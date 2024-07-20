@@ -1,0 +1,53 @@
+{
+  "emails": {
+    "resetPassword": {
+      "subject": "Reset your password",
+      "text": "Hello,\n\nTo reset your password, simply click the link below:\n\n{{url}}\n\nIf you didn't request a password reset, please ignore this email.\n\nThanks."
+    }
+  },
+  "errors": {
+    "emailAlreadyExists": "Account with this email already exists.",
+    "emailNotFound": "Account with this email not found.",
+    "invalidCredentials": "Wrong email or password.",
+    "invalidToken": "Invalid token.",
+    "passwordsDontMatch": "Passwords don't match.",
+    "somethingWentWrong": "Something went wrong. Please try again later."
+  },
+  "forgotPassword": {
+    "resetInstructionsSent": "Instructions to reset your password have been sent to your email.",
+    "subtitle": "Enter your email address to reset your password.",
+    "title": "Reset Password"
+  },
+  "forgotPasswordForm": {
+    "submit": "Send Reset Instructions"
+  },
+  "form": {
+    "submit": "Submit"
+  },
+  "general": {
+    "backTo": "Back to",
+    "or": "or"
+  },
+  "login": {
+    "title": "Login"
+  },
+  "loginForm": {
+    "forgotPassword": "Forgot password?",
+    "submit": "Log in"
+  },
+  "register": {
+    "title": "Register"
+  },
+  "registerForm": {
+    "submit": "Register"
+  },
+  "resetPassword": {
+    "subtitle": "Please enter your new password.",
+    "title": "Reset Password"
+  },
+  "user": {
+    "confirmPassword": "Confirm password",
+    "email": "Email",
+    "password": "Password"
+  }
+}
