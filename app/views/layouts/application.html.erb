@@ -27,7 +27,18 @@
     <nav class="navbar">
       <%= link_to "Home", root_path %>
       <%= link_to "Login", new_session_path unless authenticated? %>
-      <%= button_to "Log out", session_path, method: :delete if authenticated? %>
+      <% if authenticated? %>
+        <div data-controller="dropdown">
+          <button data-action="click->dropdown#toggle">
+            <%= Current.user.email_address %>
+          </button>
+          <div data-dropdown-target="menu" class="dropdown-menu hidden">
+            <ul>
+              <li><%= button_to "Log out", session_path, method: :delete %></li>
+            </ul>
+          </div>
+        </div>
+      <% end %>
     </nav>
 
     <% if alert = flash[:alert] %>

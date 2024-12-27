@@ -13,12 +13,17 @@
 
   <div class="my-5">
     <%= form.label :title %>
-    <%= form.text_field :title, class: "form-control" %>
+    <%= form.text_field :title, required: true, class: "form-control" %>
   </div>
 
   <div class="my-5">
     <%= form.label :content %>
-    <%= form.rich_text_area :content, class: "form-control" %>
+    <%= form.rich_text_area :content, required: true, class: "form-control" %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :status %><br>
+    <%= form.select :status, Visible::VALID_STATUSES, { selected: post.status || 'public' }, { class: "form-control w-auto" } %>
   </div>
 
   <div class="inline">

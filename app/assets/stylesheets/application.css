@@ -8,3 +8,12 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+form label:has(~ :required)::after {
+  content: " *";
+  color: red;
+}
+
+trix-toolbar {
+  margin-top: 0.5rem;
+}

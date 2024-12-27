@@ -6,14 +6,18 @@
     <%= link_to "New post", new_post_path, class: "btn btn-primary" if authenticated? %>
   </div>
 
+  <p class="mt-4">Our blog has <%= Post.public_count %> posts and counting!</p>
+
   <div id="posts" class="min-w-full space-y-5 mt-5">
     <% @posts.each do |post| %>
-      <article class="card">
-        <%= render post %>
-        <p>
-          <%= link_to "Show this post", post, class: "btn" %>
-        </p>
-      </article>
+      <% unless post.archived? %>
+        <article class="card">
+          <%= render post %>
+          <p>
+            <%= link_to "Show this post", post, class: "btn" %>
+          </p>
+        </article>
+      <% end %>
     <% end %>
   </div>
 </div>

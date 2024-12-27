@@ -1,0 +1,7 @@
+<%= turbo_stream.append "comments", partial: "comments/comment", locals: { comment: @comment } %>
+<%= turbo_stream.replace "new_comment", partial: "comments/form", locals: { post: @post } %>
+<%= turbo_stream.after "new_comment" do %>
+  <script>
+    document.querySelector("form[data-turbo-frame='new_comment']").reset();
+  </script>
+<% end %>

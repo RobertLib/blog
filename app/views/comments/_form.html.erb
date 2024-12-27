@@ -1,0 +1,17 @@
+<%= form_with model: [ @post, @post.comments.build ], data: { turbo_frame: "new_comment" } do |form| %>
+  <p class="my-3">
+    <%= form.label :commenter %><br>
+    <%= form.text_field :commenter, required: true, class: "form-control" %>
+  </p>
+  <p class="my-3">
+    <%= form.label :body %><br>
+    <%= form.text_area :body, required: true, class: "form-control" %>
+  </p>
+  <p class="my-3">
+    <%= form.label :status %><br>
+    <%= form.select :status, Visible::VALID_STATUSES, { selected: 'public' }, { class: "form-control w-auto" } %>
+  </p>
+  <p>
+    <%= form.submit class: "btn btn-primary mt-3" %>
+  </p>
+<% end %>
