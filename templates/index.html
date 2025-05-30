@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RobLib's Blog</title>
+    <meta
+      name="description"
+      content="Blog about programming and web technologies"
+    />
+    <meta property="og:title" content="RobLib's Blog" />
+    <meta
+      property="og:description"
+      content="Blog about programming and web technologies"
+    />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta
+      name="robots"
+      content="index, follow, max-snippet:-1, max-image-preview:large"
+    />
+    <meta property="og:locale" content="en_US" />
+    <link rel="canonical" href="{{canonical-url}}" />
+    <meta http-equiv="Cache-Control" content="public, max-age=3600" />
+    <meta name="generator" content="Blog Generator v1.0.0" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": "{{title}}",
+        "description": "{{description}}",
+        "author": {
+          "@type": "Person",
+          "name": "Robert Libšanský"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header">
+      <h1>
+        <a href="index.html" aria-label="RobLib's Blog homepage">
+          RobLib's Blog
+        </a>
+      </h1>
+      <nav role="navigation" aria-label="Main navigation">
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="archive.html">Archive</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <h2>Latest Articles</h2>
+      {{articles}} {{archive}}
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Robert Libšanský. All rights reserved.</p>
+    </footer>
+  </body>
+</html>
