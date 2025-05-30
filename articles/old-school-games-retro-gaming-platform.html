@@ -1,0 +1,198 @@
+<!-- title: Building Old School Games Platform -->
+<!-- date: 2025-07-12 -->
+<!-- description: A retro gaming platform bringing classic DOS games to modern browsers using old-school web technologies - exploring DOSBox integration and retro gaming. -->
+
+<p>
+  In an era where modern web development often means complex frameworks,
+  countless dependencies, and client-side rendering, there's something
+  refreshing about building a web application that stays true to the old-school
+  approach. Today, I want to introduce you to
+  <a href="https://oldschoolgames.eu/" target="_blank">Old School Games</a>, a
+  retro gaming platform I've been developing that not only celebrates classic
+  DOS games but also embraces the web technologies of yesteryear.
+</p>
+
+<h2>What is Old School Games?</h2>
+
+<p>
+  Old School Games is a web platform dedicated to preserving and making
+  accessible the golden age of PC gaming. The site features a curated collection
+  of classic DOS games from the 1980s and 1990s - titles like System Shock,
+  Monkey Island, Civilization, Wolfenstein 3D, and many others. What makes it
+  special is that all these games can be played directly in your browser without
+  any downloads or complicated setup.
+</p>
+
+<p>
+  The platform serves as a digital museum for gaming history, complete with
+  detailed descriptions of each game, developer information, screenshots, and
+  the ability to play these classics instantly. It's a nostalgic journey back to
+  a time when games were crafted with heart and soul, featuring pixelated
+  graphics, unforgettable soundtracks, and that unique atmosphere that defined
+  an entire generation of gaming.
+</p>
+
+<h2>Technical Philosophy: Old School Web Development</h2>
+
+<p>
+  What's particularly interesting about Old School Games is that it doesn't just
+  celebrate retro gaming - it's built using a retro web development approach. In
+  keeping with the philosophy of simplicity and staying true to the era it
+  represents, the entire platform is built with traditional server-side
+  technologies:
+</p>
+
+<ul>
+  <li>
+    <strong>Node.js and Express</strong> - For the backend server and routing
+  </li>
+  <li>
+    <strong>PostgreSQL</strong> - Direct database queries without ORM overhead
+  </li>
+  <li>
+    <strong>EJS templating</strong> - Server-side rendering for fast,
+    SEO-friendly pages
+  </li>
+  <li>
+    <strong>Minimal client-side JavaScript</strong> - Just enough for essential
+    interactions
+  </li>
+</ul>
+
+<p>
+  This approach mirrors how websites were built in the 1990s and early 2000s -
+  predominantly server-side rendered with minimal client-side JavaScript. It's a
+  deliberate choice that aligns with the platform's mission to preserve and
+  honor the past.
+</p>
+
+<h2>Why Server-Side Rendering Still Matters</h2>
+
+<p>
+  In today's JavaScript-heavy web development landscape, Old School Games
+  demonstrates that server-side rendering (SSR) still has significant
+  advantages:
+</p>
+
+<ul>
+  <li>
+    <strong>SEO Benefits</strong> - Pages are fully rendered on the server,
+    making them easily indexable by search engines
+  </li>
+  <li>
+    <strong>Performance</strong> - Fast initial page loads without waiting for
+    JavaScript bundles
+  </li>
+  <li>
+    <strong>Accessibility</strong> - Works perfectly even with JavaScript
+    disabled
+  </li>
+  <li>
+    <strong>Simplicity</strong> - No complex build processes or state management
+  </li>
+</ul>
+
+<p>
+  The result is a website that loads quickly, works reliably, and provides an
+  excellent user experience across all devices and browsers - much like the
+  robust, dependable games it hosts.
+</p>
+
+<h2>Game Collection and Features</h2>
+
+<p>
+  Old School Games features an impressive collection spanning multiple genres:
+</p>
+
+<ul>
+  <li>
+    <strong>Strategy Games</strong> - Civilization, Dune II, Transport Tycoon
+    Deluxe
+  </li>
+  <li>
+    <strong>Adventure Games</strong> - Monkey Island series, Indiana Jones and
+    the Fate of Atlantis
+  </li>
+  <li>
+    <strong>Action Games</strong> - Duke Nukem 3D, Wolfenstein 3D, Doom II
+  </li>
+  <li><strong>RPGs</strong> - System Shock, Lands of Lore, Ishar series</li>
+  <li><strong>Simulation Games</strong> - SimCity, Star Wars: TIE Fighter</li>
+</ul>
+
+<p>The platform includes useful features like:</p>
+
+<ul>
+  <li>Alphabetical browsing and genre-based filtering</li>
+  <li>Developer and publisher information</li>
+  <li>Release year organization</li>
+  <li>Game of the Week highlights</li>
+  <li>Recently added games section</li>
+</ul>
+
+<h2>Technical Implementation Highlights</h2>
+
+<p>
+  Building a retro gaming platform presents unique technical challenges. The
+  games run using DOSBox compiled to WebAssembly, allowing classic DOS
+  executables to run in modern browsers. This requires careful optimization to
+  ensure good performance while maintaining compatibility across different
+  browsers and devices.
+</p>
+
+<p>
+  The database structure is designed to efficiently handle game metadata, user
+  preferences, and game states. Using PostgreSQL with direct SQL queries (no
+  ORM) provides maximum control over database performance and allows for complex
+  queries needed for filtering and searching the game collection.
+</p>
+
+<h2>The Future of Retro Gaming</h2>
+
+<p>
+  Old School Games represents more than just a gaming platform - it's a
+  preservation project. As we move further into the future, these classic games
+  risk being forgotten or becoming inaccessible due to hardware and software
+  obsolescence. By making them available in modern browsers, we ensure that
+  future generations can experience the games that shaped the industry.
+</p>
+
+<p>
+  The platform continues to grow, with new games being added regularly. The
+  focus remains on quality over quantity - each game is carefully selected for
+  its historical significance and gameplay value.
+</p>
+
+<h2>Conclusion</h2>
+
+<p>
+  Old School Games proves that sometimes the best approach is to keep things
+  simple. By using traditional web technologies and server-side rendering, the
+  platform delivers a fast, reliable, and accessible experience that honors both
+  the games it hosts and the web development practices of the era.
+</p>
+
+<p>
+  Whether you're a gaming enthusiast looking to relive childhood memories, a
+  developer interested in retro gaming preservation, or someone curious about
+  classic game design, Old School Games offers a unique window into the golden
+  age of PC gaming.
+</p>
+
+<p>
+  Visit
+  <a href="https://oldschoolgames.eu/" target="_blank">Old School Games</a> and
+  take a trip back to when games were simpler, but arguably more memorable. Fire
+  up a classic title and experience the magic that defined an entire generation
+  of gaming.
+</p>
+
+<blockquote>
+  <p>
+    <em
+      >In a world of complex modern games, sometimes the most profound
+      experiences come from the simplest pixels and the most straightforward
+      gameplay.</em
+    >
+  </p>
+</blockquote>
