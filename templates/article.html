@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}} - RobLib's Blog</title>
+    <meta name="description" content="{{description}}" />
+    <meta name="author" content="Robert Libsansky" />
+    <meta name="keywords" content="{{keywords}}" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta
+      name="robots"
+      content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+    />
+    <link rel="canonical" href="{{canonical-url}}" />
+    <meta property="og:title" content="{{title}}" />
+    <meta property="og:description" content="{{description}}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="{{canonical-url}}" />
+    <meta property="og:site_name" content="RobLib's Blog" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="{{base-url}}/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:author" content="Robert Libsansky" />
+    <meta property="article:published_time" content="{{date}}" />
+    <meta property="article:section" content="Programming" />
+    <meta property="article:tag" content="{{keywords}}" />
+    <meta http-equiv="Cache-Control" content="public, max-age=86400" />
+    <meta name="generator" content="Blog Generator v1.0.0" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{title}}" />
+    <meta name="twitter:description" content="{{description}}" />
+    <meta name="twitter:creator" content="@robertlib" />
+    <meta name="twitter:image" content="{{base-url}}/og-image.svg" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="RSS Feed"
+      href="feed.xml"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "{{title}}",
+        "description": "{{description}}",
+        "url": "{{canonical-url}}",
+        "datePublished": "{{date}}",
+        "dateModified": "{{date}}",
+        "author": {
+          "@type": "Person",
+          "name": "Robert Libsansky",
+          "url": "{{base-url}}"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Robert Libsansky"
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "{{canonical-url}}"
+        },
+        "inLanguage": "en-US",
+        "keywords": "{{keywords}}",
+        "wordCount": "{{word-count}}",
+        "timeRequired": "PT{{reading-time-minutes}}M"
+      }
+    </script>
+  </head>
+  <body>
+    <div class="reading-progress" id="reading-progress"></div>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header" id="header">
+      <div class="header-content">
+        <span class="site-title"><a href="{{base-url}}">RobLib's Blog</a></span>
+        <nav role="navigation" aria-label="Main navigation">
+          <a href="{{base-url}}">Home</a>
+          <a href="archive.html">Archive</a>
+          <a href="feed.xml">RSS</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <article>
+        <header>
+          <h1>{{title}}</h1>
+          <div class="article-meta">
+            <time datetime="{{date}}">{{formatted-date}}</time>
+            <span class="reading-time">{{reading-time}}</span>
+          </div>
+        </header>
+        {{content}}
+
+        <div class="share-buttons">
+          <a
+            href="https://twitter.com/intent/tweet?url={{canonical-url}}&text={{title}}"
+            class="share-btn twitter"
+            target="_blank"
+            rel="noopener"
+            aria-label="Share on Twitter"
+          >
+            Share on X
+          </a>
+          <a
+            href="https://www.linkedin.com/sharing/share-offsite/?url={{canonical-url}}"
+            class="share-btn linkedin"
+            target="_blank"
+            rel="noopener"
+            aria-label="Share on LinkedIn"
+          >
+            Share on LinkedIn
+          </a>
+          <button
+            class="share-btn copy"
+            onclick="navigator.clipboard.writeText('{{canonical-url}}').then(() => this.textContent = 'Copied!')"
+            aria-label="Copy link"
+          >
+            Copy Link
+          </button>
+        </div>
+
+        {{related-articles}}
+      </article>
+
+      <nav class="article-navigation" aria-label="Related articles">
+        {{navigation}}
+      </nav>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Robert Libsansky. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="feed.xml">RSS Feed</a>
+        <a href="https://github.com/RobertLib" target="_blank" rel="noopener"
+          >GitHub</a
+        >
+      </div>
+    </footer>
+
+    <script>
+      // Reading progress bar
+      window.addEventListener("scroll", () => {
+        const article = document.querySelector("article");
+        const progressBar = document.getElementById("reading-progress");
+        if (article && progressBar) {
+          const articleTop = article.offsetTop;
+          const articleHeight = article.offsetHeight;
+          const windowHeight = window.innerHeight;
+          const scrolled = window.scrollY;
+          const progress = Math.min(
+            Math.max(
+              (scrolled - articleTop + windowHeight * 0.3) /
+                (articleHeight - windowHeight * 0.5),
+              0
+            ),
+            1
+          );
+          progressBar.style.width = progress * 100 + "%";
+        }
+      });
+
+      // Header scroll effect
+      let lastScroll = 0;
+      const header = document.getElementById("header");
+
+      window.addEventListener("scroll", () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 50) {
+          header.classList.add("scrolled");
+        } else {
+          header.classList.remove("scrolled");
+        }
+
+        lastScroll = currentScroll;
+      });
+    </script>
+  </body>
+</html>

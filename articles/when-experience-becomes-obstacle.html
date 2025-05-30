@@ -1,0 +1,247 @@
+<!-- title: When Experience Becomes an Obstacle -->
+<!-- date: 2025-11-28 -->
+<!-- description: How deep CSS expertise made me resist Tailwind for years - a personal story about when experience blinds us to innovation and why experts can be wrong. -->
+
+<p>
+  I've been writing CSS since it practically came into existence. Over the
+  years, I've mastered every nuance of the cascade, specificity rules, and the
+  art of writing maintainable stylesheets. I was proud of this expertise. But
+  here's the uncomfortable truth: that very expertise made me blind to one of
+  the most significant improvements in how we style web applications.
+</p>
+
+<p>
+  This is a story about Tailwind CSS, but more importantly, it's a story about
+  how experience can sometimes be our biggest obstacle to growth.
+</p>
+
+<h2>The Cascade Mindset</h2>
+
+<p>
+  The word "cascading" in Cascading Style Sheets isn't accidental. CSS was
+  designed with a specific philosophy: styles flow from top to bottom, from
+  parent to child, creating elegant inheritance patterns across entire HTML
+  documents.
+</p>
+
+<p>
+  For decades, this made perfect sense. Servers rendered complete HTML pages,
+  and CSS provided a beautiful way to define consistent styling from a central
+  location. Write once, apply everywhere. The cascade was elegant, efficient,
+  and exactly what we needed.
+</p>
+
+<p>
+  When JavaScript-based styling solutions started emerging, I dismissed them
+  immediately. <strong>This goes against everything CSS stands for,</strong> I
+  thought. And when Tailwind arrived with its utility-first approach? I was
+  genuinely horrified.
+</p>
+
+<h2>The Horror of Utility Classes</h2>
+
+<p>
+  I still remember my first encounter with Tailwind code. Endless strings of
+  cryptic class names cluttering the HTML:
+</p>
+
+<pre><code>&lt;div class="flex items-center justify-between p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"&gt;
+</code></pre>
+
+<p>
+  "You can't be serious," I told my colleagues. "This is everything we've fought
+  against for years. It's inline styles with extra steps. It violates separation
+  of concerns. It will create maintenance nightmares. This is an anti-pattern!"
+</p>
+
+<p>
+  I was convinced that anyone who couldn't see these obvious problems simply
+  didn't understand CSS deeply enough. They were naive developers seduced by a
+  shiny new tool, unable to appreciate the elegance of properly structured
+  stylesheets.
+</p>
+
+<p>
+  <strong>I was wrong.</strong>
+</p>
+
+<h2>The World Changed, I Didn't Notice</h2>
+
+<p>
+  Here's what my experience-clouded judgment failed to recognize: the web
+  development landscape had fundamentally shifted. We weren't building
+  server-rendered pages anymore. We were building component-based applications.
+</p>
+
+<p>
+  In a world of React, Vue, and Angular, the cascade that CSS was designed for
+  becomes a liability, not an asset. When you're building isolated components:
+</p>
+
+<ul>
+  <li>
+    <strong>Global styles become dangerous</strong> - A style change in one
+    component can unexpectedly affect another
+  </li>
+  <li>
+    <strong>Naming becomes a nightmare</strong> - You need increasingly complex
+    BEM-style names to avoid conflicts
+  </li>
+  <li>
+    <strong>Bundle size grows linearly</strong> - Every new component adds more
+    CSS, even if it uses similar styles
+  </li>
+  <li>
+    <strong>Context switching hurts productivity</strong> - Jumping between HTML
+    and CSS files breaks flow
+  </li>
+</ul>
+
+<p>
+  Shadow DOM attempted to solve the encapsulation problem, but it didn't address
+  the fundamental issue of CSS bloat and the mental overhead of maintaining
+  separate stylesheets.
+</p>
+
+<h2>The Tailwind Revelation</h2>
+
+<p>
+  When I finally gave Tailwind an honest try, something clicked. The "problems"
+  I saw were actually solutions to problems I refused to acknowledge:
+</p>
+
+<ul>
+  <li>
+    <strong>No naming decisions</strong> - I spent countless hours debating
+    class names. With Tailwind, you just describe what you want
+  </li>
+  <li>
+    <strong>True encapsulation</strong> - Styles are right there with the
+    component, impossible to leak
+  </li>
+  <li>
+    <strong>Constant bundle size</strong> - The CSS doesn't grow with your
+    application because you're reusing utility classes
+  </li>
+  <li>
+    <strong>Immediate visual feedback</strong> - Change a class, see the result,
+    no file switching
+  </li>
+</ul>
+
+<p>
+  Don't like the long class strings? Use the <code>cn()</code> function pattern
+  to organize them across multiple lines. The structure is entirely up to you:
+</p>
+
+<pre><code>className={cn(
+  "flex items-center justify-between",
+  "p-4 bg-white rounded-lg",
+  "shadow-md hover:shadow-lg",
+  "transition-shadow duration-200"
+)}
+</code></pre>
+
+<p>
+  Tailwind didn't ignore CSS principles out of ignorance. It recognized that
+  those principles were designed for a different era and offered a pragmatic
+  solution for today's component-based world.
+</p>
+
+<h2>The AI Era Vindication</h2>
+
+<p>
+  And then came AI-assisted development, and Tailwind's approach proved almost
+  prophetic.
+</p>
+
+<p>
+  When you ask an AI to style a component, Tailwind is the perfect language. The
+  styling is declarative, explicit, and directly attached to the elements. No
+  need to understand complex cascade relationships, no hunting through separate
+  files, no worrying about unintended side effects.
+</p>
+
+<p>
+  AI can read a Tailwind component and immediately understand exactly how it
+  looks. It can modify styles with precision because everything is right there,
+  explicit and self-contained. The directness that I once dismissed as primitive
+  turned out to be exactly what modern tooling needed.
+</p>
+
+<blockquote>
+  <p>What I called an anti-pattern was actually ahead of its time.</p>
+</blockquote>
+
+<h2>The Lesson in Humility</h2>
+
+<p>
+  This experience taught me something valuable about expertise. Deep knowledge
+  in any field creates mental models, strong opinions about how things
+  <em>should</em> work. These models are usually helpful, but they can also
+  become prisons.
+</p>
+
+<p>When a new approach violates your mental model, you have two choices:</p>
+
+<ol>
+  <li>Assume the new approach is wrong because it doesn't fit your model</li>
+  <li>Question whether your model still applies in the current context</li>
+</ol>
+
+<p>
+  I chose the first option for far too long. My expertise in "how CSS should
+  work" blinded me to the reality that the problems CSS was designed to solve
+  had changed.
+</p>
+
+<h2>Experience vs. Adaptability</h2>
+
+<p>
+  This doesn't mean experience is worthless. Far from it. Experience gives us
+  pattern recognition, helps us avoid known pitfalls, and provides the
+  foundation for understanding new concepts.
+</p>
+
+<p>But experience needs a companion: <strong>intellectual humility.</strong></p>
+
+<ul>
+  <li>
+    When something new gains traction despite your objections, ask yourself
+    <em>why</em> it's succeeding
+  </li>
+  <li>
+    When younger developers embrace something you reject, consider that they
+    might see something you don't
+  </li>
+  <li>
+    When your criticism sounds like "this isn't how it was designed to work,"
+    question whether that original design still applies
+  </li>
+</ul>
+
+<p>
+  Technologies like Tailwind succeeded not despite experienced developers'
+  objections, but often in spite of them. The industry moved forward, and some
+  of us grumpy veterans eventually had to admit we were wrong.
+</p>
+
+<h2>Moving Forward</h2>
+
+<p>
+  Today, Tailwind is essentially a standard in modern web development. The
+  community has grown, the tooling is excellent, and even the most skeptical
+  developers have largely come around. I'm one of them.
+</p>
+
+<p>
+  But I try to carry this lesson with me: the next time something new comes
+  along that violates my deeply held beliefs about "how things should work,"
+  I'll try to pause. I'll try to understand the problem it's solving, the
+  context it was designed for, and whether my mental models are still relevant.
+</p>
+
+<p>
+  Because sometimes, the grumpy old developer convinced that everyone else is
+  wrong... is the one who needs to learn something new.
+</p>
