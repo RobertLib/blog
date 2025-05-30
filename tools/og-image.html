@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+  Source for static/og-image.png (1200x630 social card).
+  Regenerate after editing:
+
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+    --headless=new --disable-gpu --hide-scrollbars \
+    --allow-file-access-from-files --force-device-scale-factor=1 \
+    --window-size=1200,630 \
+    --screenshot="$PWD/static/og-image.png" \
+    "file://$PWD/tools/og-image.html"
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>OG image source</title>
+    <style>
+      @font-face {
+        font-family: "Inter";
+        font-style: normal;
+        font-weight: 400 700;
+        src: url("../static/fonts/inter-latin.woff2") format("woff2");
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+
+      body {
+        position: relative;
+        background: #111214;
+        color: #e9e7e2;
+        font-family: "Inter", -apple-system, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Fine engineering grid, barely visible */
+      .grid {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+            to right,
+            rgba(233, 231, 226, 0.035) 1px,
+            transparent 1px
+          ),
+          linear-gradient(
+            to bottom,
+            rgba(233, 231, 226, 0.035) 1px,
+            transparent 1px
+          );
+        background-size: 60px 60px;
+        -webkit-mask-image: radial-gradient(
+          120% 100% at 0% 0%,
+          #000 25%,
+          transparent 80%
+        );
+        mask-image: radial-gradient(
+          120% 100% at 0% 0%,
+          #000 25%,
+          transparent 80%
+        );
+      }
+
+      .frame {
+        position: absolute;
+        inset: 40px;
+        border: 1px solid rgba(233, 231, 226, 0.1);
+        border-radius: 4px;
+      }
+
+      .inner {
+        position: absolute;
+        inset: 40px;
+        padding: 56px 64px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .mark {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border: 1.5px solid #e9e7e2;
+        border-radius: 9px;
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1;
+      }
+
+      .brand-name {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+      }
+
+      .headline {
+        font-size: 66px;
+        font-weight: 600;
+        letter-spacing: -0.035em;
+        line-height: 1.06;
+        max-width: 15ch;
+        color: #fbfaf8;
+      }
+
+      .rule {
+        width: 72px;
+        height: 3px;
+        background: #e08a50;
+        margin-top: 34px;
+        border-radius: 2px;
+      }
+
+      .foot {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 16px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #827e77;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+    <div class="frame"></div>
+    <div class="inner">
+      <div class="brand">
+        <span class="mark">RL</span>
+        <span class="brand-name">RobLib&rsquo;s Blog</span>
+      </div>
+
+      <div>
+        <h1 class="headline">Notes on programming and web development</h1>
+        <div class="rule"></div>
+      </div>
+
+      <div class="foot">
+        <span>roblibs-blog.com</span>
+        <span>Robert Libsansky</span>
+      </div>
+    </div>
+  </body>
+</html>

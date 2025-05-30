@@ -1,0 +1,167 @@
+<!-- title: NextJS App Router: Production Reality Check -->
+<!-- date: 2025-05-31 -->
+<!-- description: An honest look at NextJS App Router and Server Components complexities, real-world performance issues, practical challenges in production environments. -->
+
+<p>
+  When NextJS introduced the App Router with Server Components, it seemed like a
+  revolutionary solution to many SPA problems. Better SEO, faster loading times,
+  and the promise of a more efficient development experience. After working with
+  this technology since its introduction, I want to share my honest experience -
+  both the good and the frustrating parts.
+</p>
+
+<h2>The Initial Promise</h2>
+
+<p>
+  Server Components appeared to solve fundamental issues that have plagued
+  Single Page Applications for years:
+</p>
+
+<ul>
+  <li>
+    <strong>SEO challenges</strong> - Server-side rendering out of the box
+  </li>
+  <li>
+    <strong>Performance issues</strong> - Reduced bundle sizes and faster
+    initial loads
+  </li>
+  <li>
+    <strong>Data fetching complexity</strong> - Simpler data flow with
+    server-side fetching
+  </li>
+</ul>
+
+<p>
+  In Hello World examples, this looked fantastic. The separation between server
+  and client code seemed clean and logical. But production applications tell a
+  different story.
+</p>
+
+<h2>The Reality Check</h2>
+
+<h3>Authentication Complexity</h3>
+
+<p>
+  One of the first major hurdles you'll encounter is authentication. With
+  traditional SPAs, you manage session state in one place - the client. With
+  Server Components, you need to handle sessions both on the server and client
+  side. This duplication isn't just inconvenient; it's a source of bugs and
+  inconsistencies.
+</p>
+
+<pre><code>// Server-side session handling
+async function getServerSession() {
+  // Server-side session logic
+}
+
+// Client-side session handling
+function useClientSession() {
+  // Client-side session logic
+}
+
+// Now you need to keep these in sync...</code></pre>
+
+<h3>The Mental Overhead</h3>
+
+<p>Every component decision becomes a complex question:</p>
+
+<ul>
+  <li>Should this be a server or client component?</li>
+  <li>Where should I fetch this data - server, client, or both?</li>
+  <li>How will these components interact with each other?</li>
+  <li>
+    What happens when I need client-side interactivity in a server component?
+  </li>
+</ul>
+
+<p>
+  This constant decision-making creates significant cognitive overhead. Instead
+  of focusing on business logic, developers spend time architecting the boundary
+  between server and client code.
+</p>
+
+<h3>Loading States and Streaming</h3>
+
+<p>
+  While data streaming sounds great in theory, implementing practical loading
+  states becomes surprisingly complex:
+</p>
+
+<ul>
+  <li><strong>Page-level loading</strong> - Too coarse-grained for good UX</li>
+  <li>
+    <strong>Suspense boundaries</strong> - Work for component blocks, but what
+    about granular loading states?
+  </li>
+  <li>
+    <strong>Partial rendering</strong> - How do you show static content while
+    loading dynamic parts?
+  </li>
+</ul>
+
+<p>
+  You end up creating specialized components for every small piece that needs
+  individual loading handling. The simplicity quickly erodes.
+</p>
+
+<blockquote>
+  <p>
+    "The complexity you save in one area often resurfaces elsewhere, sometimes
+    in worse forms."
+  </p>
+</blockquote>
+
+<h2>The Bigger Picture</h2>
+
+<p>
+  This experience with NextJS Server Components reflects a broader trend in
+  frontend development that concerns me. Instead of leveraging the browser's
+  native capabilities and simplifying our development process, we're adding
+  layers of abstraction that require extensive mental models to navigate.
+</p>
+
+<p>
+  Web development should be getting simpler over time. Browsers are more capable
+  than ever, with native modules, improved APIs, and better performance. Yet we
+  keep building frameworks that abstract away these improvements and create new
+  complexities.
+</p>
+
+<h2>What This Means for Developers</h2>
+
+<p>
+  I'm not saying Server Components are inherently bad - they solve real problems
+  and can be valuable in the right context. But the gap between marketing
+  promises and production reality is significant.
+</p>
+
+<p>
+  Before adopting any new technology, especially one that fundamentally changes
+  your application architecture, consider:
+</p>
+
+<ul>
+  <li>Are you solving a real problem or chasing hype?</li>
+  <li>What's the long-term maintenance cost?</li>
+  <li>How will this affect your team's productivity?</li>
+  <li>Could simpler solutions achieve the same goals?</li>
+</ul>
+
+<h2>Moving Forward</h2>
+
+<p>
+  This experience has inspired me to start sharing more honest perspectives on
+  modern web technologies. There's too much hype and not enough critical
+  analysis in our community.
+</p>
+
+<p>
+  In future articles, I want to explore the real advantages and disadvantages of
+  popular frameworks and libraries, based on actual production experience rather
+  than theoretical benefits.
+</p>
+
+<p>
+  Because at the end of the day, the best technology is the one that helps you
+  build great products efficiently - not the one with the most impressive demo.
+</p>

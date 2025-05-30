@@ -1,0 +1,265 @@
+<!-- title: SPA Comeback: Why SPAs Rule Admin Apps -->
+<!-- date: 2025-09-06 -->
+<!-- description: After experimenting with Next.js, returning to Single Page Applications for admin interfaces proved to be the right choice. Why SPA architecture excels. -->
+
+<p>
+  After spending considerable time working with Next.js and its App Router, I've
+  made a deliberate decision to return to Single Page Applications (SPA) for
+  admin interfaces. This wasn't a step backward, it was a strategic choice that
+  has significantly improved my development experience and application
+  performance for a specific use case.
+</p>
+
+<h2>The Context: Admin Applications vs Public Websites</h2>
+
+<p>
+  Let's be clear about what we're discussing. When I say "admin applications,"
+  I'm referring to large-scale business applications that live entirely behind
+  authentication, employee management systems, customer relationship platforms,
+  internal company tools, and complex dashboards. These applications have
+  fundamentally different requirements than public-facing websites.
+</p>
+
+<p>
+  Next.js was designed to solve specific problems that SPAs struggled with,
+  primarily SEO optimization and initial loading performance. While these are
+  critical concerns for public websites, they become irrelevant, and sometimes
+  counterproductive, for admin applications.
+</p>
+
+<h2>Why SEO Optimization Doesn't Matter for Admin Apps</h2>
+
+<p>
+  The primary selling point of Next.js is its ability to handle server-side
+  rendering and static generation for better search engine optimization. But
+  consider this: when was the last time you wanted Google to index your
+  company's internal employee management system?
+</p>
+
+<p>Admin applications typically:</p>
+
+<ul>
+  <li>
+    <strong>Live behind authentication</strong> - No search engines can access
+    them
+  </li>
+  <li>
+    <strong>Serve specific user groups</strong> - Employees, partners, or
+    customers with accounts
+  </li>
+  <li>
+    <strong>Focus on functionality over discoverability</strong> - Users don't
+    find them through search
+  </li>
+  <li>
+    <strong>Prioritize user experience over page rankings</strong> - Speed and
+    usability matter more than SEO
+  </li>
+</ul>
+
+<p>
+  Building an architecture optimized for SEO when you explicitly don't want SEO
+  is like installing a convertible roof on a submarine, technically impressive,
+  but completely missing the point.
+</p>
+
+<h2>The Performance Paradox</h2>
+
+<p>
+  Next.js promises better performance through static rendering and
+  pre-rendering, but in practice, I found the opposite to be true for admin
+  applications. The additional complexity introduced by the framework often
+  slowed down both development and runtime performance.
+</p>
+
+<h3>Static Generation Overhead</h3>
+
+<p>
+  Static generation and pre-rendering add unnecessary complexity when your
+  content is inherently dynamic. Admin applications typically display:
+</p>
+
+<ul>
+  <li>Real-time data that changes frequently</li>
+  <li>User-specific information that can't be pre-rendered</li>
+  <li>Interactive dashboards with live updates</li>
+  <li>Forms and workflows that depend on current state</li>
+</ul>
+
+<p>
+  Attempting to statically generate pages that are fundamentally dynamic creates
+  a mismatch between the tool and the task.
+</p>
+
+<h3>Bundle Size vs. User Experience</h3>
+
+<p>
+  While Next.js aims to reduce bundle sizes through code splitting and server
+  components, this approach can actually make admin applications feel slower.
+  The constant need to fetch additional code and components during navigation
+  creates micro-delays that accumulate into a sluggish user experience.
+</p>
+
+<h2>The SPA Advantage: Instant User Feedback</h2>
+
+<p>
+  Single Page Applications excel at what matters most in admin interfaces:
+  immediate user feedback. When a user clicks a link, switches tabs, or
+  navigates to a different section, the response should be instantaneous.
+</p>
+
+<h3>Lightning-Fast Navigation</h3>
+
+<p>In a well-built SPA, every user interaction feels immediate because:</p>
+
+<ul>
+  <li>
+    <strong>No server round trips for navigation</strong> - Everything happens
+    client-side
+  </li>
+  <li>
+    <strong>Shared state management</strong> - Data persists across routes
+  </li>
+  <li>
+    <strong>Predictive loading</strong> - Components can preload anticipated
+    data
+  </li>
+  <li>
+    <strong>Smooth transitions</strong> - No page refreshes or loading states
+  </li>
+</ul>
+
+<p>
+  This immediate feedback is crucial for admin applications where users perform
+  repetitive tasks and need the interface to keep up with their workflow.
+</p>
+
+<h2>Scalability: The Lazy Loading Solution</h2>
+
+<p>
+  The common concern with SPAs is that they don't scale well as applications
+  grow larger. This is true only if you don't plan for scale from the beginning.
+  The solution is straightforward: lazy loading.
+</p>
+
+<h3>Strategic Code Splitting</h3>
+
+<p>Modern SPAs can implement intelligent code splitting by:</p>
+
+<ul>
+  <li>
+    <strong>Route-based splitting</strong> - Load components only when routes
+    are accessed
+  </li>
+  <li>
+    <strong>Feature-based splitting</strong> - Group related functionality into
+    separate bundles
+  </li>
+  <li>
+    <strong>Component-level splitting</strong> - Load heavy components on demand
+  </li>
+  <li>
+    <strong>Conditional loading</strong> - Load features based on user
+    permissions
+  </li>
+</ul>
+
+<p>
+  This approach gives you the best of both worlds: fast initial loading and
+  instant navigation once the user starts working with the application.
+</p>
+
+<h2>Development Velocity: Simplicity Wins</h2>
+
+<p>
+  Returning to SPA architecture for admin applications has dramatically improved
+  my development velocity. Without the mental overhead of deciding what should
+  render on the server versus the client, I can focus on building features that
+  matter to users.
+</p>
+
+<h3>Clear Architecture Boundaries</h3>
+
+<p>The API + SPA approach provides clear separation of concerns:</p>
+
+<ul>
+  <li>
+    <strong>Backend focuses on data and business logic</strong> - Clean,
+    testable APIs
+  </li>
+  <li>
+    <strong>Frontend focuses on user experience</strong> - Interactive,
+    responsive interfaces
+  </li>
+  <li>
+    <strong>No hybrid complexity</strong> - No confusion about where code should
+    run
+  </li>
+  <li>
+    <strong>Independent scaling</strong> - Frontend and backend can scale
+    separately
+  </li>
+</ul>
+
+<h2>The Right Tool for the Right Job</h2>
+
+<p>
+  I'm not arguing that SPAs are universally better than Next.js. Each approach
+  has its strengths and appropriate use cases:
+</p>
+
+<h3>Choose Next.js for:</h3>
+<ul>
+  <li>Public-facing websites that need SEO</li>
+  <li>Marketing sites and landing pages</li>
+  <li>E-commerce platforms</li>
+  <li>Content-heavy sites with mostly static content</li>
+  <li>Applications where initial loading time is critical</li>
+</ul>
+
+<h3>Choose SPA for:</h3>
+<ul>
+  <li>Admin interfaces and internal tools</li>
+  <li>Complex interactive applications</li>
+  <li>Real-time dashboards and monitoring tools</li>
+  <li>Applications where user engagement time is high</li>
+  <li>Scenarios where immediate user feedback is paramount</li>
+</ul>
+
+<h2>Coexistence, Not Competition</h2>
+
+<p>
+  The future of web development isn't about choosing a single architectural
+  approach for every project. It's about understanding the strengths and
+  weaknesses of different approaches and applying them appropriately.
+</p>
+
+<p>
+  Next.js and SPAs can coexist peacefully in the development ecosystem. They
+  solve different problems for different types of applications. The key is
+  recognizing which tool fits your specific requirements rather than following
+  the latest trend.
+</p>
+
+<h2>Conclusion</h2>
+
+<p>
+  My return to SPAs for admin applications wasn't a rejection of modern
+  development practices, it was a conscious choice to use the right tool for the
+  job. When you're building applications that prioritize user interaction speed
+  over search engine visibility, SPAs remain the superior choice.
+</p>
+
+<p>
+  The development community sometimes gets caught up in the excitement of new
+  technologies and forgets that older approaches might still be the best fit for
+  certain scenarios. SPAs have evolved significantly since their early days, and
+  with modern tooling and best practices, they can deliver exceptional user
+  experiences for admin applications.
+</p>
+
+<p>
+  Before choosing your next tech stack, ask yourself: What problem am I actually
+  trying to solve? The answer might lead you back to a technology you thought
+  you'd outgrown.
+</p>

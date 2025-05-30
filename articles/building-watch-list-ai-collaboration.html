@@ -1,0 +1,248 @@
+<!-- title: Building Watch-List.me with AI Collaboration -->
+<!-- date: 2025-08-16 -->
+<!-- description: My detailed experience building a Next.js app with Claude Sonnet 4's agent mode - exploring benefits, pitfalls, and why human oversight still matters. -->
+
+<p>
+  Recently, I built
+  <a href="https://www.watch-list.me/" target="_blank">Watch-List.me</a>, a
+  Next.js application deployed on Vercel for tracking movies and TV shows. While
+  the project itself might not sound revolutionary, the development process
+  highlighted something important about our current relationship with AI coding
+  tools - particularly when using Claude Sonnet 4's agent mode for code
+  generation.
+</p>
+
+<p>
+  This experience reinforced a crucial lesson: AI can dramatically accelerate
+  development, but it requires constant human oversight and architectural
+  decision-making. The more complex your application becomes, the more critical
+  this oversight becomes.
+</p>
+
+<h2>Where AI Excels: The Grunt Work</h2>
+
+<p>
+  Claude's agent mode proved invaluable for generating the mundane, repetitive
+  code that every web application needs:
+</p>
+
+<ul>
+  <li>
+    <strong>Database schemas and migrations</strong> - Prisma models and SQL
+    setup
+  </li>
+  <li><strong>API route boilerplate</strong> - Standard CRUD operations</li>
+  <li>
+    <strong>Form components</strong> - Input validation and error handling
+  </li>
+  <li>
+    <strong>TypeScript interfaces</strong> - Type definitions for data
+    structures
+  </li>
+  <li><strong>Component styling</strong> - Tailwind CSS class combinations</li>
+</ul>
+
+<p>
+  For these tasks, AI is incredibly efficient. What might take me 30 minutes to
+  write carefully, Claude generated in seconds. The time savings on repetitive
+  work allowed me to focus on the more interesting architectural decisions.
+</p>
+
+<h2>The Critical Gap: Architectural Understanding</h2>
+
+<p>
+  However, as the application grew more complex, I encountered AI's fundamental
+  limitation: it lacks holistic understanding of application architecture,
+  especially when it comes to Next.js Server Components and the delicate balance
+  between server and client-side rendering.
+</p>
+
+<h3>The Server vs Client Component Dilemma</h3>
+
+<p>
+  Next.js App Router with Server Components introduces a new complexity that AI
+  tools consistently struggle with. They tend to make decisions based on
+  immediate context rather than considering:
+</p>
+
+<ul>
+  <li>
+    <strong>SEO implications</strong> - What needs to be server-rendered for
+    search engines
+  </li>
+  <li>
+    <strong>Performance trade-offs</strong> - Bundle size vs. hydration overhead
+  </li>
+  <li>
+    <strong>User experience</strong> - Interactive elements vs. static content
+  </li>
+  <li>
+    <strong>Data flow patterns</strong> - How state propagates through the
+    component tree
+  </li>
+</ul>
+
+<p>
+  I repeatedly had to intervene when Claude would suggest using client
+  components for content that should be server-rendered for SEO, or conversely,
+  trying to add interactivity to server components without proper hydration
+  boundaries.
+</p>
+
+<h3>Real Examples of AI Missteps</h3>
+
+<p>
+  One particularly telling example involved the movie search functionality.
+  Claude initially suggested implementing the entire search interface as a
+  server component, which would have resulted in full page reloads for every
+  search query - terrible UX. Later, when I asked for optimization, it went to
+  the opposite extreme, suggesting we make the entire movie listing page
+  client-side, which would have hurt SEO.
+</p>
+
+<p>
+  The correct solution required understanding that the initial movie grid should
+  be server-rendered for SEO and performance, while the search overlay needed to
+  be a client component for interactivity, with proper data fetching strategies
+  for each use case.
+</p>
+
+<h2>The Human Factor: Code Review and Architectural Oversight</h2>
+
+<p>
+  Working with AI taught me that code review has never been more important. But
+  it's not just about catching bugs - it's about ensuring architectural
+  consistency and long-term maintainability.
+</p>
+
+<h3>What I Learned to Watch For:</h3>
+
+<ul>
+  <li><strong>Component boundaries</strong> - Proper separation of concerns</li>
+  <li>
+    <strong>Data fetching patterns</strong> - Consistent approaches across the
+    app
+  </li>
+  <li>
+    <strong>Error handling</strong> - Comprehensive coverage, not just happy
+    paths
+  </li>
+  <li>
+    <strong>Performance implications</strong> - Bundle size and runtime
+    efficiency
+  </li>
+  <li><strong>Accessibility</strong> - Often completely overlooked by AI</li>
+</ul>
+
+<p>
+  I found myself doing more thorough code reviews than ever before, not because
+  the AI-generated code was buggy (it usually worked), but because I needed to
+  ensure it fit into the larger architectural vision.
+</p>
+
+<h2>The Anti-Pattern: "Vibe Coding"</h2>
+
+<p>
+  The biggest risk I see with AI-assisted development is what I call "vibe
+  coding" - letting the AI make architectural decisions based on what "feels
+  right" for individual features, without considering the application as a
+  whole.
+</p>
+
+<p>
+  This approach might work for small scripts or prototypes, but it leads to
+  inconsistent patterns, performance issues, and maintenance nightmares in
+  production applications. The temptation is strong because AI-generated code
+  often works immediately, but working code isn't the same as good code.
+</p>
+
+<h2>Best Practices for AI-Assisted Development</h2>
+
+<p>
+  Based on this experience, here's what I recommend for working with AI coding
+  tools:
+</p>
+
+<h3>Before Starting:</h3>
+<ul>
+  <li>
+    <strong>Define your architecture</strong> - Decide on patterns before
+    generating code
+  </li>
+  <li><strong>Set coding standards</strong> - Be explicit about conventions</li>
+  <li>
+    <strong>Plan your component hierarchy</strong> - Know what should be server
+    vs client
+  </li>
+</ul>
+
+<h3>During Development:</h3>
+<ul>
+  <li>
+    <strong>Review every AI suggestion</strong> - Don't blindly accept generated
+    code
+  </li>
+  <li>
+    <strong>Test architectural decisions</strong> - Verify performance and SEO
+    implications
+  </li>
+  <li>
+    <strong>Maintain consistency</strong> - Ensure new code follows established
+    patterns
+  </li>
+</ul>
+
+<h3>After Implementation:</h3>
+<ul>
+  <li>
+    <strong>Performance audit</strong> - Check bundle sizes and rendering
+    performance
+  </li>
+  <li>
+    <strong>SEO validation</strong> - Test that server-rendered content is
+    working
+  </li>
+  <li>
+    <strong>Accessibility review</strong> - AI rarely considers accessibility
+    properly
+  </li>
+</ul>
+
+<h2>The Future of AI-Assisted Development</h2>
+
+<p>
+  Despite these challenges, I'm optimistic about AI's role in software
+  development. The productivity gains are real, especially for the tedious parts
+  of coding that we all have to do but don't particularly enjoy.
+</p>
+
+<p>
+  However, the human developer's role is evolving rather than diminishing. We're
+  becoming more like architects and code reviewers, focusing on high-level
+  decisions while AI handles the implementation details. This requires us to
+  level up our understanding of system design, performance implications, and
+  architectural patterns.
+</p>
+
+<h2>Conclusion</h2>
+
+<p>
+  Building Watch-List.me with AI assistance was both faster and more challenging
+  than traditional development. The speed gains were substantial, but they came
+  with the overhead of constant architectural oversight.
+</p>
+
+<p>
+  The key insight is that AI tools are powerful accelerators, not replacements
+  for engineering judgment. They excel at generating code that works, but
+  ensuring that code is well-architected, performant, and maintainable remains
+  firmly in the human domain.
+</p>
+
+<p>
+  As we continue to integrate AI into our development workflows, the developers
+  who thrive will be those who learn to leverage AI's strengths while
+  maintaining rigorous standards for code quality and architectural consistency.
+  The future belongs to human-AI collaboration, but only when the human remains
+  firmly in the driver's seat.
+</p>
