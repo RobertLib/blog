@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      RobLib's Blog - Programming, Web Development & Technology Insights
+    </title>
+    <meta
+      name="description"
+      content="Expert insights on web development, JavaScript, Node.js, and programming best practices. Pragmatic solutions and critical perspectives on web technologies."
+    />
+    <meta
+      name="keywords"
+      content="web development, programming, javascript, nodejs, frontend, backend, software engineering, coding, web technologies, blog"
+    />
+    <meta name="author" content="Robert Libsansky" />
+    <meta
+      property="og:title"
+      content="RobLib's Blog - Programming & Web Development"
+    />
+    <meta
+      property="og:description"
+      content="Expert insights on web development, JavaScript, Node.js, and programming best practices. Read about pragmatic solutions and critical perspectives on modern web technologies."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{canonical-url}}" />
+    <meta property="og:site_name" content="RobLib's Blog" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="{{base-url}}/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="RobLib's Blog - Programming & Web Development"
+    />
+    <meta name="twitter:image" content="{{base-url}}/og-image.svg" />
+    <meta
+      name="twitter:description"
+      content="Expert insights on web development, JavaScript, Node.js, and programming best practices."
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <meta
+      name="robots"
+      content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+    />
+    <link rel="canonical" href="{{canonical-url}}" />
+    <meta http-equiv="Cache-Control" content="public, max-age=3600" />
+    <meta name="generator" content="Blog Generator v1.0.0" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="RSS Feed"
+      href="feed.xml"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": "RobLib's Blog",
+        "description": "Expert insights on web development, JavaScript, Node.js, and programming best practices.",
+        "url": "{{canonical-url}}",
+        "author": {
+          "@type": "Person",
+          "name": "Robert Libsansky",
+          "url": "{{canonical-url}}"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Robert Libsansky"
+        },
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": "{{canonical-url}}"
+        },
+        "inLanguage": "en-US"
+      }
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header" id="header">
+      <div class="header-content">
+        <h1 class="site-title">
+          <a href="{{base-url}}" aria-label="RobLib's Blog homepage">
+            RobLib's Blog
+          </a>
+        </h1>
+        <nav role="navigation" aria-label="Main navigation">
+          <a href="{{base-url}}" aria-current="page">Home</a>
+          <a href="archive.html">Archive</a>
+          <a href="feed.xml">RSS</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <div class="hero">
+        <p class="hero-description">
+          Programming insights, web development tips, and technology
+          perspectives
+        </p>
+      </div>
+
+      {{articles}} {{archive}}
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Robert Libsansky. All rights reserved.</p>
+      <div class="footer-links">
+        <a href="feed.xml">RSS Feed</a>
+        <a href="https://github.com/RobertLib" target="_blank" rel="noopener"
+          >GitHub</a
+        >
+      </div>
+    </footer>
+    <script>
+      // Header scroll effect
+      let lastScroll = 0;
+      const header = document.getElementById("header");
+
+      window.addEventListener("scroll", () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 50) {
+          header.classList.add("scrolled");
+        } else {
+          header.classList.remove("scrolled");
+        }
+
+        lastScroll = currentScroll;
+      });
+    </script>
+  </body>
+</html>

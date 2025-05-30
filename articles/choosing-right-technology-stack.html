@@ -1,0 +1,262 @@
+<!-- title: Choosing Tech Stack: HTML to Next.js -->
+<!-- date: 2025-07-15 -->
+<!-- description: How to choose the right tech stack for each project - when to use HTML, static generators, frameworks, or separated backends with practical guidance and tips. -->
+
+<p>
+  In today's world of web technologies, we face a paradox of choice. We have
+  countless frameworks, libraries, and tools at our disposal, but this can be
+  our biggest problem. I often see projects where developers used Next.js for a
+  simple landing page or plain React for a complex application with
+  authentication. The key to success is spending enough time choosing the right
+  technology at the beginning.
+</p>
+
+<h2>Profile Page: HTML + CSS + JavaScript</h2>
+
+<p>
+  Let's start with the simplest case. Do you need to create a personal portfolio
+  or company presentation? <strong>You don't need any framework.</strong>
+  Plain HTML, CSS, and a bit of JavaScript for interactivity is enough.
+</p>
+
+<p>Advantages of this approach:</p>
+
+<ul>
+  <li><strong>Loading speed</strong> - no additional libraries</li>
+  <li>
+    <strong>SEO optimization</strong> - everything is in HTML from the start
+  </li>
+  <li><strong>Deployment simplicity</strong> - upload anywhere</li>
+  <li><strong>Zero dependencies</strong> - no build process needed</li>
+</ul>
+
+<p>
+  If your website has fewer than 10 pages and primarily presents information, a
+  framework will only bring unnecessary complexity. I often see developers who
+  set up an entire React project with Webpack configuration for a simple landing
+  page. That's like using an excavator to dig a hole for a tree.
+</p>
+
+<h2>Blog: Static Generator Instead of Server</h2>
+
+<p>
+  For a blog like this one, you have two reasonable options: server-side
+  rendering or static generator.
+  <strong>Static generator is almost always the better choice.</strong>
+</p>
+
+<p>Why static generator wins:</p>
+
+<ul>
+  <li>
+    <strong>Performance</strong> - HTML files are served directly from CDN
+  </li>
+  <li><strong>Security</strong> - no database, no security vulnerabilities</li>
+  <li><strong>Cost</strong> - hosting static files is almost free</li>
+  <li><strong>Scalability</strong> - can handle millions of visitors</li>
+</ul>
+
+<p>
+  This blog is built on a custom static generator in Node.js. I write articles
+  in HTML, the generator compiles them into final pages, and I upload them to
+  GitHub Pages. The entire build process takes seconds, the website loads
+  lightning-fast, and never crashes.
+</p>
+
+<pre><code>// Example of a simple generator
+const fs = require('fs');
+const path = require('path');
+
+function generateBlog() {
+  const articles = loadArticles();
+  const template = loadTemplate();
+
+  articles.forEach(article => {
+    const html = template.replace('{{content}}', article.content);
+    fs.writeFileSync(`dist/${article.slug}.html`, html);
+  });
+}
+</code></pre>
+
+<h2>Admin/CMS: API + React Frontend</h2>
+
+<p>
+  When you need an admin interface or content management system, we're getting
+  into an area where a framework makes sense.
+  <strong>Separated backend (API) + React frontend</strong> is a proven choice.
+</p>
+
+<p>Why this approach works:</p>
+
+<ul>
+  <li>
+    <strong>Clear separation</strong> - backend handles data, frontend handles
+    UI
+  </li>
+  <li><strong>Flexibility</strong> - you can replace either layer</li>
+  <li><strong>Testability</strong> - each layer is tested separately</li>
+  <li><strong>Scalability</strong> - you can scale parts independently</li>
+</ul>
+
+<p>
+  For the backend, you can use Node.js with Express, Python with Django/FastAPI,
+  or any other stack. The frontend as a Single Page Application in React handles
+  the user interface. This solution is ideal for internal tools, dashboards, and
+  content management.
+</p>
+
+<h2>Hybrid Applications: Next.js as the Golden Middle Path</h2>
+
+<p>
+  Choose Next.js when you
+  <strong
+    >need to combine the advantages of server-side rendering with an interactive
+    frontend</strong
+  >
+  and want to have everything in one project.
+</p>
+
+<p>When Next.js is the right choice:</p>
+
+<ul>
+  <li><strong>E-commerce</strong> - you need both SEO and interactivity</li>
+  <li><strong>Marketing websites</strong> - with forms and dynamic content</li>
+  <li>
+    <strong>Applications with authentication</strong> - where you need to
+    protect API keys
+  </li>
+  <li><strong>Smaller teams</strong> - one project, one technology</li>
+</ul>
+
+<p>
+  Next.js allows you to server-side render pages for SEO while having fully
+  interactive parts of the application. You can also securely hide API keys in
+  server-side code. It's a compromise between simplicity and functionality.
+</p>
+
+<blockquote>
+  <p>
+    "Next.js is like a Swiss Army knife - it can do a lot, but it's not the best
+    at any specific area. Sometimes that's exactly what you need."
+  </p>
+</blockquote>
+
+<h2>Large Applications: Separated Backend + React SPA</h2>
+
+<p>
+  For large applications with complex logic, hybrid solutions become
+  problematic.
+  <strong
+    >For enterprise applications, choose clearly separated backend and React SPA
+    built into static files.</strong
+  >
+</p>
+
+<p>Why separation wins for large projects:</p>
+
+<ul>
+  <li>
+    <strong>Clear responsibility</strong> - backend and frontend teams can work
+    independently
+  </li>
+  <li><strong>Scalability</strong> - each layer scales according to needs</li>
+  <li><strong>Technology independence</strong> - you can replace any layer</li>
+  <li><strong>Easy testing</strong> - each layer has its own tests</li>
+</ul>
+
+<p>
+  React SPA built into static files can be hosted on CDN, which is fast and
+  cheap. If the application is behind authentication, you don't need to worry
+  about SEO, so server-side rendering is unnecessary. The backend handles API,
+  authentication, and business logic.
+</p>
+
+<h2>Decision Tree: What to Choose?</h2>
+
+<p>Here's a practical guide on how to decide:</p>
+
+<ol>
+  <li>
+    <strong>Do you have less than 10 pages without complex logic?</strong><br />
+    → HTML + CSS + JavaScript
+  </li>
+  <li>
+    <strong>Do you need a blog or documentation?</strong><br />
+    → Static generator (Gatsby, Next.js static export, custom)
+  </li>
+  <li>
+    <strong>Are you building an admin interface or CMS?</strong><br />
+    → API backend + React SPA
+  </li>
+  <li>
+    <strong>Do you need SEO + interactivity + protect API keys?</strong><br />
+    → Next.js (hybrid solution)
+  </li>
+  <li>
+    <strong>Are you building a large application with complex logic?</strong
+    ><br />
+    → Separated backend + React SPA
+  </li>
+</ol>
+
+<h2>Common Mistakes When Choosing Technology</h2>
+
+<p>From experience, I see several recurring mistakes:</p>
+
+<h3>1. Overkill for Simple Projects</h3>
+<p>
+  Using React for a static presentation is like hiring a symphony orchestra to
+  play "Happy Birthday". It works, but it's unnecessarily complex.
+</p>
+
+<h3>2. Underestimating Complexity</h3>
+<p>
+  Conversely, trying to build a complex e-commerce site with only vanilla
+  JavaScript is a recipe for endless maintainability problems.
+</p>
+
+<h3>3. Chasing Trends</h3>
+<p>
+  Just because something is new and trendy doesn't mean it's suitable for your
+  project. Choose technologies based on requirements, not Hacker News.
+</p>
+
+<h3>4. Lack of Planning Time</h3>
+<p>
+  The most common mistake is rushing the technology choice. Spend enough time on
+  this at the beginning - changing it later will be exponentially more
+  expensive.
+</p>
+
+<h2>Conclusion: Less Often Means More</h2>
+
+<p>
+  Today, we often think that more complex technology automatically means a
+  better solution. The opposite is true.
+  <strong
+    >The best technology is the simplest one that meets your
+    requirements.</strong
+  >
+</p>
+
+<p>Before every project, ask yourself these questions:</p>
+
+<ul>
+  <li>What exactly do we need to build?</li>
+  <li>Who will use the application and how?</li>
+  <li>What are our performance and scalability requirements?</li>
+  <li>How big is the team and what experience do they have?</li>
+  <li>What is the time and financial budget?</li>
+</ul>
+
+<p>
+  The answers to these questions will give you clear guidance for choosing
+  technology. Remember: a successful project isn't one that uses the latest
+  technologies, but one that solves real user problems effectively and
+  sustainably.
+</p>
+
+<p>
+  Technologies are just tools. Their value is measured by how well they help you
+  achieve your goals, not by how modern or popular they are.
+</p>
