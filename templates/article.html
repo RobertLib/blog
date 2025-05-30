@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{title}} - RobLib's Blog</title>
+    <meta name="description" content="{{description}}" />
+    <meta name="author" content="Robert Libšanský" />
+    <meta name="keywords" content="web development, programming, javascript" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="{{canonical-url}}" />
+    <meta property="og:title" content="{{title}}" />
+    <meta property="og:description" content="{{description}}" />
+    <meta property="og:type" content="article" />
+    <meta property="article:author" content="Robert Libšanský" />
+    <meta property="article:published_time" content="{{date}}" />
+    <meta http-equiv="Cache-Control" content="public, max-age=3600" />
+    <meta name="generator" content="Blog Generator v1.0.0" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="{{title}}" />
+    <meta name="twitter:description" content="{{description}}" />
+    <meta property="article:section" content="Programming" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="RSS Feed"
+      href="feed.xml"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "{{title}}",
+        "description": "{{description}}",
+        "author": {
+          "@type": "Person",
+          "name": "Robert Libšanský"
+        },
+        "datePublished": "{{date}}"
+      }
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <header class="header">
+      <h1><a href="index.html">RobLib's Blog</a></h1>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="archive.html">Archive</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article>
+        <header>
+          <h1>{{title}}</h1>
+          <div class="article-meta">
+            <time datetime="{{date}}">{{formatted-date}}</time>
+            <span class="reading-time">{{reading-time}}</span>
+          </div>
+        </header>
+        {{content}}
+      </article>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Robert Libšanský. All rights reserved.</p>
+    </footer>
+  </body>
+</html>

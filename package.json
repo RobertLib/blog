@@ -1,0 +1,16 @@
+{
+  "name": "blog",
+  "version": "1.0.0",
+  "description": "Static blog generator",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js",
+    "start": "npx serve dist",
+    "dev": "npm run build && npm start",
+    "watch": "npx nodemon --watch articles --watch templates --watch static --exec npm run build",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean"
+  },
+  "author": "Robert Libšanský",
+  "license": "MIT"
+}
