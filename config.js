@@ -5,7 +5,7 @@ module.exports = {
     author: "Robert Libšanský",
     baseUrl:
       process.env.NODE_ENV === "production"
-        ? process.env.BASE_URL || "https://your-domain.com"
+        ? process.env.BASE_URL || "https://RobertLib.github.io/blog"
         : "http://localhost:3000",
   },
   build: {
