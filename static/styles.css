@@ -151,19 +151,20 @@ time::before {
 }
 
 pre {
-  background: var(--text-primary);
-  color: #e5e7eb;
+  background: #f8fafc;
+  color: #1e293b;
   padding: 1.5rem;
   border-radius: 8px;
   overflow-x: auto;
   font-size: 0.875rem;
   line-height: 1.5;
   box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
 }
 
 code {
-  background: var(--bg-secondary);
-  color: var(--primary-color);
+  background: #f1f5f9;
+  color: #0f172a;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
@@ -375,6 +376,7 @@ button:focus,
   pre {
     background: #1f2937;
     color: #e5e7eb;
+    border-color: #374151;
   }
 
   code {
