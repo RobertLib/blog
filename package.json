@@ -4,8 +4,9 @@
   "description": "Static blog generator",
   "main": "build.js",
   "scripts": {
+    "test": "vitest run",
     "build": "node build.js",
-    "build:prod": "NODE_ENV=production BASE_URL=https://RobertLib.github.io/blog node build.js",
+    "build:prod": "NODE_ENV=production BASE_URL=https://robertlib.github.io/blog node build.js",
     "start": "npx serve dist",
     "dev": "npm run build && npm start",
     "watch": "npx nodemon --watch articles --watch templates --watch static --exec npm run build",
@@ -13,5 +14,8 @@
     "prebuild": "npm run clean"
   },
   "author": "Robert Libšanský",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^3.2.3"
+  }
 }
