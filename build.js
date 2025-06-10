@@ -2,6 +2,43 @@ const fs = require("fs");
 const path = require("path");
 const config = require("./config");
 
+function getNestedValue(obj, path) {
+  return path.split(".").reduce((current, key) => {
+    return current && current[key] !== undefined ? current[key] : undefined;
+  }, obj);
+}
+
+function validateConfig(config) {
+  const required = [
+    { path: "site.title", type: "string" },
+    { path: "site.baseUrl", type: "string" },
+    { path: "build.articlesDir", type: "string" },
+    { path: "build.outputDir", type: "string" },
+    { path: "build.templatesDir", type: "string" },
+    { path: "build.staticDir", type: "string" },
+    { path: "build.recentArticlesCount", type: "number" },
+  ];
+
+  const errors = [];
+
+  for (const { path, type } of required) {
+    const value = getNestedValue(config, path);
+    if (!value) {
+      errors.push(`Missing required config: ${path}`);
+    } else if (typeof value !== type) {
+      errors.push(
+        `Config ${path} must be of type ${type}, got ${typeof value}`
+      );
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Configuration validation failed:\n${errors.join("\n")}`);
+  }
+
+  console.log("✅ Configuration validated successfully");
+}
+
 const BASE_URL = config.site.baseUrl;
 const ARTICLES_DIR = config.build.articlesDir;
 const OUTPUT_DIR = config.build.outputDir;
@@ -9,23 +46,33 @@ const TEMPLATES_DIR = config.build.templatesDir;
 const STATIC_DIR = config.build.staticDir;
 const RECENT_ARTICLES_COUNT = config.build.recentArticlesCount;
 
+const templateCache = new Map();
+
+function clearTemplateCache() {
+  templateCache.clear();
+}
+
 function loadTemplate(templateName) {
+  if (templateCache.has(templateName)) {
+    return templateCache.get(templateName);
+  }
+
   const templatePath = path.join(TEMPLATES_DIR, `${templateName}.html`);
   if (!fs.existsSync(templatePath)) {
-    console.error(
-      `❌ Template ${templateName}.html not found in ${TEMPLATES_DIR}`
+    const availableTemplates = fs.existsSync(TEMPLATES_DIR)
+      ? fs.readdirSync(TEMPLATES_DIR).filter((f) => f.endsWith(".html"))
+      : [];
+    throw new Error(
+      `Template ${templateName}.html not found. Available: ${availableTemplates.join(
+        ", "
+      )}`
     );
-    if (fs.existsSync(TEMPLATES_DIR)) {
-      console.log(
-        "Available templates:",
-        fs.readdirSync(TEMPLATES_DIR).filter((f) => f.endsWith(".html"))
-      );
-    }
-    throw new Error(`Template ${templateName}.html not found`);
   }
 
   try {
-    return fs.readFileSync(templatePath, "utf8");
+    const content = fs.readFileSync(templatePath, "utf8");
+    templateCache.set(templateName, content);
+    return content;
   } catch (error) {
     throw new Error(`Error reading template ${templateName}: ${error.message}`);
   }
@@ -139,11 +186,20 @@ function getAllArticles() {
     return [];
   }
 
-  return fs
+  const articles = [];
+  const files = fs
     .readdirSync(ARTICLES_DIR)
-    .filter((file) => file.endsWith(".html"))
-    .map(getArticleData)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+    .filter((file) => file.endsWith(".html"));
+
+  for (const file of files) {
+    try {
+      articles.push(getArticleData(file));
+    } catch (error) {
+      console.warn(`Skipping article ${file}: ${error.message}`);
+    }
+  }
+
+  return articles.sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 function escapeHtml(text) {
@@ -377,15 +433,44 @@ function buildArchive() {
 }
 
 function generateSitemap(articles) {
-  const urls = [
-    `${BASE_URL}/`,
-    `${BASE_URL}/archive.html`,
-    ...articles.map((article) => `${BASE_URL}/${article.filename}`),
+  const now = new Date().toISOString();
+
+  const staticPages = [
+    {
+      url: `${BASE_URL}/`,
+      lastmod: now,
+      changefreq: "weekly",
+      priority: "1.0",
+    },
+    {
+      url: `${BASE_URL}/archive.html`,
+      lastmod: now,
+      changefreq: "weekly",
+      priority: "0.8",
+    },
   ];
+
+  const articlePages = articles.map((article) => ({
+    url: `${BASE_URL}/${article.filename}`,
+    lastmod: article.date ? formatDateISO(article.date) : now,
+    changefreq: "monthly",
+    priority: "0.6",
+  }));
+
+  const allPages = [...staticPages, ...articlePages];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((url) => `  <url><loc>${escapeHtml(url)}</loc></url>`).join("\n")}
+${allPages
+  .map(
+    (page) => `  <url>
+    <loc>${escapeHtml(page.url)}</loc>
+    <lastmod>${page.lastmod}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`
+  )
+  .join("\n")}
 </urlset>`;
 
   fs.writeFileSync(path.join(OUTPUT_DIR, "sitemap.xml"), sitemap);
@@ -402,10 +487,10 @@ function generateRSS(articles) {
       (article) => `
         <item>
           <title><![CDATA[${article.title}]]></title>
-          <link>${BASE_URL}/${article.filename}</link>
+          <link>${escapeHtml(BASE_URL)}/${escapeHtml(article.filename)}</link>
           <description><![CDATA[${article.description || ""}]]></description>
           <pubDate>${new Date(article.date).toUTCString()}</pubDate>
-          <guid>${BASE_URL}/${article.filename}</guid>
+          <guid>${escapeHtml(BASE_URL)}/${escapeHtml(article.filename)}</guid>
         </item>
       `
     )
@@ -427,6 +512,11 @@ function generateRSS(articles) {
 function build() {
   try {
     console.log("🚀 Starting blog build...");
+
+    clearTemplateCache();
+    console.log("🧹 Template cache cleared");
+
+    validateConfig(config);
 
     if (fs.existsSync(OUTPUT_DIR)) {
       fs.rmSync(OUTPUT_DIR, { recursive: true });
@@ -478,4 +568,34 @@ function build() {
   }
 }
 
-build();
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    loadTemplate,
+    extractMetadata,
+    formatDate,
+    formatDateISO,
+    validateArticle,
+    getArticleData,
+    getAllArticles,
+    escapeHtml,
+    estimateReadingTime,
+    replaceTemplate,
+    sanitizeHtml,
+    generateIndexHtml,
+    generateArchiveHtml,
+    buildArticle,
+    generateSitemap,
+    generateRSS,
+    build,
+    ensureDir,
+    copyDirectory,
+    copyStatic,
+    buildIndex,
+    buildArchive,
+    clearTemplateCache,
+  };
+}
+
+if (require.main === module) {
+  build();
+}

@@ -35,7 +35,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
-          BASE_URL: https://RobertLib.github.io/blog
+          BASE_URL: https://robertlib.github.io/blog
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
