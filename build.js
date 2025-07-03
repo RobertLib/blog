@@ -473,7 +473,7 @@ ${allPages
   .join("\n")}
 </urlset>`;
 
-  fs.writeFileSync(path.join(OUTPUT_DIR, "sitemap.xml"), sitemap);
+  fs.writeFileSync(path.join(OUTPUT_DIR, "sitemap-index.xml"), sitemap);
 }
 
 function generateRSS(articles) {
@@ -554,7 +554,7 @@ function build() {
     console.log("Generated archive.html");
 
     generateSitemap(successfulArticles);
-    console.log("Generated sitemap.xml");
+    console.log("Generated sitemap-index.xml");
 
     generateRSS(successfulArticles);
     console.log("Generated feed.xml");

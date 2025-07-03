@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://robertlib.github.io/blog/sitemap.xml
+Sitemap: https://robertlib.github.io/blog/sitemap-index.xml
