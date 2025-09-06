@@ -12,7 +12,8 @@
     "dev": "npm run build && npm start",
     "watch": "npx nodemon --watch articles --watch templates --watch static --exec npm run build",
     "clean": "rm -rf dist",
-    "prebuild": "npm run clean"
+    "prebuild": "npm run clean",
+    "indexnow": "node index-now.js"
   },
   "author": "Robert Libšanský",
   "license": "MIT",

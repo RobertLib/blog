@@ -662,6 +662,66 @@ function escapeXml(text) {
     .replace(/'/g, "&#39;");
 }
 
+async function submitToIndexNow(urls) {
+  if (!config.indexNow.enabled) {
+    console.log("IndexNow is disabled (not in production mode)");
+    return;
+  }
+
+  if (!urls || urls.length === 0) {
+    console.log("No URLs to submit to IndexNow");
+    return;
+  }
+
+  const payload = {
+    host: new URL(BASE_URL).hostname,
+    key: config.indexNow.apiKey,
+    keyLocation: `${BASE_URL}/${config.indexNow.apiKey}.txt`,
+    urlList: urls,
+  };
+
+  console.log(`\n🔗 Submitting ${urls.length} URLs to IndexNow...`);
+
+  for (const endpoint of config.indexNow.endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const status = response.status;
+        if (status === 200) {
+          console.log(`✅ IndexNow: Successfully submitted to ${endpoint}`);
+        } else if (status === 202) {
+          console.log(
+            `✅ IndexNow: URLs accepted for processing by ${endpoint}`
+          );
+        } else {
+          console.log(
+            `✅ IndexNow: Submitted to ${endpoint} (status: ${status})`
+          );
+        }
+        return; // Success with first endpoint, no need to try others
+      } else {
+        console.warn(
+          `⚠️ IndexNow: Failed to submit to ${endpoint} (status: ${response.status})`
+        );
+      }
+    } catch (error) {
+      console.warn(
+        `⚠️ IndexNow: Error submitting to ${endpoint}:`,
+        error.message
+      );
+    }
+  }
+
+  console.log("❌ IndexNow: Failed to submit to any endpoint");
+}
+
 function extractKeywords(content, title) {
   const commonWords = new Set([
     "the",
@@ -807,7 +867,7 @@ function extractKeywords(content, title) {
     .join(", ");
 }
 
-function build() {
+async function build() {
   try {
     console.log("🚀 Starting blog build...");
 
@@ -861,6 +921,18 @@ function build() {
       `\nBuild complete: ${successfulArticles.length} articles generated`
     );
 
+    // Submit to IndexNow
+    if (config.indexNow.enabled) {
+      const urlsToSubmit = [
+        BASE_URL, // Homepage
+        `${BASE_URL}/archive.html`, // Archive page
+        ...successfulArticles.map(
+          (article) => `${BASE_URL}/${article.filename}`
+        ), // All articles
+      ];
+      await submitToIndexNow(urlsToSubmit);
+    }
+
     // Run SEO validation
     console.log("\n🔍 Running SEO validation...");
     const seoSuccess = validateSEO(OUTPUT_DIR);
@@ -897,6 +969,7 @@ if (typeof module !== "undefined" && module.exports) {
     buildArticle,
     generateSitemap,
     generateRSSFeed,
+    submitToIndexNow,
     build,
     ensureDir,
     copyDirectory,
@@ -909,5 +982,8 @@ if (typeof module !== "undefined" && module.exports) {
 }
 
 if (require.main === module) {
-  build();
+  build().catch((error) => {
+    console.error("Build failed:", error);
+    process.exit(1);
+  });
 }

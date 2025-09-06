@@ -10,6 +10,7 @@ A simple static blog generator that creates a blog from HTML articles with metad
 - 🎨 Responsive design with modern CSS
 - 🔍 SEO optimized pages
 - 📊 Recent articles management
+- 🚀 IndexNow integration for faster search engine indexing
 - 🧪 Complete test coverage
 
 ## 📁 Project Structure
@@ -81,6 +82,9 @@ npm run build:prod   # Production build for GitHub Pages
 # Testing
 npm test            # Run all tests
 
+# IndexNow
+npm run indexnow <url>  # Submit specific URL to IndexNow
+
 # Other
 npm start           # Serve dist folder
 npm run clean       # Clean dist folder
@@ -115,8 +119,54 @@ module.exports = {
     staticDir: "static",
     recentArticlesCount: 10,
   },
+  indexNow: {
+    enabled: process.env.NODE_ENV === "production",
+    apiKey: "your-api-key-here",
+    endpoints: [
+      "https://api.indexnow.org/indexnow",
+      "https://www.bing.com/indexnow",
+    ],
+  },
 };
 ```
+
+## 🚀 IndexNow Integration
+
+This blog includes [IndexNow](https://www.indexnow.org/) integration for faster search engine indexing.
+
+### What is IndexNow?
+
+IndexNow is an open protocol that allows websites to instantly inform search engines about content changes. Supported by:
+
+- Microsoft Bing
+- Seznam.cz
+- Yandex
+- Other search engines
+
+### How it works
+
+**Automatic submission during build:**
+
+- Production builds (`npm run build:prod`) automatically submit all URLs
+- Includes homepage, archive page, and all articles
+- Only active in production environment
+
+**Manual submission:**
+
+```bash
+npm run indexnow https://roblibs-blog.com/new-article.html
+npm run indexnow https://roblibs-blog.com/article1.html https://roblibs-blog.com/article2.html
+```
+
+### Benefits
+
+- **Faster indexing**: Search engines learn about new/changed pages immediately
+- **Reduced load**: Search engines don't need to crawl as frequently
+- **Better SEO**: New content appears in search results faster
+
+### API Key
+
+The API key is automatically generated and stored as a static file that must be accessible on your domain for verification.
 
 ## 🧪 Testing
 
@@ -129,6 +179,7 @@ The project includes complete test coverage:
 - `integration.test.js` - Integration tests
 - `edge-cases.test.js` - Edge cases and error handling
 - `utils.test.js` - Utility functions
+- `indexnow.test.js` - IndexNow integration testing
 
 ## 📄 License
 

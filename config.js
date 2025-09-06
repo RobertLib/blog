@@ -15,4 +15,12 @@ module.exports = {
     staticDir: "static",
     recentArticlesCount: 10,
   },
+  indexNow: {
+    enabled: process.env.NODE_ENV === "production",
+    apiKey: "f57799dcfb29699bee2683154c12d7fb6f1842a04cf57bcf75fe3153eaeb1fb7",
+    endpoints: [
+      "https://api.indexnow.org/indexnow",
+      "https://www.bing.com/indexnow",
+    ],
+  },
 };

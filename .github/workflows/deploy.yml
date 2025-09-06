@@ -32,10 +32,7 @@ jobs:
         run: npm install
 
       - name: Build site
-        run: npm run build
-        env:
-          NODE_ENV: production
-          BASE_URL: https://roblibs-blog.com
+        run: npm run build:prod
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
