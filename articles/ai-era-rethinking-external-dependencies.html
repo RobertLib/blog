@@ -1,0 +1,372 @@
+<!-- title: Rethinking Dependencies in the AI Era -->
+<!-- date: 2026-01-23 -->
+<!-- description: How AI shifts the build vs. buy decision for npm packages - when to use external libraries and when to write custom solutions for long-term stability. -->
+
+<p>
+  There's a question that every developer and system architect should be asking
+  themselves in 2026: In the age of AI code generation, do we still need all
+  those npm packages we've grown dependent on?
+</p>
+
+<p>
+  The answer isn't a simple yes or no. But I believe AI is fundamentally
+  shifting the balance in how we should think about external dependencies,
+  particularly for enterprise applications that need to remain stable and
+  maintainable for years.
+</p>
+
+<h2>The Dependency Dilemma</h2>
+
+<p>
+  Let's be clear: some external libraries are absolutely essential and will
+  remain so. Frameworks like React, Vue, or Angular represent massive ecosystems
+  with thousands of person-hours invested in testing, optimization, and edge
+  cases. You don't want to rebuild React from scratch, and you shouldn't.
+</p>
+
+<p>
+  But then there's the other category: smaller libraries for text formatting,
+  data serialization, validation, date manipulation, form handling, and hundreds
+  of other "utility" functions. This is where things get interesting.
+</p>
+
+<p>
+  Every time we add an external dependency to our project, we're making a bet
+  on:
+</p>
+
+<ul>
+  <li>
+    <strong>Continued maintenance</strong> - Will the maintainers still care in
+    two years?
+  </li>
+  <li>
+    <strong>Stability</strong> - Will they decide to rewrite everything with
+    breaking changes?
+  </li>
+  <li>
+    <strong>Compatibility</strong> - Will it work with the next version of Node,
+    React, or TypeScript?
+  </li>
+  <li><strong>Security</strong> - Will vulnerabilities be patched promptly?</li>
+  <li>
+    <strong>Bundle size</strong> - Are we importing megabytes for a simple
+    function?
+  </li>
+</ul>
+
+<p>
+  In enterprise development, especially in conservative corporate environments,
+  we need <strong>stability above all else</strong>. We don't want to discover
+  six months into development that a critical dependency is abandoned, or that
+  version 2.0 requires a complete rewrite of our codebase.
+</p>
+
+<h2>The Traditional Trade-off</h2>
+
+<p>
+  Historically, the calculation was simple: writing custom solutions was
+  expensive. Why spend developer time and money building your own validation
+  library when you could install one with a single command?
+</p>
+
+<p>
+  <code>npm install some-validator</code> - Done. Problem solved. Ship the
+  feature.
+</p>
+
+<p>
+  This made perfect sense when developer time was the constraining resource.
+  Building even moderately complex functionality from scratch required hours of
+  coding, testing, and debugging. The risk of taking on an external dependency
+  was worth it compared to the cost of building it yourself.
+</p>
+
+<h2>AI Changes the Equation</h2>
+
+<p>
+  But here's what's different now:
+  <strong>AI has drastically reduced the cost of writing custom code.</strong>
+</p>
+
+<p>
+  Today, you can describe what you need to an AI coding assistant, and within
+  minutes have a working implementation that does exactly what you want. Need a
+  date formatter with specific requirements for your business logic? AI can
+  generate it. Need validation rules for your specific domain? AI can write it.
+  Need a custom serialization format? Done.
+</p>
+
+<p>
+  The time and effort required to build small to medium-sized functionality has
+  collapsed. What used to take hours or days now takes minutes.
+</p>
+
+<blockquote>
+  <p>
+    "When the cost of building goes down, the value proposition of buying
+    changes fundamentally."
+  </p>
+</blockquote>
+
+<h2>The New Decision Framework</h2>
+
+<p>
+  This shift means we need a new framework for deciding when to use external
+  dependencies versus writing our own solutions. Here's how I think about it
+  now:
+</p>
+
+<h3>Use External Libraries When:</h3>
+
+<ul>
+  <li>
+    <strong>Complexity is extremely high</strong> - Full frameworks, database
+    drivers, cryptography libraries
+  </li>
+  <li>
+    <strong>Standards compliance matters</strong> - OAuth implementations, HTTP
+    clients, protocol handlers
+  </li>
+  <li>
+    <strong>The library is battle-tested</strong> - Millions of downloads, years
+    of production use
+  </li>
+  <li>
+    <strong>Active, professional maintenance</strong> - Corporate backing or
+    established foundation support
+  </li>
+  <li>
+    <strong>Ecosystem integration is critical</strong> - Core dependencies that
+    other tools rely on
+  </li>
+</ul>
+
+<h3>Write Custom Solutions When:</h3>
+
+<ul>
+  <li>
+    <strong>Functionality is small to medium</strong> - Can be implemented in a
+    few hundred lines
+  </li>
+  <li>
+    <strong>Requirements are specific</strong> - You need exactly this behavior,
+    not 90% of it
+  </li>
+  <li>
+    <strong>Long-term stability matters</strong> - Enterprise apps that must run
+    unchanged for years
+  </li>
+  <li>
+    <strong>The library seems abandoned</strong> - Last update was years ago,
+    issues pile up
+  </li>
+  <li>
+    <strong>You're importing huge packages for tiny features</strong> - Using 1%
+    of a library's functionality
+  </li>
+  <li>
+    <strong>The dependency tree is concerning</strong> - One package pulls in 50
+    others
+  </li>
+</ul>
+
+<h2>Real-World Example</h2>
+
+<p>
+  Let me give you a concrete example from a recent project. We needed email
+  validation for a registration form. The traditional approach would be to
+  install a validation library:
+</p>
+
+<pre><code>npm install validator
+import { isEmail } from 'validator'
+</code></pre>
+
+<p>
+  But this package has dozens of functions we don't need, adds to our bundle
+  size, and introduces a dependency we have to maintain and update. Is someone
+  going to maintain this package in 5 years? Will it work with Node 25?
+</p>
+
+<p>
+  Instead, I asked an AI assistant to write a custom email validator with our
+  specific requirements. Two minutes later, I had a well-tested, documented
+  function that does exactly what we need, nothing more, nothing less. It's
+  <strong>ours</strong>. We control it. It won't break in a major version
+  update. It won't be abandoned.
+</p>
+
+<h2>The Ownership Advantage</h2>
+
+<p>
+  There's another benefit to AI-generated custom code that's often overlooked:
+  <strong>complete ownership and understanding</strong>.
+</p>
+
+<p>
+  When you use an external package, you're trusting code you haven't read and
+  probably don't fully understand. When something breaks, you're dependent on
+  others to fix it. When you need a slight modification, you either fork it
+  (creating maintenance burden) or work around it (creating technical debt).
+</p>
+
+<p>With AI-generated custom code, you get:</p>
+
+<ul>
+  <li>
+    <strong>Full visibility</strong> - You can read and understand every line
+  </li>
+  <li>
+    <strong>Easy modification</strong> - Need to change behavior? Just edit it
+  </li>
+  <li>
+    <strong>No version conflicts</strong> - It's not coupled to external update
+    cycles
+  </li>
+  <li>
+    <strong>Guaranteed stability</strong> - It only changes when you decide to
+    change it
+  </li>
+  <li>
+    <strong>Learning opportunity</strong> - Your team understands how it works
+  </li>
+</ul>
+
+<h2>The Stability Imperative</h2>
+
+<p>
+  In conservative enterprise development, stability is paramount. When you're
+  building applications that need to run reliably for 5, 10, or 15 years, every
+  external dependency is a potential time bomb.
+</p>
+
+<p>
+  I've seen projects grind to a halt because a critical dependency was
+  abandoned. I've watched teams spend weeks upgrading packages because of
+  breaking changes they never asked for. I've debugged subtle bugs introduced by
+  "minor" version updates.
+</p>
+
+<p>
+  With AI, we now have a realistic alternative: write the code ourselves. Not
+  because we're against open source or collaboration, but because for certain
+  types of functionality, owning the code provides better long-term outcomes.
+</p>
+
+<h2>Practical Guidelines</h2>
+
+<p>If you're adopting this approach, here are some practical guidelines:</p>
+
+<ol>
+  <li>
+    <strong>Be selective</strong> - Don't go crazy and avoid all dependencies.
+    Focus on the small to medium utilities.
+  </li>
+  <li>
+    <strong>Document AI-generated code</strong> - Add comments explaining what
+    it does and why you built it custom.
+  </li>
+  <li>
+    <strong>Write tests</strong> - AI can generate these too. Don't skip testing
+    just because it was easy to write.
+  </li>
+  <li>
+    <strong>Review carefully</strong> - AI makes mistakes. Have experienced
+    developers review before merging.
+  </li>
+  <li>
+    <strong>Keep it simple</strong> - If the AI-generated solution is too
+    complex, that's a signal you might need a library.
+  </li>
+  <li>
+    <strong>Maintain a library of custom utilities</strong> - Build up your own
+    trusted collection of functions.
+  </li>
+</ol>
+
+<h2>A Cultural Shift</h2>
+
+<p>
+  This represents a cultural shift in how we build software. For years, the
+  JavaScript ecosystem encouraged "install everything" - there were famous
+  examples of packages with just a few lines of code getting millions of
+  downloads.
+</p>
+
+<p>
+  But that culture emerged in a pre-AI world where writing code was expensive.
+  We're now in a different world, and our practices need to evolve.
+</p>
+
+<p>
+  I'm not advocating for NIH (Not Invented Here) syndrome, where teams
+  arrogantly refuse to use anything external. I'm advocating for a more nuanced,
+  context-aware decision process that weighs AI-enabled custom development as a
+  legitimate option, especially for enterprise applications prioritizing
+  long-term stability.
+</p>
+
+<h2>Looking Forward</h2>
+
+<p>
+  I believe this trend will accelerate. As AI coding tools become more capable
+  and more developers gain experience using them effectively, we'll see:
+</p>
+
+<ul>
+  <li>
+    <strong>Fewer micro-packages</strong> - Less need for single-purpose utility
+    libraries
+  </li>
+  <li>
+    <strong>More internal libraries</strong> - Companies building collections of
+    custom utilities
+  </li>
+  <li>
+    <strong>Higher bar for dependencies</strong> - External packages will need
+    stronger justification
+  </li>
+  <li>
+    <strong>Consolidation around major frameworks</strong> - The truly essential
+    libraries will remain dominant
+  </li>
+  <li>
+    <strong>Better code ownership</strong> - Teams understanding their codebases
+    more deeply
+  </li>
+</ul>
+
+<p>
+  This doesn't mean external dependencies will disappear. It means the balance
+  is shifting. The scales that once heavily favored "npm install" are becoming
+  more even, and for many use cases, tipping toward "let's build it ourselves."
+</p>
+
+<h2>Conclusion</h2>
+
+<p>
+  Every system architect and senior developer should be rethinking their
+  dependency strategy in light of AI capabilities. The old rules about when to
+  build versus buy are changing.
+</p>
+
+<p>
+  For small to medium functionality, AI has made custom development fast, cheap,
+  and practical. When you combine this with the stability benefits of owning
+  your code, the equation shifts dramatically, especially for long-lived
+  enterprise applications.
+</p>
+
+<p>
+  The question isn't "do we still need external libraries?" It's "which external
+  libraries do we actually need?" And increasingly, the answer is: fewer than we
+  think.
+</p>
+
+<p>
+  <strong
+    >AI doesn't just make us write code faster. It changes what code we should
+    write in the first place.</strong
+  >
+</p>
