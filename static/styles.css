@@ -365,6 +365,7 @@ article p a,
 article li a,
 article div a:not(.tag) {
   color: var(--primary-color);
+  font-weight: 700;
   text-decoration: underline;
   text-decoration-color: transparent;
   transition: text-decoration-color var(--transition);

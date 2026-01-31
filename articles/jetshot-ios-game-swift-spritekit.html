@@ -1,0 +1,259 @@
+<!-- title: Building Jetshot: 2D Arcade Shooter for iOS -->
+<!-- date: 2026-01-31 -->
+<!-- description: Creating a 2D arcade shooter for iOS using Swift and SpriteKit. Exploring native development, procedurally generated levels, and vector-based graphics. -->
+
+<p>
+  I'm excited to introduce my latest project -
+  <a
+    href="https://apps.apple.com/us/app/jetshot/id6754814450"
+    target="_blank"
+    rel="noopener"
+    >Jetshot</a
+  >, a 2D arcade shooter for iOS. This project gave me the opportunity to dive
+  deep into native iOS game development and explore the powerful yet
+  underappreciated SpriteKit framework.
+</p>
+
+<p>
+  Jetshot is a free arcade shooter with gradually increasing difficulty,
+  designed to provide quick entertainment sessions without consuming too much of
+  your time. If you have an iOS device, I'd be thrilled if you'd try it out and
+  leave a rating on the App Store!
+</p>
+
+<h2>Why Swift for Game Development?</h2>
+
+<p>
+  When I decided to develop a game specifically for iOS, Swift was an obvious
+  choice. As a compiled language with modern features and clean syntax, Swift
+  makes game development surprisingly enjoyable. The language provides:
+</p>
+
+<ul>
+  <li>
+    <strong>Modern language features</strong> - Protocol-oriented programming,
+    generics, and powerful type safety
+  </li>
+  <li>
+    <strong>Excellent performance</strong> - Compiled code runs efficiently on
+    iOS devices
+  </li>
+  <li>
+    <strong>Clean syntax</strong> - Less boilerplate compared to Objective-C,
+    making game logic readable
+  </li>
+  <li>
+    <strong>First-class iOS integration</strong> - Seamless access to all iOS
+    frameworks and features
+  </li>
+</ul>
+
+<p>
+  Unfortunately, Swift's tight coupling with the iOS ecosystem means it's rarely
+  used for game development in the broader industry. Most game developers prefer
+  cross-platform solutions like Unity or Unreal Engine to reach multiple
+  platforms simultaneously. However, since Jetshot was specifically targeted at
+  iOS, working with Swift was a fantastic experience without the compromises
+  that cross-platform frameworks often require.
+</p>
+
+<h2>SpriteKit: Apple's Hidden Gem</h2>
+
+<p>
+  For the game framework, I chose SpriteKit - Apple's 2D game development
+  framework. SpriteKit is an excellent piece of technology that deserves more
+  recognition than it gets. It provides:
+</p>
+
+<ul>
+  <li>
+    <strong>Tree-based object structure</strong> - Clean scene graph hierarchy
+    for organizing game objects
+  </li>
+  <li>
+    <strong>Rich action system</strong> - Animations and movements with
+    declarative, easy-to-use APIs
+  </li>
+  <li>
+    <strong>Scene management</strong> - Seamless transitions between different
+    game screens
+  </li>
+  <li>
+    <strong>Built-in physics</strong> - 2D physics engine ready to use out of
+    the box
+  </li>
+  <li>
+    <strong>Declarative approach</strong> - Many common game development tasks
+    handled elegantly
+  </li>
+</ul>
+
+<p>
+  The framework works declaratively and takes care of many common game
+  development concerns, allowing developers to focus on game logic rather than
+  low-level rendering details.
+</p>
+
+<h2>The Unfortunate Fate of Great Technology</h2>
+
+<p>
+  Sadly, SpriteKit is no longer actively developed by Apple. This situation
+  reminds me of Microsoft's XNA framework - another excellent game development
+  technology that was eventually abandoned. XNA found new life through the
+  open-source community as MonoGame, but SpriteKit likely won't have the same
+  fortune due to its limited popularity and reach.
+</p>
+
+<p>
+  It's a real shame because SpriteKit is genuinely superb technology, especially
+  for mobile 2D games. The framework strikes an excellent balance between power
+  and ease of use, making it possible to create polished 2D games efficiently.
+  Its eventual obsolescence feels like a waste of great engineering.
+</p>
+
+<h2>A Sprite-less Game in SpriteKit</h2>
+
+<p>
+  Here's an interesting paradox: despite its name suggesting sprite-based
+  graphics, Jetshot doesn't use a single sprite. Instead, I took a different
+  approach - all graphics are defined programmatically using vector-based
+  rendering, similar to how SVG works on the web.
+</p>
+
+<p>This approach offers several advantages:</p>
+
+<ul>
+  <li>
+    <strong>Code-driven control</strong> - Everything is directly controllable
+    through code
+  </li>
+  <li>
+    <strong>Perfect scalability</strong> - Graphics remain sharp on any screen
+    size or resolution
+  </li>
+  <li>
+    <strong>Easy modifications</strong> - Visual changes don't require asset
+    pipeline updates
+  </li>
+  <li>
+    <strong>Smaller app size</strong> - No image assets to bundle with the
+    application
+  </li>
+</ul>
+
+<p>
+  This programmatic approach means I can define shapes, colors, and animations
+  entirely in code. The result is crisp, resolution-independent graphics that
+  look perfect on any iPhone display, from older models to the latest Pro Max
+  screens.
+</p>
+
+<h2>Procedural Level Generation</h2>
+
+<p>
+  Another key aspect of Jetshot is its procedurally generated levels. Rather
+  than hand-crafting each level or using a visual editor, I define levels
+  through data configurations. As a programmer, this approach feels natural and
+  powerful:
+</p>
+
+<ul>
+  <li>
+    <strong>Data-driven design</strong> - Levels are defined as configuration
+    data
+  </li>
+  <li>
+    <strong>Dynamic assembly</strong> - The game constructs levels at runtime
+    from these configurations
+  </li>
+  <li>
+    <strong>Easy iteration</strong> - Tweaking level design is just a matter of
+    adjusting data
+  </li>
+  <li>
+    <strong>Consistency</strong> - Algorithmic generation ensures consistent
+    difficulty curves
+  </li>
+</ul>
+
+<p>
+  This approach doesn't suit every game genre, but for an arcade shooter like
+  Jetshot, it works perfectly. The data-driven level system allows for quick
+  iteration and ensures that the difficulty progression feels balanced and fair.
+</p>
+
+<h2>The Developer Workflow Benefits</h2>
+
+<p>
+  Working directly in Swift and SpriteKit for iOS development provided several
+  workflow benefits that cross-platform tools can't match:
+</p>
+
+<ul>
+  <li>
+    <strong>Direct access to iOS features</strong> - No wrapper layers or
+    plugins needed
+  </li>
+  <li>
+    <strong>Excellent Xcode integration</strong> - First-class debugging and
+    profiling tools
+  </li>
+  <li>
+    <strong>Immediate testing</strong> - Run directly on device or simulator
+    without export steps
+  </li>
+  <li>
+    <strong>Optimal performance</strong> - Native code runs without
+    cross-platform overhead
+  </li>
+</ul>
+
+<p>
+  The tight integration between Swift, SpriteKit, and Xcode creates a smooth
+  development experience. When you're not fighting with build systems or dealing
+  with platform abstraction layers, you can focus entirely on making your game
+  fun.
+</p>
+
+<h2>Try Jetshot Today</h2>
+
+<p>
+  Jetshot is available for free on the App Store with gradually increasing
+  difficulty. The game is designed to provide quick entertainment without
+  demanding hours of your time - perfect for short breaks or commutes.
+</p>
+
+<p>
+  If you enjoy arcade shooters or are curious about what can be achieved with
+  Swift and SpriteKit, I'd love for you to
+  <a
+    href="https://apps.apple.com/us/app/jetshot/id6754814450"
+    target="_blank"
+    rel="noopener"
+    >download Jetshot</a
+  >
+  and give it a try. Your ratings and feedback on the App Store would mean a lot
+  and help others discover the game!
+</p>
+
+<h2>Reflections on Native iOS Game Development</h2>
+
+<p>
+  Building Jetshot reinforced my appreciation for platform-specific development.
+  While cross-platform tools have their place and are often the pragmatic
+  choice, there's something special about working directly with native
+  technologies. You get closer to the metal, have fewer layers of abstraction,
+  and can leverage platform-specific features without workarounds.
+</p>
+
+<p>
+  Swift and SpriteKit may not be the standard choice for game development, but
+  for iOS-specific projects, they offer an excellent development experience.
+  It's unfortunate that SpriteKit's future is uncertain, but the framework
+  remains a powerful tool for creating polished 2D games today.
+</p>
+
+<p>
+  Thank you for reading, and I hope you enjoy playing Jetshot as much as I
+  enjoyed creating it!
+</p>
