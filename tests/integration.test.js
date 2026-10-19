@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
+import { spawnSync } from "child_process";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import * as build from "../build.js";
 
 describe("Integration Tests - Real Usage", () => {
@@ -59,72 +63,6 @@ describe("Integration Tests - Real Usage", () => {
       }
     });
 
-    it("should generate valid sitemap content", () => {
-      const articles = build.getAllArticles();
-
-      const urls = [
-        "http://localhost:3000/",
-        "http://localhost:3000/archive.html",
-        ...articles.map(
-          (article) => `http://localhost:3000/${article.filename}`
-        ),
-      ];
-
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls
-  .map((url) => `  <url><loc>${build.escapeHtml(url)}</loc></url>`)
-  .join("\n")}
-</urlset>`;
-
-      expect(sitemap).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(sitemap).toContain(
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-      );
-      expect(sitemap).toContain("</urlset>");
-    });
-
-    it("should generate valid RSS content", () => {
-      const articles = build.getAllArticles();
-
-      const validArticles = articles.filter(
-        (article) => article.date && !isNaN(new Date(article.date))
-      );
-
-      const rssItems = validArticles
-        .slice(0, 10)
-        .map(
-          (article) => `
-            <item>
-              <title><![CDATA[${article.title}]]></title>
-              <link>http://localhost:3000/${article.filename}</link>
-              <description><![CDATA[${
-                article.description || ""
-              }]]></description>
-              <pubDate>${new Date(article.date).toUTCString()}</pubDate>
-              <guid>http://localhost:3000/${article.filename}</guid>
-            </item>
-          `
-        )
-        .join("");
-
-      const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>RobLib's Blog</title>
-    <link>http://localhost:3000</link>
-    <description>Blog about programming and web technologies</description>
-    ${rssItems}
-  </channel>
-</rss>`;
-
-      expect(rss).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(rss).toContain('<rss version="2.0">');
-      expect(rss).toContain("<channel>");
-      expect(rss).toContain("</channel>");
-      expect(rss).toContain("</rss>");
-    });
-
     it("should handle template processing workflow", () => {
       const testTemplate = "Hello {{name}}, welcome to {{site}}!";
       const testReplacements = {
@@ -174,6 +112,115 @@ ${urls
 
       const sanitizedContent = build.sanitizeHtml(article.content);
       expect(sanitizedContent).toContain("<h1>Test Content</h1>");
+    });
+  });
+
+  // Runs the real build script in a temporary copy of the project, so the
+  // actual dist/ is never touched
+  describe("Full production build", () => {
+    const PROJECT_FILES = [
+      "articles",
+      "templates",
+      "static",
+      "build.js",
+      "config.js",
+      "seo-validate.js",
+      "html-entities.js",
+    ];
+    const tempDirs = [];
+
+    function copyProject() {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "blog-build-"));
+      tempDirs.push(dir);
+      for (const entry of PROJECT_FILES) {
+        fs.cpSync(entry, path.join(dir, entry), { recursive: true });
+      }
+      return dir;
+    }
+
+    function runBuild(dir) {
+      return spawnSync(process.execPath, ["build.js"], {
+        cwd: dir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          NODE_ENV: "production",
+          BASE_URL: "https://example.com",
+          // Dates must not shift when built west of UTC
+          TZ: "America/New_York",
+        },
+      });
+    }
+
+    afterAll(() => {
+      tempDirs.forEach((dir) => fs.rmSync(dir, { recursive: true, force: true }));
+    });
+
+    it("should generate every page and pass SEO validation", () => {
+      const dir = copyProject();
+      const result = runBuild(dir);
+      const dist = path.join(dir, "dist");
+      const read = (file) => fs.readFileSync(path.join(dist, file), "utf8");
+      const articles = build.getAllArticles();
+
+      expect(result.status, result.stdout + result.stderr).toBe(0);
+      expect(result.stdout).toContain("all SEO checks passed");
+
+      for (const file of [
+        "index.html",
+        "archive.html",
+        "404.html",
+        "sitemap.xml",
+        "feed.xml",
+        "styles.css",
+        "fonts/inter-latin.woff2",
+        ...articles.map((article) => article.filename),
+      ]) {
+        expect(fs.existsSync(path.join(dist, file)), file).toBe(true);
+      }
+
+      for (const article of articles) {
+        const html = read(article.filename);
+        const ld = html.match(
+          /<script type="application\/ld\+json">([\s\S]*?)<\/script>/
+        )[1];
+
+        expect(JSON.parse(ld).headline).toBe(article.title);
+        expect(html).toContain(build.formatDate(article.date));
+        expect(html.slice(0, html.indexOf("</head>"))).not.toMatch(
+          /\{\{[^}]+\}\}/
+        );
+      }
+
+      const sitemap = read("sitemap.xml");
+      const feed = read("feed.xml");
+      for (const article of articles) {
+        expect(sitemap).toContain(
+          `<loc>https://example.com/${article.filename}</loc>`
+        );
+      }
+      expect(feed.match(/<item>/g)).toHaveLength(Math.min(articles.length, 10));
+
+      const pages = fs
+        .readdirSync(dist)
+        .filter((file) => /\.(html|xml)$/.test(file));
+      for (const file of pages) {
+        expect(read(file), file).not.toContain("localhost");
+      }
+    });
+
+    it("should fail when an article is invalid", () => {
+      const dir = copyProject();
+      fs.writeFileSync(
+        path.join(dir, "articles", "broken-article.html"),
+        "<!-- title: Broken -->\n<!-- date: 2024-01-01 -->\n<p>No description.</p>"
+      );
+
+      const result = runBuild(dir);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain("broken-article.html");
+      expect(result.stderr).toContain("Missing description");
     });
   });
 });

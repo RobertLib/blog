@@ -8,44 +8,94 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
+# Pull requests get their own group so they never queue behind deploys
 concurrency:
-  group: "pages"
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          # Full history: article modification dates come from git log
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "18"
+          node-version: "24"
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
 
       - name: Build site
         run: npm run build:prod
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
 
   deploy:
+    if: github.event_name == 'push'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
+
+  # Runs only once the new version is live, and submits only pages whose
+  # content changed since the last run that completed every job
+  indexnow:
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: deploy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      # Diffing against the last fully successful run rather than the push's
+      # "before" commit keeps pages from pushes whose run was cancelled while
+      # queued, or failed, from being skipped. A failed submission fails this
+      # job, so the next run submits those pages again. No base means all pages.
+      - name: Submit changed URLs to IndexNow
+        run: |
+          BASE_SHA=$(gh run list --workflow deploy.yml --branch main \
+            --event push --status success --limit 1 \
+            --json headSha --jq '.[0].headSha // ""' || true)
+          node index-now.js --changed-since "$BASE_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NODE_ENV: production
+          BASE_URL: https://roblibs-blog.com

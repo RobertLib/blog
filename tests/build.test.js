@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import * as build from "../build.js";
 
 describe("Blog Build Functions - Pure Unit Tests", () => {
@@ -145,7 +148,7 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       expect(result.warnings).toContain("Future date detected");
     });
 
-    it("should warn about missing description", () => {
+    it("should reject missing description", () => {
       const article = {
         title: "Test",
         date: "2024-01-01",
@@ -154,9 +157,8 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
           "This is a test article with enough content to pass validation and avoid short content warning.",
       };
 
-      const result = build.validateArticle(article);
-      expect(result.warnings).toContain(
-        "Missing description - recommended for SEO"
+      expect(() => build.validateArticle(article)).toThrow(
+        "Missing description"
       );
     });
 
@@ -296,6 +298,115 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       const result = build.sanitizeHtml(input);
 
       expect(result).toBe(input);
+    });
+
+    it("should not touch prose or code that mentions handlers", () => {
+      const input =
+        '<p>Set options = "a" and use javascript: links; onload="x" in text</p>';
+
+      expect(build.sanitizeHtml(input)).toBe(input);
+    });
+
+    it("should remove unquoted event handlers", () => {
+      const input = "<img src=x.png onerror=alert(1)>";
+
+      expect(build.sanitizeHtml(input)).toBe("<img src=x.png >");
+    });
+  });
+
+  describe("replaceTemplate with code-like values", () => {
+    it("should not interpret $ replacement patterns in values", () => {
+      const template = "<div>{{content}}</div>";
+      const content = "<code>s.replace(re, \"$&-$'-$`-$1\")</code>";
+
+      expect(build.replaceTemplate(template, { content })).toBe(
+        `<div>${content}</div>`
+      );
+    });
+
+    it("should not replace placeholders inside substituted values", () => {
+      const template = "{{content}} {{year}}";
+      const content = "<code>{{year}} {{content}}</code>";
+
+      expect(build.replaceTemplate(template, { content, year: 2026 })).toBe(
+        "<code>{{year}} {{content}}</code> 2026"
+      );
+    });
+
+    it("should keep numeric zero values", () => {
+      expect(build.replaceTemplate("{{n}}", { n: 0 })).toBe("0");
+    });
+  });
+
+  describe("stripHtml and countWords", () => {
+    it("should drop tags and decode entities", () => {
+      expect(build.stripHtml("<p>Don&rsquo;t&nbsp;panic &amp; code</p>").trim())
+        .toBe("Don’t panic & code");
+    });
+
+    it("should count only visible words", () => {
+      expect(
+        build.countWords('<p class="lead">One <strong>two</strong> three</p>')
+      ).toBe(3);
+      expect(build.countWords("")).toBe(0);
+    });
+  });
+
+  describe("extractKeywords", () => {
+    it("should ignore HTML tag and attribute names", () => {
+      const content = `
+        <p><strong>Rust</strong> and <a href="#">Rust</a> compilers</p>
+        <blockquote><p><strong>Compilers</strong> matter</p></blockquote>
+      `;
+      const keywords = build.extractKeywords(content, "Rust compilers");
+
+      expect(keywords.split(", ")).toEqual(
+        expect.arrayContaining(["rust", "compilers"])
+      );
+      expect(keywords).not.toMatch(/\b(strong|href|blockquote)\b/);
+    });
+  });
+
+  describe("escapeJsonString", () => {
+    it("should produce a valid JSON string body without HTML entities", () => {
+      const value = `RobLib's "Blog" \\ </script>`;
+      const escaped = build.escapeJsonString(value);
+
+      expect(escaped).not.toContain("</script>");
+      expect(JSON.parse(`"${escaped}"`)).toBe(value);
+    });
+  });
+
+  describe("getAllArticles", () => {
+    const dir = path.join(os.tmpdir(), "blog-articles-test");
+    const valid = `<!-- title: Valid -->
+<!-- date: 2024-01-01 -->
+<!-- description: Valid description -->
+<p>${"Enough content to avoid the short content warning. ".repeat(3)}</p>`;
+
+    beforeEach(() => {
+      fs.mkdirSync(dir, { recursive: true });
+    });
+
+    afterEach(() => {
+      fs.rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("should fail on an invalid article instead of skipping it", () => {
+      fs.writeFileSync(path.join(dir, "valid.html"), valid);
+      fs.writeFileSync(
+        path.join(dir, "broken.html"),
+        valid.replace("2024-01-01", "not-a-date")
+      );
+
+      expect(() => build.getAllArticles(dir)).toThrow(/broken\.html/);
+    });
+
+    it("should return valid articles", () => {
+      fs.writeFileSync(path.join(dir, "valid.html"), valid);
+
+      const articles = build.getAllArticles(dir);
+      expect(articles.map((a) => a.slug)).toEqual(["valid"]);
     });
   });
 });

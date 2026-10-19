@@ -94,7 +94,7 @@
   --tint: rgba(26, 25, 23, 0.035);
   --ink: #1a1917;
   --ink-2: #55524c;
-  --ink-3: #8b867d;
+  --ink-3: #706c65;
   --rule: #e6e2da;
   --rule-2: #d2ccc1;
 
@@ -124,7 +124,7 @@
   --tint: rgba(233, 231, 226, 0.045);
   --ink: #e9e7e2;
   --ink-2: #b2aea7;
-  --ink-3: #827e77;
+  --ink-3: #87837c;
   --rule: #272a2e;
   --rule-2: #383c42;
   --accent: #e08a50;
@@ -142,7 +142,7 @@
     --tint: rgba(233, 231, 226, 0.045);
     --ink: #e9e7e2;
     --ink-2: #b2aea7;
-    --ink-3: #827e77;
+    --ink-3: #87837c;
     --rule: #272a2e;
     --rule-2: #383c42;
     --accent: #e08a50;
@@ -229,17 +229,6 @@ button {
   max-width: var(--shell);
   margin-inline: auto;
   padding-inline: var(--gutter);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 /* Small mono label — the recurring micro-typographic device of the site */
@@ -524,6 +513,14 @@ main {
   max-width: 34rem;
   color: var(--ink-2);
   font-size: 1.0625rem;
+}
+
+/* Action row under a page heading (404) */
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 4rem;
 }
 
 /* ============================================================
@@ -1165,38 +1162,6 @@ main {
 }
 
 /* ============================================================
-   TAGS
-   ============================================================ */
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  margin: 1rem 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tag {
-  display: inline-flex;
-  padding: 0.1875rem 0.5rem;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  background: var(--sunken);
-  color: var(--ink-2);
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.03em;
-  text-decoration: none;
-  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
-}
-
-.tag:hover {
-  color: var(--accent);
-  border-color: var(--accent-line);
-}
-
-/* ============================================================
    FOOTER
    ============================================================ */
 
@@ -1286,9 +1251,15 @@ main {
   }
 }
 
+/* Hidden visually only: the text stays the logo link's accessible name */
 @media (max-width: 26rem) {
   .wordmark__text {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 }
 

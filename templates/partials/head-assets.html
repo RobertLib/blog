@@ -1,0 +1,45 @@
+    <meta
+      name="theme-color"
+      content="#fbfaf8"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#111214"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link
+      rel="preload"
+      href="{{root}}fonts/inter-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="{{root}}fonts/source-serif-4-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="{{root}}styles.css" />
+    <link rel="icon" href="{{root}}favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="{{root}}favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="{{root}}apple-touch-icon.png" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="RSS Feed"
+      href="{{root}}feed.xml"
+    />
+    <script>
+      // Applied before first paint so the chosen theme never flashes.
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t === "dark" || t === "light")
+            document.documentElement.dataset.theme = t;
+        } catch (e) {}
+      })();
+    </script>
+    <script src="{{root}}site.js" defer></script>

@@ -3,12 +3,19 @@
 // SEO Validation Script
 const fs = require("fs");
 const path = require("path");
+const { decodeEntities } = require("./html-entities");
 
 const DIST_DIR = "dist";
 const MIN_TITLE_LENGTH = 50;
 const MAX_TITLE_LENGTH = 60;
 const MIN_DESCRIPTION_LENGTH = 150;
 const MAX_DESCRIPTION_LENGTH = 160;
+
+// Length is measured on the text a search engine displays, so entities are
+// decoded and whitespace from multi-line markup is collapsed.
+function toDisplayText(html) {
+  return decodeEntities(html).replace(/\s+/g, " ").trim();
+}
 
 function validateSEO(distDir = DIST_DIR) {
   console.log("🔍 SEO Validation Report\n");
@@ -21,7 +28,7 @@ function validateSEO(distDir = DIST_DIR) {
   const htmlFiles = fs
     .readdirSync(distDir)
     .filter((file) => file.endsWith(".html"))
-    .filter((file) => file !== "index.html") // Skip index for now
+    .filter((file) => file !== "404.html") // Not indexed (noindex)
     .filter((file) => !file.startsWith("google")); // Skip Google verification files
 
   let hasErrors = false;
@@ -33,9 +40,12 @@ function validateSEO(distDir = DIST_DIR) {
     console.log(`📄 ${file}`);
 
     // Check title length
-    const titleMatch = content.match(/<title>(.*?)<\/title>/);
-    if (titleMatch) {
-      const title = titleMatch[1];
+    const titleMatch = content.match(/<title>([\s\S]*?)<\/title>/);
+    if (!titleMatch) {
+      console.log(`  ❌ Missing <title>`);
+      hasErrors = true;
+    } else {
+      const title = toDisplayText(titleMatch[1]);
       const titleLength = title.length;
 
       if (titleLength < MIN_TITLE_LENGTH) {
@@ -56,9 +66,14 @@ function validateSEO(distDir = DIST_DIR) {
     }
 
     // Check meta description length
-    const descMatch = content.match(/<meta name="description" content="(.*?)"/);
-    if (descMatch) {
-      const description = descMatch[1];
+    const descMatch = content.match(
+      /<meta\s+name="description"\s+content="([^"]*)"/
+    );
+    if (!descMatch) {
+      console.log(`  ❌ Missing meta description`);
+      hasErrors = true;
+    } else {
+      const description = toDisplayText(descMatch[1]);
       const descLength = description.length;
 
       if (descLength < MIN_DESCRIPTION_LENGTH) {

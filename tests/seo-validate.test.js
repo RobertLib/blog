@@ -68,8 +68,7 @@ describe("SEO Validation Tests", () => {
     expect(result).toBe(false);
   });
 
-  it("should skip index.html and google verification files", () => {
-    const shortHtml = `
+  const shortHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -79,13 +78,55 @@ describe("SEO Validation Tests", () => {
   <h1>Test</h1>
 </body>
 </html>
-    `.trim();
+  `.trim();
 
+  it("should skip 404 page and google verification files", () => {
     // These files should be skipped
-    fs.writeFileSync(path.join(testDir, "index.html"), shortHtml);
+    fs.writeFileSync(path.join(testDir, "404.html"), shortHtml);
     fs.writeFileSync(path.join(testDir, "google123.html"), shortHtml);
 
     const result = validateSEO(testDir);
     expect(result).toBe(true); // Should pass because files are skipped
+  });
+
+  it("should validate index.html", () => {
+    fs.writeFileSync(path.join(testDir, "index.html"), shortHtml);
+
+    expect(validateSEO(testDir)).toBe(false);
+  });
+
+  it("should fail when title or description is missing", () => {
+    const html = `
+<html><head>
+  <meta property="og:title" content="T">
+  <meta property="og:description" content="D">
+  <meta property="og:image" content="https://example.com/i.png">
+</head></html>`;
+    fs.writeFileSync(path.join(testDir, "no-meta.html"), html);
+
+    expect(validateSEO(testDir)).toBe(false);
+  });
+
+  it("should measure multi-line markup by its decoded display text", () => {
+    // Title is 54 chars once entities are decoded, 63 as raw source
+    const html = `
+<html><head>
+  <title>
+    RobLib&#039;s Blog - Programming &amp; Web Development Insights
+  </title>
+  <meta
+    name="description"
+    content="Expert insights on web development, JavaScript, Node.js, and programming best practices. Pragmatic solutions &amp; critical perspectives on web technologies."
+  />
+  <meta
+    property="og:title"
+    content="T"
+  />
+  <meta property="og:description" content="D" />
+  <meta property="og:image" content="https://example.com/i.png" />
+</head></html>`;
+    fs.writeFileSync(path.join(testDir, "multi-line.html"), html);
+
+    expect(validateSEO(testDir)).toBe(true);
   });
 });

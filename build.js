@@ -1,6 +1,8 @@
+const { execFileSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const config = require("./config");
+const { decodeEntities } = require("./html-entities");
 const { validateSEO } = require("./seo-validate");
 
 function getNestedValue(obj, path) {
@@ -71,12 +73,29 @@ function loadTemplate(templateName) {
   }
 
   try {
-    const content = fs.readFileSync(templatePath, "utf8");
+    const content = expandPartials(fs.readFileSync(templatePath, "utf8"));
     templateCache.set(templateName, content);
     return content;
   } catch (error) {
     throw new Error(`Error reading template ${templateName}: ${error.message}`);
   }
+}
+
+// Replaces each line holding only "{{> name}}" with templates/partials/
+// name.html, which carries its own indentation. Partials are shared markup
+// (head assets, header, footer); their placeholders are filled like the
+// page's own.
+function expandPartials(template) {
+  return template.replace(
+    /^[ \t]*\{\{>\s*([\w-]+)\s*\}\}[ \t]*$/gm,
+    (_, name) => {
+      const partialPath = path.join(TEMPLATES_DIR, "partials", `${name}.html`);
+      if (!fs.existsSync(partialPath)) {
+        throw new Error(`Partial ${name}.html not found`);
+      }
+      return fs.readFileSync(partialPath, "utf8").replace(/\n$/, "");
+    }
+  );
 }
 
 function extractMetadata(content) {
@@ -94,9 +113,33 @@ function extractMetadata(content) {
   return { metadata, content: cleanContent };
 }
 
+// Article dates are calendar days, so date-only strings are pinned to UTC
+// midnight whatever their format: JS parses "2024-01-01" as UTC but
+// "2024/01/01" and "01/01/2024" as local midnight. Strings with a time keep
+// their instant. Impossible days ("2024-02-30") give an invalid date.
+function parseDate(dateString) {
+  const value = String(dateString).trim();
+  const utcDay = (year, month, day) => {
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+      ? date
+      : new Date(NaN);
+  };
+
+  let match = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (match) return utcDay(+match[1], +match[2], +match[3]);
+
+  match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (match) return utcDay(+match[3], +match[1], +match[2]);
+
+  return new Date(value);
+}
+
+// Formatted in UTC to match parseDate; the machine's local time zone would
+// otherwise shift the day.
 function formatDate(dateString) {
   if (!dateString) return "";
-  const date = new Date(dateString);
+  const date = parseDate(dateString);
   if (isNaN(date.getTime())) {
     throw new Error(`Invalid date format: ${dateString}`);
   }
@@ -104,13 +147,14 @@ function formatDate(dateString) {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
 // Compact form for the date column in list views ("Jan 31, 2026")
 function formatDateShort(dateString) {
   if (!dateString) return "";
-  const date = new Date(dateString);
+  const date = parseDate(dateString);
   if (isNaN(date.getTime())) {
     throw new Error(`Invalid date format: ${dateString}`);
   }
@@ -118,12 +162,13 @@ function formatDateShort(dateString) {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
 function formatDateISO(dateString) {
   if (!dateString) return "";
-  const date = new Date(dateString);
+  const date = parseDate(dateString);
   return date.toISOString();
 }
 
@@ -138,7 +183,7 @@ function validateArticle(article) {
   if (!article.date) {
     errors.push("Missing date");
   } else {
-    const date = new Date(article.date);
+    const date = parseDate(article.date);
     if (isNaN(date.getTime())) {
       errors.push("Invalid date format");
     } else if (date > new Date()) {
@@ -154,8 +199,8 @@ function validateArticle(article) {
     errors.push("Article content is empty");
   }
 
-  if (!article.description) {
-    warnings.push("Missing description - recommended for SEO");
+  if (!article.description || article.description.trim().length === 0) {
+    errors.push("Missing description");
   }
 
   if (article.content.length < 100) {
@@ -169,9 +214,9 @@ function validateArticle(article) {
   return { errors, warnings };
 }
 
-function getArticleData(articleFile) {
+function getArticleData(articleFile, articlesDir = ARTICLES_DIR) {
   try {
-    const articlePath = path.join(ARTICLES_DIR, articleFile);
+    const articlePath = path.join(articlesDir, articleFile);
     const rawContent = fs.readFileSync(articlePath, "utf8");
     const { metadata, content } = extractMetadata(rawContent);
 
@@ -196,25 +241,100 @@ function getArticleData(articleFile) {
   }
 }
 
-function getAllArticles() {
-  if (!fs.existsSync(ARTICLES_DIR)) {
+// Throws if any article is invalid, so a broken article fails the build
+// instead of silently disappearing from the site.
+function getAllArticles(articlesDir = ARTICLES_DIR) {
+  if (!fs.existsSync(articlesDir)) {
     return [];
   }
 
   const articles = [];
+  const failures = [];
   const files = fs
-    .readdirSync(ARTICLES_DIR)
+    .readdirSync(articlesDir)
     .filter((file) => file.endsWith(".html"));
 
   for (const file of files) {
     try {
-      articles.push(getArticleData(file));
+      articles.push(getArticleData(file, articlesDir));
     } catch (error) {
-      console.warn(`Skipping article ${file}: ${error.message}`);
+      failures.push(`${file}: ${error.message}`);
     }
   }
 
-  return articles.sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (failures.length > 0) {
+    throw new Error(`Invalid articles:\n${failures.join("\n")}`);
+  }
+
+  return articles.sort(compareNewestFirst);
+}
+
+// Dates only have day precision, so articles published on the same day are
+// ordered by when they were first committed. Uncommitted (new) articles
+// count as the newest; the filename keeps the order deterministic.
+function compareNewestFirst(a, b) {
+  const createdTime = (article) =>
+    article.created ? Date.parse(article.created) : Infinity;
+  return (
+    parseDate(b.date) - parseDate(a.date) ||
+    createdTime(b) - createdTime(a) ||
+    a.filename.localeCompare(b.filename)
+  );
+}
+
+// Parses `git log --format=%x00%aI --name-only` output (newest first) into a
+// map of file -> { created, modified }: its first and last commit dates.
+function parseGitDates(log) {
+  const dates = new Map();
+  for (const block of log.split("\0")) {
+    const [date, ...files] = block
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!date) continue;
+    for (const file of files) {
+      if (dates.has(file)) dates.get(file).created = date;
+      else dates.set(file, { created: date, modified: date });
+    }
+  }
+  return dates;
+}
+
+// First and last commit dates of every article, from a single `git log`
+// call. Author dates are used, so rebasing doesn't make articles look edited.
+// Empty outside a git checkout or in a shallow clone (where history is cut
+// off), so callers fall back to the publication date.
+function getGitDates(articlesDir = ARTICLES_DIR) {
+  const git = (args) =>
+    execFileSync("git", ["-c", "core.quotePath=false", ...args], {
+      cwd: articlesDir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+
+  try {
+    if (git(["rev-parse", "--is-shallow-repository"]).trim() === "true") {
+      console.warn(
+        "Shallow git clone: using publication dates as modification dates"
+      );
+      return new Map();
+    }
+    return parseGitDates(
+      git(["log", "--format=%x00%aI", "--name-only", "--relative", "--", "."])
+    );
+  } catch (error) {
+    return new Map();
+  }
+}
+
+// Never earlier than the publication date, e.g. for an article committed
+// ahead of the date it is published under.
+function getModifiedDate(article, gitDates) {
+  const published = parseDate(article.date);
+  const committed = gitDates.has(article.filename)
+    ? new Date(gitDates.get(article.filename).modified)
+    : null;
+  return (committed > published ? committed : published).toISOString();
 }
 
 function escapeHtml(text) {
@@ -228,44 +348,91 @@ function escapeHtml(text) {
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
-function estimateReadingTime(content) {
-  const wordsPerMinute = 200;
-  const text = content.replace(/<[^>]*>/g, "");
-  const wordCount = text.split(/\s+/).length;
-  const readingTime = Math.ceil(wordCount / wordsPerMinute);
-  return readingTime;
+// Escapes a string for a JSON string literal inside an inline <script>,
+// where HTML entities are not decoded.
+function escapeJsonString(text) {
+  return JSON.stringify(String(text)).slice(1, -1).replace(/</g, "\\u003c");
 }
 
+// Plain text of an HTML fragment, for word counts and keyword extraction.
+function stripHtml(html) {
+  const text = html.replace(/<!--[\s\S]*?-->/g, " ").replace(/<[^>]*>/g, " ");
+  // Unknown named entities would otherwise surface as words ("&frac12;")
+  return decodeEntities(
+    text.replace(/&[a-z]+;/gi, (entity) =>
+      decodeEntities(entity) === entity ? " " : entity
+    )
+  );
+}
+
+function countWords(html) {
+  return stripHtml(html).split(/\s+/).filter(Boolean).length;
+}
+
+function estimateReadingTime(content) {
+  const wordsPerMinute = 200;
+  return Math.max(1, Math.ceil(countWords(content) / wordsPerMinute));
+}
+
+// Single pass over the template only: placeholder-like text and "$&"-style
+// patterns inside substituted values (e.g. code samples) are left untouched.
 function replaceTemplate(template, replacements) {
-  let result = template;
-  const usedPlaceholders = new Set();
+  const unresolved = new Set();
 
-  for (const [key, value] of Object.entries(replacements)) {
-    const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g");
-    if (regex.test(result)) {
-      usedPlaceholders.add(key);
-      result = result.replace(regex, value || "");
+  const result = template.replace(/\{\{([^{}]+)\}\}/g, (match, key) => {
+    if (!Object.prototype.hasOwnProperty.call(replacements, key)) {
+      unresolved.add(match);
+      return match;
     }
-  }
+    const value = replacements[key];
+    return value === undefined || value === null ? "" : String(value);
+  });
 
-  const remainingPlaceholders = result.match(/\{\{[^}]+\}\}/g);
-  if (remainingPlaceholders) {
-    console.warn(
-      `Unresolved placeholders: ${remainingPlaceholders.join(", ")}`
-    );
+  if (unresolved.size > 0) {
+    console.warn(`Unresolved placeholders: ${[...unresolved].join(", ")}`);
   }
 
   return result;
 }
 
+// Attribute rules only match inside tags, so prose and code samples that
+// merely mention "onload=" or "javascript:" stay intact.
 function sanitizeHtml(html) {
-  return html
+  let result = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gis, "")
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gis, "")
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "")
-    .replace(/javascript:/gi, "")
-    .replace(/vbscript:/gi, "");
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gis, "");
+
+  // One attribute per tag per pass, so repeat until nothing changes
+  let previous;
+  do {
+    previous = result;
+    result = result
+      .replace(
+        /(<[a-z][^>]*?\s)on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+        "$1"
+      )
+      .replace(/(<[a-z][^>]*?)(?:javascript|vbscript)\s*:/gi, "$1");
+  } while (result !== previous);
+
+  return result;
 }
+
+// Placeholders shared by every page template
+function commonReplacements() {
+  return {
+    "base-url": BASE_URL,
+    // Prefix for asset and page links in the partials; relative by default
+    root: "",
+    author: escapeHtml(config.site.author),
+    "json-author": escapeJsonString(config.site.author),
+    year: new Date().getFullYear(),
+    // Marks the current page in the header navigation
+    "nav-home-current": "",
+    "nav-archive-current": "",
+  };
+}
+
+const CURRENT_PAGE = ' aria-current="page"';
 
 function generateIndexHtml(articles = null) {
   const allArticles = articles || getAllArticles();
@@ -309,24 +476,24 @@ function generateIndexHtml(articles = null) {
   }
 
   return replaceTemplate(template, {
+    ...commonReplacements(),
+    "nav-home-current": CURRENT_PAGE,
     articles: articlesList,
     archive: archiveLink,
     "canonical-url": BASE_URL,
-    "base-url": BASE_URL,
     title: config.site.title,
     description: config.site.description,
-    year: new Date().getFullYear(),
   });
 }
 
-function generateArchiveHtml() {
-  const articles = getAllArticles();
+function generateArchiveHtml(articles = null) {
+  const allArticles = articles || getAllArticles();
   const template = loadTemplate("archive");
 
   const articlesByYear = {};
-  articles.forEach((article) => {
+  allArticles.forEach((article) => {
     if (article.date) {
-      const year = new Date(article.date).getFullYear();
+      const year = parseDate(article.date).getUTCFullYear();
       if (!articlesByYear[year]) {
         articlesByYear[year] = [];
       }
@@ -365,12 +532,12 @@ function generateArchiveHtml() {
     .join("");
 
   return replaceTemplate(template, {
+    ...commonReplacements(),
+    "nav-archive-current": CURRENT_PAGE,
     archive: archiveContent,
     "canonical-url": `${BASE_URL}/archive.html`,
-    "base-url": BASE_URL,
     title: config.site.title,
     description: config.site.description,
-    year: new Date().getFullYear(),
   });
 }
 
@@ -457,7 +624,7 @@ function getRelatedArticles(currentArticle, allArticles, maxCount = 3) {
   if (otherArticles.length === 0) {
     return allArticles
       .filter((article) => article.filename !== currentArticle.filename)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort(compareNewestFirst)
       .slice(0, maxCount);
   }
 
@@ -497,7 +664,7 @@ function generateRelatedArticlesHTML(relatedArticles) {
 function generateArticleNavigation(currentArticle, allArticles) {
   const sortedArticles = allArticles
     .filter((article) => article.date)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+    .sort((a, b) => compareNewestFirst(b, a));
 
   const currentIndex = sortedArticles.findIndex(
     (article) => article.filename === currentArticle.filename
@@ -531,39 +698,51 @@ function generateArticleNavigation(currentArticle, allArticles) {
   `;
 }
 
+function renderArticleHtml(article, articles) {
+  const template = loadTemplate("article");
+  const readingTime = estimateReadingTime(article.content);
+  const keywords = extractKeywords(article.content, article.title);
+  const wordCount = countWords(article.content);
+  const canonicalUrl = `${BASE_URL}/${article.filename}`;
+
+  // Generate related articles and navigation
+  const relatedArticles = getRelatedArticles(article, articles);
+  const relatedArticlesHTML = generateRelatedArticlesHTML(relatedArticles);
+  const navigationHTML = generateArticleNavigation(article, articles);
+
+  return replaceTemplate(template, {
+    ...commonReplacements(),
+    title: escapeHtml(article.title || "Untitled"),
+    date: formatDateISO(article.date),
+    "modified-date": article.modified || formatDateISO(article.date),
+    "formatted-date": formatDate(article.date),
+    description: escapeHtml(article.description || ""),
+    content: sanitizeHtml(article.content),
+    "reading-time": `${readingTime} min read`,
+    "reading-time-minutes": readingTime,
+    "canonical-url": canonicalUrl,
+    keywords: keywords,
+    "word-count": wordCount,
+    // JSON-LD lives in a <script>, which needs JSON escaping, not HTML
+    "json-title": escapeJsonString(article.title || "Untitled"),
+    "json-description": escapeJsonString(article.description || ""),
+    "json-keywords": escapeJsonString(keywords),
+    // Query-string values for the share links
+    "share-url": encodeURIComponent(canonicalUrl),
+    "share-title": encodeURIComponent(article.title || ""),
+    lede: article.description
+      ? `<p class="post__lede">${escapeHtml(article.description)}</p>`
+      : "",
+    "related-articles": relatedArticlesHTML,
+    navigation: navigationHTML,
+  });
+}
+
 function buildArticle(articleFile, articleData = null, allArticles = null) {
   try {
     const article = articleData || getArticleData(articleFile);
     const articles = allArticles || getAllArticles();
-    const template = loadTemplate("article");
-    const readingTime = estimateReadingTime(article.content);
-    const keywords = extractKeywords(article.content, article.title);
-    const wordCount = article.content.split(/\s+/).length;
-
-    // Generate related articles and navigation
-    const relatedArticles = getRelatedArticles(article, articles);
-    const relatedArticlesHTML = generateRelatedArticlesHTML(relatedArticles);
-    const navigationHTML = generateArticleNavigation(article, articles);
-
-    const html = replaceTemplate(template, {
-      title: escapeHtml(article.title || "Untitled"),
-      date: formatDateISO(article.date),
-      "formatted-date": formatDate(article.date),
-      description: escapeHtml(article.description || ""),
-      content: sanitizeHtml(article.content),
-      "reading-time": `${readingTime} min read`,
-      "reading-time-minutes": readingTime,
-      "canonical-url": `${BASE_URL}/${article.filename}`,
-      "base-url": BASE_URL,
-      keywords: keywords,
-      "word-count": wordCount,
-      lede: article.description
-        ? `<p class="post__lede">${escapeHtml(article.description)}</p>`
-        : "",
-      "related-articles": relatedArticlesHTML,
-      navigation: navigationHTML,
-      year: new Date().getFullYear(),
-    });
+    const html = renderArticleHtml(article, articles);
 
     const outputPath = path.join(OUTPUT_DIR, articleFile);
     fs.writeFileSync(outputPath, html);
@@ -579,18 +758,42 @@ function buildIndex(articles) {
   fs.writeFileSync(path.join(OUTPUT_DIR, "index.html"), html);
 }
 
-function buildArchive() {
-  const html = generateArchiveHtml();
+function buildArchive(articles) {
+  const html = generateArchiveHtml(articles);
   fs.writeFileSync(path.join(OUTPUT_DIR, "archive.html"), html);
 }
 
-function generateSitemap(articles) {
+// GitHub Pages serves 404.html for any missing path, including nested ones,
+// so the template references assets through absolute URLs.
+function generateNotFoundHtml() {
+  const template = loadTemplate("404");
+  return replaceTemplate(template, {
+    ...commonReplacements(),
+    root: `${BASE_URL}/`,
+  });
+}
+
+function buildNotFound() {
+  const html = generateNotFoundHtml();
+  fs.writeFileSync(path.join(OUTPUT_DIR, "404.html"), html);
+}
+
+function renderSitemap(articles) {
   const sitemapItems = [];
+  const day = (iso) => iso.split("T")[0];
+  const articleLastmods = articles.map((article) =>
+    day(article.modified || formatDateISO(article.date))
+  );
+  // Listing pages change exactly when some article does
+  const listingLastmod =
+    articleLastmods.length > 0
+      ? articleLastmods.reduce((a, b) => (a > b ? a : b))
+      : day(new Date().toISOString());
 
   // Add homepage
   sitemapItems.push({
     url: BASE_URL,
-    lastmod: new Date().toISOString().split("T")[0],
+    lastmod: listingLastmod,
     changefreq: "daily",
     priority: 1.0,
   });
@@ -598,22 +801,22 @@ function generateSitemap(articles) {
   // Add archive page
   sitemapItems.push({
     url: `${BASE_URL}/archive.html`,
-    lastmod: new Date().toISOString().split("T")[0],
+    lastmod: listingLastmod,
     changefreq: "weekly",
     priority: 0.8,
   });
 
   // Add articles
-  articles.forEach((article) => {
+  articles.forEach((article, index) => {
     sitemapItems.push({
       url: `${BASE_URL}/${article.filename}`,
-      lastmod: new Date(article.date).toISOString().split("T")[0],
+      lastmod: articleLastmods[index],
       changefreq: "monthly",
       priority: 0.9,
     });
   });
 
-  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemapItems
   .map(
@@ -626,41 +829,47 @@ ${sitemapItems
   )
   .join("\n")}
 </urlset>`;
+}
 
-  fs.writeFileSync(path.join(OUTPUT_DIR, "sitemap.xml"), sitemap);
+function generateSitemap(articles) {
+  fs.writeFileSync(
+    path.join(OUTPUT_DIR, "sitemap.xml"),
+    renderSitemap(articles)
+  );
   console.log("✅ Sitemap generated");
 }
 
-function generateRSSFeed(articles) {
+function renderRSSFeed(articles) {
   const recentArticles = articles.slice(0, 10);
 
-  const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
-    <title>${config.site.title}</title>
+    <title>${escapeXml(config.site.title)}</title>
     <link>${BASE_URL}</link>
-    <description>${config.site.description}</description>
+    <description>${escapeXml(config.site.description)}</description>
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml" />
-    <managingEditor>${config.site.author}</managingEditor>
-    <webMaster>${config.site.author}</webMaster>
     ${recentArticles
       .map(
         (article) => `
     <item>
       <title>${escapeXml(article.title)}</title>
       <link>${BASE_URL}/${article.filename}</link>
-      <description>${escapeXml(article.description)}</description>
-      <pubDate>${new Date(article.date).toUTCString()}</pubDate>
+      <description>${escapeXml(article.description || "")}</description>
+      <dc:creator>${escapeXml(config.site.author)}</dc:creator>
+      <pubDate>${parseDate(article.date).toUTCString()}</pubDate>
       <guid>${BASE_URL}/${article.filename}</guid>
     </item>`
       )
       .join("")}
   </channel>
 </rss>`;
+}
 
-  fs.writeFileSync(path.join(OUTPUT_DIR, "feed.xml"), rss);
+function generateRSSFeed(articles) {
+  fs.writeFileSync(path.join(OUTPUT_DIR, "feed.xml"), renderRSSFeed(articles));
   console.log("✅ RSS feed generated");
 }
 
@@ -673,15 +882,20 @@ function escapeXml(text) {
     .replace(/'/g, "&#39;");
 }
 
+const INDEXNOW_TIMEOUT_MS = 15000;
+
+// Resolves to false only when a submission was attempted and every endpoint
+// failed, so callers can report it (the deploy workflow then retries these
+// pages on its next run).
 async function submitToIndexNow(urls) {
   if (!config.indexNow.enabled) {
     console.log("IndexNow is disabled (not in production mode)");
-    return;
+    return true;
   }
 
   if (!urls || urls.length === 0) {
     console.log("No URLs to submit to IndexNow");
-    return;
+    return true;
   }
 
   const payload = {
@@ -701,6 +915,7 @@ async function submitToIndexNow(urls) {
           "Content-Type": "application/json; charset=utf-8",
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(INDEXNOW_TIMEOUT_MS),
       });
 
       if (response.ok) {
@@ -716,7 +931,7 @@ async function submitToIndexNow(urls) {
             `✅ IndexNow: Submitted to ${endpoint} (status: ${status})`
           );
         }
-        return; // Success with first endpoint, no need to try others
+        return true; // Success with first endpoint, no need to try others
       } else {
         console.warn(
           `⚠️ IndexNow: Failed to submit to ${endpoint} (status: ${response.status})`
@@ -731,6 +946,7 @@ async function submitToIndexNow(urls) {
   }
 
   console.log("❌ IndexNow: Failed to submit to any endpoint");
+  return false;
 }
 
 function extractKeywords(content, title) {
@@ -859,9 +1075,51 @@ function extractKeywords(content, title) {
     "try",
     "leave",
     "call",
+    // Generic filler that otherwise links unrelated articles
+    "one",
+    "two",
+    "three",
+    "every",
+    "there",
+    "here",
+    "who",
+    "which",
+    "while",
+    "without",
+    "within",
+    "need",
+    "never",
+    "always",
+    "way",
+    "often",
+    "something",
+    "someone",
+    "everything",
+    "instead",
+    "comes",
+    "become",
+    "becomes",
+    "new",
+    "good",
+    "even",
+    "still",
+    "much",
+    "many",
+    "really",
+    "then",
+    "because",
+    "like",
+    // Contraction stems left behind by the 3+ letter word match
+    "don",
+    "doesn",
+    "didn",
+    "isn",
+    "aren",
+    "wasn",
+    "won",
   ]);
 
-  const text = (title + " " + content).toLowerCase();
+  const text = (title + " " + stripHtml(content)).toLowerCase();
   const words = text.match(/\b[a-z]{3,}\b/g) || [];
   const wordCount = {};
 
@@ -904,45 +1162,50 @@ async function build() {
       return;
     }
 
-    const successfulArticles = [];
+    // "created" orders same-day articles; "modified" feeds sitemap <lastmod>
+    // and JSON-LD dateModified
+    const gitDates = getGitDates();
+    articles.forEach((article) => {
+      article.created = gitDates.get(article.filename)?.created;
+      article.modified = getModifiedDate(article, gitDates);
+    });
+    articles.sort(compareNewestFirst);
+
+    // Build every article first so all failures are reported at once
+    const failures = [];
 
     articles.forEach((article) => {
       try {
-        const builtArticle = buildArticle(article.filename, article, articles);
-        successfulArticles.push(builtArticle);
+        buildArticle(article.filename, article, articles);
         console.log(`Generated: ${article.filename}`);
       } catch (error) {
-        console.error(`Error generating ${article.filename}:`, error.message);
+        failures.push(`${article.filename}: ${error.message}`);
       }
     });
 
-    buildIndex(successfulArticles);
+    if (failures.length > 0) {
+      throw new Error(`Failed to generate articles:\n${failures.join("\n")}`);
+    }
+
+    buildIndex(articles);
     console.log("Generated index.html");
 
-    buildArchive();
+    buildArchive(articles);
     console.log("Generated archive.html");
 
-    generateSitemap(successfulArticles);
+    buildNotFound();
+    console.log("Generated 404.html");
+
+    generateSitemap(articles);
     console.log("Generated sitemap.xml");
 
-    generateRSSFeed(successfulArticles);
+    generateRSSFeed(articles);
     console.log("Generated feed.xml");
 
-    console.log(
-      `\nBuild complete: ${successfulArticles.length} articles generated`
-    );
+    console.log(`\nBuild complete: ${articles.length} articles generated`);
 
-    // Submit to IndexNow
-    if (config.indexNow.enabled) {
-      const urlsToSubmit = [
-        BASE_URL, // Homepage
-        `${BASE_URL}/archive.html`, // Archive page
-        ...successfulArticles.map(
-          (article) => `${BASE_URL}/${article.filename}`
-        ), // All articles
-      ];
-      await submitToIndexNow(urlsToSubmit);
-    }
+    // IndexNow is submitted by the deploy workflow once the site is live
+    // (see index-now.js), never from the build itself.
 
     // Run SEO validation
     console.log("\n🔍 Running SEO validation...");
@@ -966,6 +1229,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     loadTemplate,
     extractMetadata,
+    parseDate,
     formatDate,
     formatDateShort,
     formatDateISO,
@@ -973,13 +1237,25 @@ if (typeof module !== "undefined" && module.exports) {
     getArticleData,
     getAllArticles,
     escapeHtml,
+    escapeJsonString,
+    stripHtml,
+    countWords,
     estimateReadingTime,
+    extractKeywords,
     replaceTemplate,
     sanitizeHtml,
+    compareNewestFirst,
+    parseGitDates,
+    getGitDates,
+    getModifiedDate,
     generateIndexHtml,
+    generateNotFoundHtml,
     generateArchiveHtml,
+    renderArticleHtml,
     buildArticle,
+    renderSitemap,
     generateSitemap,
+    renderRSSFeed,
     generateRSSFeed,
     submitToIndexNow,
     build,
@@ -988,6 +1264,7 @@ if (typeof module !== "undefined" && module.exports) {
     copyStatic,
     buildIndex,
     buildArchive,
+    buildNotFound,
     clearTemplateCache,
     validateSEO,
   };

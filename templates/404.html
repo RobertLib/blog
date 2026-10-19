@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page Not Found - RobLib's Blog</title>
+    <meta
+      name="description"
+      content="The page you are looking for does not exist or has been moved."
+    />
+    <meta name="robots" content="noindex" />
+    <meta name="generator" content="Blog Generator v1.0.0" />
+    {{> head-assets}}
+  </head>
+  <body class="page-not-found">
+    {{> header}}
+
+    <main id="main-content">
+      <div class="shell">
+        <div class="page-head">
+          <h1>Page not found</h1>
+          <p>
+            The page you are looking for does not exist or has been moved.
+            Try the homepage or browse every article in the archive.
+          </p>
+        </div>
+        <p class="page-actions">
+          <a href="{{base-url}}" class="button">Go to homepage</a>
+          <a href="{{root}}archive.html" class="button">View archive</a>
+        </p>
+      </div>
+    </main>
+
+    {{> footer}}
+  </body>
+</html>

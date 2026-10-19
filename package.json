@@ -1,6 +1,7 @@
 {
   "name": "blog",
   "version": "1.0.0",
+  "private": true,
   "description": "Static blog generator",
   "main": "build.js",
   "scripts": {
@@ -8,15 +9,21 @@
     "build": "node build.js",
     "build:prod": "NODE_ENV=production BASE_URL=https://roblibs-blog.com node build.js",
     "seo-validate": "node seo-validate.js",
-    "start": "npx serve dist",
+    "start": "serve dist",
     "dev": "npm run build && npm start",
     "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
-    "indexnow": "node index-now.js"
+    "indexnow": "NODE_ENV=production BASE_URL=https://roblibs-blog.com node index-now.js"
   },
   "author": "Robert Libšanský",
   "license": "MIT",
+  "engines": {
+    "node": ">=22.12"
+  },
   "devDependencies": {
-    "vitest": "^4.0.16"
+    "serve": "^14.2.6",
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "compression": "^1.8.2"
   }
 }

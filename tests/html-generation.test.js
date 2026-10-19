@@ -1,365 +1,360 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import os from "os";
 import * as build from "../build.js";
+import config from "../config.js";
+
+const BASE_URL = config.site.baseUrl;
+
+const jsonLd = (html) =>
+  JSON.parse(
+    html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]
+  );
+
+const head = (html) => html.slice(0, html.indexOf("</head>"));
+
+function makeArticle(overrides = {}) {
+  const slug = overrides.slug || "test-article";
+  return {
+    title: "Test Article",
+    date: "2024-01-15",
+    description: "A test description",
+    content: "<p>Rust compilers are fast. Rust compilers matter.</p>",
+    slug,
+    filename: `${slug}.html`,
+    ...overrides,
+  };
+}
+
+// Runs fn with process.env.TZ set, restoring the previous zone afterwards
+function inTimeZone(timeZone, fn) {
+  const previous = process.env.TZ;
+  process.env.TZ = timeZone;
+  try {
+    return fn();
+  } finally {
+    if (previous === undefined) delete process.env.TZ;
+    else process.env.TZ = previous;
+  }
+}
 
 describe("Blog HTML Generation", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  describe("date formatting", () => {
+    it("should format dates independently of the local time zone", () => {
+      for (const zone of ["UTC", "America/New_York", "Pacific/Auckland"]) {
+        inTimeZone(zone, () => {
+          expect(build.formatDate("2026-10-19")).toBe("October 19, 2026");
+          expect(build.formatDateShort("2026-01-01")).toBe("Jan 1, 2026");
+          expect(build.formatDate("2026/01/01")).toBe("January 1, 2026");
+          expect(build.formatDate("01/31/2026")).toBe("January 31, 2026");
+        });
+      }
+    });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+    it("should parse date-only strings as UTC calendar days", () => {
+      expect(build.parseDate("2024/3/9").toISOString()).toBe(
+        "2024-03-09T00:00:00.000Z"
+      );
+      expect(build.parseDate("2024-02-30").getTime()).toBeNaN();
+      expect(build.parseDate("not a date").getTime()).toBeNaN();
+      expect(build.parseDate("2024-01-01T12:30:00Z").toISOString()).toBe(
+        "2024-01-01T12:30:00.000Z"
+      );
+    });
   });
 
   describe("generateIndexHtml", () => {
-    it("should test article list generation logic", () => {
-      const mockArticles = [
-        {
-          title: "First Article",
-          filename: "first-article.html",
-          date: "2024-01-02",
-          description: "First article description",
-          content:
-            "This is the first article content with enough words to make a meaningful reading time estimate.",
-        },
-        {
-          title: "Second Article",
-          filename: "second-article.html",
-          date: "2024-01-01",
-          description: "Second article description",
-          content:
-            "This is the second article content with enough words to make a meaningful reading time estimate.",
-        },
-      ];
+    it("should list articles with escaped titles and descriptions", () => {
+      const html = build.generateIndexHtml([
+        makeArticle({ slug: "newer", title: "Tom & Jerry <3" }),
+        makeArticle({ slug: "older", description: "Quotes \"here\"" }),
+      ]);
 
-      const recentArticles = mockArticles.slice(0, 10);
-      const articlesList = recentArticles
-        .map((article) => {
-          const readingTime = build.estimateReadingTime(article.content);
-          return `
-            <article>
-              <h2>
-                <a href="${build.escapeHtml(article.filename)}">
-                  ${build.escapeHtml(article.title)}
-                </a>
-              </h2>
-              <div class="article-meta">
-                <time datetime="${build.escapeHtml(article.date)}">
-                  ${build.formatDate(article.date)}
-                </time>
-                <span class="reading-time">${readingTime} min read</span>
-              </div>
-              ${
-                article.description
-                  ? `<p>${build.escapeHtml(article.description)}</p>`
-                  : ""
-              }
-            </article>
-          `;
-        })
-        .join("");
-
-      expect(articlesList).toContain("First Article");
-      expect(articlesList).toContain("Second Article");
-      expect(articlesList).toContain("first-article.html");
-      expect(articlesList).toContain("January 2, 2024");
-      expect(articlesList).toContain("min read");
+      expect(html).toContain('href="newer.html"');
+      expect(html).toContain("Tom &amp; Jerry &lt;3");
+      expect(html).toContain("Quotes &quot;here&quot;");
+      expect(html.indexOf("newer.html")).toBeLessThan(
+        html.indexOf("older.html")
+      );
+      expect(html).not.toMatch(/\{\{[^}]+\}\}/);
     });
 
-    it("should test archive link generation logic", () => {
-      const mockArticles = Array(15)
-        .fill(null)
-        .map((_, i) => ({
-          title: `Article ${i + 1}`,
-          filename: `article-${i + 1}.html`,
-          date: `2024-01-${String(i + 1).padStart(2, "0")}`,
-          content:
-            "Article content with enough words to make reading time estimation meaningful.",
-        }));
+    it("should link to the archive only when articles overflow", () => {
+      const count = config.build.recentArticlesCount;
+      const articles = (n) =>
+        Array.from({ length: n }, (_, i) => makeArticle({ slug: `a${i}` }));
 
-      let archiveLink = "";
-      if (mockArticles.length > 10) {
-        archiveLink =
-          '<p><a href="archive.html" class="button">View Archive</a></p>';
-      }
-
-      expect(archiveLink).toContain("View Archive");
-      expect(archiveLink).toContain("archive.html");
+      expect(build.generateIndexHtml(articles(count))).not.toContain(
+        "View archive"
+      );
+      const overflowing = build.generateIndexHtml(articles(count + 1));
+      expect(overflowing).toContain("View archive");
+      expect(overflowing).not.toContain(`a${count}.html`);
     });
 
-    it("should test archive link logic for few articles", () => {
-      const mockArticles = [
-        {
-          title: "Only Article",
-          filename: "only-article.html",
-          date: "2024-01-01",
-          content: "Single article content.",
-        },
-      ];
+    it("should fill author and JSON-LD from config", () => {
+      const html = build.generateIndexHtml([makeArticle()]);
 
-      let archiveLink = "";
-      if (mockArticles.length > 10) {
-        archiveLink =
-          '<p><a href="archive.html" class="button">View Archive</a></p>';
-      }
-
-      expect(archiveLink).toBe("");
+      expect(jsonLd(html).author.name).toBe(config.site.author);
+      expect(html).toContain(`content="${config.site.author}"`);
     });
   });
 
   describe("generateArchiveHtml", () => {
-    it("should test archive grouping logic by year", () => {
-      const mockArticles = [
-        {
-          title: "Article 2024",
-          filename: "article-2024.html",
-          date: "2024-01-01",
-        },
-        {
-          title: "Article 2023",
-          filename: "article-2023.html",
-          date: "2023-12-01",
-        },
-        {
-          title: "Another 2024",
-          filename: "another-2024.html",
-          date: "2024-06-01",
-        },
-      ];
+    it("should group articles by year, newest year first", () => {
+      const html = build.generateArchiveHtml([
+        makeArticle({ slug: "b", date: "2024-06-01" }),
+        makeArticle({ slug: "a", date: "2024-01-01" }),
+        makeArticle({ slug: "c", date: "2023-12-01" }),
+      ]);
 
-      const articlesByYear = {};
-      mockArticles.forEach((article) => {
-        if (article.date) {
-          const year = new Date(article.date).getFullYear();
-          if (!articlesByYear[year]) {
-            articlesByYear[year] = [];
-          }
-          articlesByYear[year].push(article);
-        }
+      const year2024 = html.indexOf(">2024</h2>");
+      const year2023 = html.indexOf(">2023</h2>");
+      expect(year2024).toBeGreaterThan(-1);
+      expect(year2023).toBeGreaterThan(year2024);
+      expect(html.indexOf('href="a.html"')).toBeLessThan(year2023);
+      expect(html.indexOf('href="c.html"')).toBeGreaterThan(year2023);
+    });
+
+    it("should keep New Year articles in their year in any time zone", () => {
+      const html = inTimeZone("America/New_York", () =>
+        build.generateArchiveHtml([makeArticle({ date: "2026-01-01" })])
+      );
+
+      expect(html).toContain(">2026</h2>");
+      expect(html).not.toContain(">2025</h2>");
+    });
+  });
+
+  describe("renderArticleHtml", () => {
+    const article = makeArticle({
+      title: `RobLib's "Quoted" & <Tagged>`,
+      modified: "2024-03-01T10:00:00.000Z",
+      content: "<p>One <strong>two</strong> three</p>",
+    });
+    const older = makeArticle({ slug: "older", date: "2023-01-01" });
+    const newer = makeArticle({ slug: "newer", date: "2025-01-01" });
+    const html = build.renderArticleHtml(article, [newer, article, older]);
+
+    it("should produce valid JSON-LD with unescaped text", () => {
+      const data = jsonLd(html);
+
+      expect(data.headline).toBe(article.title);
+      expect(data.wordCount).toBe(3);
+      expect(data.datePublished).toBe("2024-01-15T00:00:00.000Z");
+      expect(data.dateModified).toBe(article.modified);
+      expect(data.author.name).toBe(config.site.author);
+      expect(data.image.url).toBe(`${BASE_URL}/og-image.png`);
+    });
+
+    it("should HTML-escape the title in markup", () => {
+      expect(html).toContain(
+        "<title>RobLib&#039;s &quot;Quoted&quot; &amp; &lt;Tagged&gt; - "
+      );
+    });
+
+    it("should URL-encode share links", () => {
+      const canonical = encodeURIComponent(`${BASE_URL}/${article.filename}`);
+
+      expect(html).toContain(
+        `tweet?url=${canonical}&amp;text=${encodeURIComponent(article.title)}`
+      );
+      expect(html).toContain(`share-offsite/?url=${canonical}"`);
+    });
+
+    it("should link previous and next articles by date", () => {
+      const nav = html.slice(html.indexOf('class="post-nav"'));
+
+      expect(nav).toMatch(/post-nav__item--prev" href="older\.html"/);
+      expect(nav).toMatch(/post-nav__item--next" href="newer\.html"/);
+    });
+
+    it("should leave no template placeholders in the head", () => {
+      expect(head(html)).not.toMatch(/\{\{[^}]+\}\}/);
+      expect(html).toContain(
+        `<meta property="article:modified_time" content="${article.modified}" />`
+      );
+    });
+  });
+
+  describe("renderSitemap", () => {
+    const articles = [
+      makeArticle({ slug: "edited", modified: "2025-05-05T08:00:00.000Z" }),
+      makeArticle({ slug: "untouched", date: "2024-02-02" }),
+    ];
+    const sitemap = build.renderSitemap(articles);
+
+    it("should use modification dates for articles", () => {
+      expect(sitemap).toContain(
+        `<loc>${BASE_URL}/edited.html</loc>\n    <lastmod>2025-05-05</lastmod>`
+      );
+      expect(sitemap).toContain(
+        `<loc>${BASE_URL}/untouched.html</loc>\n    <lastmod>2024-02-02</lastmod>`
+      );
+    });
+
+    it("should date listing pages by their newest article", () => {
+      expect(sitemap).toContain(
+        `<loc>${BASE_URL}</loc>\n    <lastmod>2025-05-05</lastmod>`
+      );
+      expect(sitemap).toContain(
+        `<loc>${BASE_URL}/archive.html</loc>\n    <lastmod>2025-05-05</lastmod>`
+      );
+    });
+  });
+
+  describe("renderRSSFeed", () => {
+    it("should include at most 10 escaped items with an author", () => {
+      const articles = Array.from({ length: 12 }, (_, i) =>
+        makeArticle({ slug: `post-${i}`, title: `Post ${i} & more` })
+      );
+      const rss = build.renderRSSFeed(articles);
+
+      expect(rss.match(/<item>/g)).toHaveLength(10);
+      expect(rss).toContain("<title>Post 0 &amp; more</title>");
+      expect(rss).not.toContain("post-10.html");
+      expect(rss).toContain(`<dc:creator>${config.site.author}</dc:creator>`);
+      expect(rss).toContain("<pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>");
+    });
+  });
+
+  describe("generateNotFoundHtml", () => {
+    it("should be noindex and use absolute asset URLs", () => {
+      const html = build.generateNotFoundHtml();
+
+      expect(html).toContain('<meta name="robots" content="noindex" />');
+      expect(html).toContain(`href="${BASE_URL}/styles.css"`);
+      expect(html).toContain(`src="${BASE_URL}/site.js"`);
+      expect(html).not.toMatch(/(href|src)="(?!https?:|#)[^"]+"/);
+      expect(html).not.toMatch(/\{\{[^}]+\}\}/);
+    });
+  });
+
+  describe("git dates", () => {
+    it("should parse git log output into first and last dates per file", () => {
+      const log = [
+        "\0" + "2026-07-30T10:00:00+02:00",
+        "",
+        "a.html",
+        "b.html",
+        "\0" + "2025-01-01T09:00:00+01:00",
+        "",
+        "a.html",
+        "c.html",
+        "",
+      ].join("\n");
+
+      expect(Object.fromEntries(build.parseGitDates(log))).toEqual({
+        "a.html": {
+          created: "2025-01-01T09:00:00+01:00",
+          modified: "2026-07-30T10:00:00+02:00",
+        },
+        "b.html": {
+          created: "2026-07-30T10:00:00+02:00",
+          modified: "2026-07-30T10:00:00+02:00",
+        },
+        "c.html": {
+          created: "2025-01-01T09:00:00+01:00",
+          modified: "2025-01-01T09:00:00+01:00",
+        },
       });
-
-      const sortedYears = Object.keys(articlesByYear).sort((a, b) => b - a);
-
-      expect(sortedYears).toEqual(["2024", "2023"]);
-      expect(articlesByYear[2024]).toHaveLength(2);
-      expect(articlesByYear[2023]).toHaveLength(1);
-      expect(articlesByYear[2024][0].title).toBe("Article 2024");
-      expect(articlesByYear[2024][1].title).toBe("Another 2024");
-      expect(articlesByYear[2023][0].title).toBe("Article 2023");
     });
 
-    it("should test filtering of articles without dates", () => {
-      const mockArticles = [
-        {
-          title: "Article with date",
-          filename: "with-date.html",
-          date: "2024-01-01",
-        },
-        {
-          title: "Article without date",
-          filename: "without-date.html",
-        },
+    it("should never date a modification before publication", () => {
+      const article = makeArticle({ date: "2025-06-01" });
+      const dates = (modified) =>
+        new Map([[article.filename, { created: modified, modified }]]);
+
+      expect(build.getModifiedDate(article, dates("2026-01-02T00:00:00Z"))).toBe(
+        "2026-01-02T00:00:00.000Z"
+      );
+      expect(build.getModifiedDate(article, dates("2025-01-01T00:00:00Z"))).toBe(
+        "2025-06-01T00:00:00.000Z"
+      );
+      expect(build.getModifiedDate(article, new Map())).toBe(
+        "2025-06-01T00:00:00.000Z"
+      );
+    });
+
+    it("should return no dates outside a git checkout", () => {
+      expect(build.getGitDates(os.tmpdir()).size).toBe(0);
+    });
+
+    it("should order same-day articles by when they were first committed", () => {
+      const byCreated = (slug, created) =>
+        makeArticle({ slug, date: "2026-10-19", created });
+      const articles = [
+        byCreated("breakup", "2026-10-19T14:32:46+02:00"),
+        makeArticle({ slug: "older", date: "2026-10-18" }),
+        byCreated("chess", "2026-10-19T14:40:40+02:00"),
+        byCreated("chuck", "2026-10-19T14:32:46+02:00"),
+        byCreated("uncommitted", undefined),
       ];
 
-      const articlesWithDates = mockArticles.filter((article) => article.date);
+      expect(
+        articles.sort(build.compareNewestFirst).map((a) => a.slug)
+      ).toEqual(["uncommitted", "chess", "breakup", "chuck", "older"]);
+    });
 
-      expect(articlesWithDates).toHaveLength(1);
-      expect(articlesWithDates[0].title).toBe("Article with date");
+    it("should use the same order for previous/next navigation", () => {
+      const first = makeArticle({
+        slug: "first",
+        date: "2026-10-19",
+        created: "2026-10-19T10:00:00Z",
+      });
+      const second = makeArticle({
+        slug: "second",
+        date: "2026-10-19",
+        created: "2026-10-19T11:00:00Z",
+      });
+      const html = build.renderArticleHtml(first, [first, second]);
+
+      expect(html).toMatch(/post-nav__item--next" href="second\.html"/);
+      expect(html).not.toContain("post-nav__item--prev");
     });
   });
+});
 
-  describe("generateSitemap", () => {
-    it("should generate valid XML sitemap content", () => {
-      const mockArticles = [
-        { filename: "article1.html" },
-        { filename: "article2.html" },
-      ];
+describe("Template partials", () => {
+  it("should expand every partial in every page template", () => {
+    for (const name of ["index", "archive", "article", "404"]) {
+      const template = build.loadTemplate(name);
 
-      const urls = [
-        "http://localhost:3000/",
-        "http://localhost:3000/archive.html",
-        ...mockArticles.map(
-          (article) => `http://localhost:3000/${article.filename}`
-        ),
-      ];
-
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls
-  .map((url) => `  <url><loc>${build.escapeHtml(url)}</loc></url>`)
-  .join("\n")}
-</urlset>`;
-
-      expect(sitemap).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(sitemap).toContain(
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-      );
-      expect(sitemap).toContain("<loc>http://localhost:3000/</loc>");
-      expect(sitemap).toContain(
-        "<loc>http://localhost:3000/archive.html</loc>"
-      );
-      expect(sitemap).toContain(
-        "<loc>http://localhost:3000/article1.html</loc>"
-      );
-      expect(sitemap).toContain(
-        "<loc>http://localhost:3000/article2.html</loc>"
-      );
-      expect(sitemap).toContain("</urlset>");
-    });
-
-    it("should handle empty articles array", () => {
-      const urls = [
-        "http://localhost:3000/",
-        "http://localhost:3000/archive.html",
-      ];
-
-      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls
-  .map((url) => `  <url><loc>${build.escapeHtml(url)}</loc></url>`)
-  .join("\n")}
-</urlset>`;
-
-      expect(sitemap).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(sitemap).toContain("<loc>http://localhost:3000/</loc>");
-      expect(sitemap).toContain(
-        "<loc>http://localhost:3000/archive.html</loc>"
-      );
-    });
-
-    it("should escape HTML in URLs", () => {
-      const mockArticles = [{ filename: "article&test.html" }];
-
-      const url = `http://localhost:3000/${mockArticles[0].filename}`;
-      const escapedUrl = build.escapeHtml(url);
-
-      expect(escapedUrl).toContain("article&amp;test.html");
-      expect(escapedUrl).not.toContain("article&test.html");
-    });
+      expect(template, name).not.toContain("{{>");
+      expect(template, name).toContain('class="site-header"');
+      expect(template, name).toContain('class="site-footer"');
+      expect(template, name).toContain('rel="stylesheet"');
+    }
   });
 
-  describe("generateRSSFeed", () => {
-    it("should generate valid RSS feed content", () => {
-      const mockArticles = [
-        {
-          title: "Test Article",
-          filename: "test.html",
-          description: "Test description",
-          date: "2024-01-01",
-        },
-        {
-          title: "Another Article",
-          filename: "another.html",
-          description: "Another description",
-          date: "2024-01-02",
-        },
-      ];
+  it("should mark the current page in the navigation", () => {
+    const home = build.generateIndexHtml([makeArticle()]);
+    const archive = build.generateArchiveHtml([makeArticle()]);
+    const current = (html) =>
+      html.match(/<a href="([^"]*)" aria-current="page">/g) || [];
 
-      const validArticles = mockArticles.filter(
-        (article) => article.date && !isNaN(new Date(article.date))
-      );
+    expect(current(home)).toEqual([`<a href="${BASE_URL}" aria-current="page">`]);
+    expect(current(archive)).toEqual([
+      '<a href="archive.html" aria-current="page">',
+    ]);
+    expect(current(build.generateNotFoundHtml())).toEqual([]);
+  });
 
-      const rssItems = validArticles
-        .slice(0, 10)
-        .map(
-          (article) => `
-            <item>
-              <title><![CDATA[${article.title}]]></title>
-              <link>http://localhost:3000/${article.filename}</link>
-              <description><![CDATA[${
-                article.description || ""
-              }]]></description>
-              <pubDate>${new Date(article.date).toUTCString()}</pubDate>
-              <guid>http://localhost:3000/${article.filename}</guid>
-            </item>
-          `
-        )
-        .join("");
+  it("should keep relative asset links outside the 404 page", () => {
+    const html = build.generateArchiveHtml([makeArticle()]);
 
-      const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>RobLib's Blog</title>
-    <link>http://localhost:3000</link>
-    <description>Blog about programming and web technologies</description>
-    ${rssItems}
-  </channel>
-</rss>`;
+    expect(html).toContain('<link rel="stylesheet" href="styles.css" />');
+    expect(html).toContain('<script src="site.js" defer></script>');
+  });
 
-      expect(rss).toContain('<?xml version="1.0" encoding="UTF-8"?>');
-      expect(rss).toContain('<rss version="2.0">');
-      expect(rss).toContain("<channel>");
-      expect(rss).toContain("<title><![CDATA[Test Article]]></title>");
-      expect(rss).toContain("<title><![CDATA[Another Article]]></title>");
-      expect(rss).toContain(
-        "<description><![CDATA[Test description]]></description>"
-      );
-      expect(rss).toContain("</channel>");
-      expect(rss).toContain("</rss>");
-    });
+  // WCAG 2.5.3 (Label in Name): voice control users say the visible text,
+  // so the logo link is named by its content rather than an aria-label that
+  // could drift from it. The "RL" mark is hidden from the accessible name.
+  it("should name the logo link by its visible site name", () => {
+    const html = build.generateArchiveHtml([makeArticle()]);
+    const [link, content] = html.match(/<a class="wordmark"[^>]*>([\s\S]*?)<\/a>/);
 
-    it("should limit RSS to 10 articles", () => {
-      const mockArticles = Array(15)
-        .fill(null)
-        .map((_, i) => ({
-          title: `Article ${i + 1}`,
-          filename: `article${i + 1}.html`,
-          description: `Description ${i + 1}`,
-          date: `2024-01-${String(i + 1).padStart(2, "0")}`,
-        }));
-
-      const validArticles = mockArticles.filter(
-        (article) => article.date && !isNaN(new Date(article.date))
-      );
-      const limitedArticles = validArticles.slice(0, 10);
-
-      expect(limitedArticles).toHaveLength(10);
-      expect(limitedArticles[0].title).toBe("Article 1");
-      expect(limitedArticles[9].title).toBe("Article 10");
-    });
-
-    it("should filter out articles with invalid dates", () => {
-      const mockArticles = [
-        {
-          title: "Valid Article",
-          filename: "valid.html",
-          description: "Valid description",
-          date: "2024-01-01",
-        },
-        {
-          title: "Invalid Article",
-          filename: "invalid.html",
-          description: "Invalid description",
-          date: "invalid-date",
-        },
-        {
-          title: "No Date Article",
-          filename: "no-date.html",
-          description: "No date description",
-        },
-      ];
-
-      const validArticles = mockArticles.filter(
-        (article) => article.date && !isNaN(new Date(article.date))
-      );
-
-      expect(validArticles).toHaveLength(1);
-      expect(validArticles[0].title).toBe("Valid Article");
-    });
-
-    it("should include pubDate in RSS items", () => {
-      const mockArticles = [
-        {
-          title: "Test Article",
-          filename: "test.html",
-          description: "Test description",
-          date: "2024-01-01T00:00:00.000Z",
-        },
-      ];
-
-      const pubDate = new Date(mockArticles[0].date).toUTCString();
-
-      expect(pubDate).toMatch(/GMT/);
-      expect(pubDate).toContain("2024");
-    });
+    expect(link.slice(0, link.indexOf(">"))).not.toContain("aria-label");
+    expect(content).toContain('aria-hidden="true">RL</span>');
+    expect(content).toContain('class="wordmark__text">RobLib&rsquo;s Blog</span>');
   });
 });

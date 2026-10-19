@@ -11,19 +11,23 @@ A simple static blog generator that creates a blog from HTML articles with metad
 - 🔍 SEO optimized pages
 - 📊 Recent articles management
 - 🚀 IndexNow integration for faster search engine indexing
-- 🧪 Complete test coverage
+- 🧪 Unit tests plus an end-to-end production build test
 
 ## 📁 Project Structure
 
 ```
 blog/
 ├── articles/          # HTML articles with metadata
-├── templates/         # HTML templates (index, archive, article)
+├── templates/         # HTML templates (index, archive, article, 404)
+│   └── partials/      # Shared head assets, header and footer
 ├── static/           # Static files (CSS, JS, fonts, favicon, OG image)
 ├── tools/            # Sources for generated assets (OG image)
 ├── tests/            # Unit and integration tests
 ├── dist/             # Generated static website
 ├── build.js          # Main build script
+├── seo-validate.js   # SEO checks run at the end of every build
+├── html-entities.js  # HTML entity decoding shared by the scripts above
+├── index-now.js      # IndexNow submission (manual or from CI)
 ├── config.js         # Project configuration
 └── package.json      # NPM configuration
 ```
@@ -44,6 +48,8 @@ blog/
   of that file.
 
 ## 🚀 Quick Start
+
+Requires Node.js 22.12 or newer (CI runs on Node.js 24).
 
 1. **Clone the repository**
 
@@ -84,6 +90,21 @@ Articles are HTML files with metadata in comments:
 - `date` - Publication date in YYYY-MM-DD format (required)
 - `description` - Short description for SEO and previews (required)
 
+An article with missing or invalid metadata fails the build, so it can never
+silently disappear from the site. The SEO check also requires page titles of
+50–60 characters (including the " - RobLib's Blog" suffix) and descriptions of
+150–160 characters.
+
+Dates are calendar days and render the same in any time zone. Git history
+adds what a day can't express (author dates, so a rebase changes nothing):
+
+- articles published on the same day are ordered by their first commit, and
+  a not yet committed article counts as the newest
+- the modification date (sitemap `<lastmod>`, JSON-LD `dateModified`) is the
+  article's last commit, never earlier than its publication date
+
+Without git history (or in a shallow clone) only the publication date is used.
+
 ## 🛠️ Available Commands
 
 ```bash
@@ -95,25 +116,45 @@ npm run build        # Development build
 npm run build:prod   # Production build for GitHub Pages
 
 # Testing
-npm test            # Run all tests
+npm test             # Run all tests
+npm run seo-validate # Re-run the SEO checks on an existing dist/
 
-# IndexNow
-npm run indexnow <url>  # Submit specific URL to IndexNow
+# IndexNow (submits to the production site; exits with 1 if submission fails)
+npm run indexnow <url>                     # Submit specific URLs
+npm run indexnow -- --changed-since <ref>  # Submit pages changed since a git ref
 
 # Other
-npm start           # Serve dist folder
+npm start           # Serve dist folder (serve, installed as a dev dependency)
 npm run clean       # Clean dist folder
 ```
 
 ## 🏗️ Build Process
 
-1. **Load templates** from `templates/` directory
-2. **Parse articles** from `articles/` with metadata extraction
-3. **Generate pages**:
+1. **Copy static files** from `static/` to `dist/`
+2. **Parse and validate articles** from `articles/` (any invalid article fails
+   the build)
+3. **Generate pages** into `dist/`:
    - `index.html` - Homepage with recent articles
    - `archive.html` - Archive of all articles
-   - `articles/[name].html` - Individual articles
-4. **Copy static files** from `static/`
+   - `[name].html` - Individual articles
+   - `404.html` - Not-found page served by GitHub Pages
+   - `sitemap.xml` and `feed.xml`
+4. **Validate SEO** of every generated page
+
+Templates share markup through partials: a line holding only
+`{{> header}}` is replaced by `templates/partials/header.html`. Partial
+placeholders are filled like the page's own; `{{root}}` prefixes asset and
+page links (empty, i.e. relative, except on the 404 page, which GitHub Pages
+also serves for nested paths and therefore uses absolute URLs).
+
+## 🔄 Deployment
+
+The GitHub Actions workflow in `.github/workflows/deploy.yml`:
+
+- runs tests and a production build for every push and pull request to `main`
+  (with full git history, which the modification dates need)
+- deploys to GitHub Pages only on pushes to `main`
+- after a successful deploy, submits the changed pages to IndexNow
 
 ## ⚙️ Configuration
 
@@ -124,8 +165,11 @@ module.exports = {
   site: {
     title: "RobLib's Blog",
     description: "Blog about programming and web technologies",
-    author: "Robert Libšanský",
-    baseUrl: "https://roblibs-blog.com",
+    author: "Robert Libsansky",
+    baseUrl:
+      process.env.NODE_ENV === "production"
+        ? process.env.BASE_URL || "https://roblibs-blog.com"
+        : "http://localhost:3000",
   },
   build: {
     articlesDir: "articles",
@@ -160,17 +204,28 @@ IndexNow is an open protocol that allows websites to instantly inform search eng
 
 ### How it works
 
-**Automatic submission during build:**
+**Automatic submission after deploy:**
 
-- Production builds (`npm run build:prod`) automatically submit all URLs
-- Includes homepage, archive page, and all articles
-- Only active in production environment
+- The build itself never contacts IndexNow; the `indexnow` job in the deploy
+  workflow runs only after the new version is live
+- It submits only pages whose content changed since the last workflow run that
+  completed every job (`node index-now.js --changed-since <that commit>`), so
+  changes from a push whose run was cancelled or failed are not lost:
+  - changed, added or deleted articles, plus the homepage and archive
+  - every page when `templates/`, `build.js`, `config.js` or
+    `html-entities.js` changed
+  - nothing when only static assets or docs changed
+- If every IndexNow endpoint fails (or times out after 15 s), the job fails,
+  so the next run submits the same pages again
+- If there is no such run, or its commit is unknown (e.g. after a force push),
+  all pages are submitted
 
 **Manual submission:**
 
 ```bash
 npm run indexnow https://roblibs-blog.com/new-article.html
 npm run indexnow https://roblibs-blog.com/article1.html https://roblibs-blog.com/article2.html
+npm run indexnow -- --changed-since HEAD~1
 ```
 
 ### Benefits
@@ -185,16 +240,20 @@ The API key is automatically generated and stored as a static file that must be 
 
 ## 🧪 Testing
 
-The project includes complete test coverage:
+Tests run with [Vitest](https://vitest.dev/) (`npm test`) and in CI before
+every build:
 
-- `build.test.js` - Build process testing
-- `config.test.js` - Configuration testing
-- `html-generation.test.js` - HTML generation testing
-- `file-operations.test.js` - File operations testing
-- `integration.test.js` - Integration tests
-- `edge-cases.test.js` - Edge cases and error handling
-- `utils.test.js` - Utility functions
-- `indexnow.test.js` - IndexNow integration testing
+- `build.test.js` - Article parsing, validation, templating, sanitization
+- `config.test.js` - Configuration
+- `html-generation.test.js` - Rendered pages, sitemap, RSS and dates, checked
+  on the real templates
+- `file-operations.test.js` - Template and article loading
+- `integration.test.js` - Full production build of a temporary copy of the
+  project (every page generated, SEO checks pass, invalid articles fail)
+- `edge-cases.test.js`, `utils.test.js` - Edge cases of the helpers
+- `seo-validate.test.js` - SEO validator
+- `indexnow.test.js` - IndexNow configuration and changed-URL selection
+- `contrast.test.js` - WCAG AA contrast of the text colors in both themes
 
 ## 📄 License
 
