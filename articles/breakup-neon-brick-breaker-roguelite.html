@@ -1,0 +1,261 @@
+<!-- title: Breakup: A Neon Brick-Breaker Roguelite -->
+<!-- date: 2026-10-19 -->
+<!-- description: Breakup is a free neon brick-breaker played as a roguelite, written in C with SDL3. Towers instead of walls, perks, bosses and a daily run with no server. -->
+
+<p>
+  I'd like to introduce one of my two new games -
+  <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener"
+    >Breakup</a
+  >, a neon brick-breaker played as a roguelite. It takes the oldest idea in
+  arcade gaming - a paddle, a ball and a wall of bricks - and asks what happens
+  when the wall stops sitting still on one screen and every game becomes a run
+  with its own rules.
+</p>
+
+<p>
+  Breakup is free and you can play it right in your browser on itch.io, with
+  nothing to install. There are also downloadable versions for Windows, macOS
+  and Linux. A typical run takes about an hour, but one tower is enough to find
+  out whether it's your kind of game.
+</p>
+
+<h2>Towers Instead of Walls</h2>
+
+<p>
+  In a classic brick-breaker, you clear the wall and move on. In Breakup, every
+  level is a tower - fifteen bricks wide and up to sixty rows tall - and the
+  camera climbs it with your ball. You are not there to clear the wall. You are
+  there to find the crystals buried in it. Shatter all of them and the level
+  ends, whatever else is still standing.
+</p>
+
+<p>Everything else in the tower is either in your way or a weapon:</p>
+
+<ul>
+  <li>
+    <strong>Steel</strong> - Never breaks. It isn't an obstacle, it's the shape
+    of the room, and learning to bank shots off it is half the game
+  </li>
+  <li>
+    <strong>Explosive bricks</strong> - Take their neighbours with them, and
+    those take theirs. One good shot can bring down half a tower
+  </li>
+  <li>
+    <strong>Gold and tough bricks</strong> - Worth the extra hits if you have
+    the time
+  </li>
+  <li>
+    <strong>Enemies</strong> - Drifters, divers, splitters and saucers. None of
+    them can kill you, but all of them stand exactly where your ball was going
+  </li>
+</ul>
+
+<p>
+  There are four worlds - Cyan Dawn, Emerald Drift, Ember Fields and Violet
+  Void - each with its own palette, sky, music and five hand-designed towers.
+</p>
+
+<h2>Every Game Is a Run</h2>
+
+<p>
+  This is where the roguelite part comes in. A run has four acts, one for each
+  world, and every act is three levels and a boss. The levels are drawn from
+  the world's pool in a new order every time, and from the second act on they
+  often arrive under a mutator - mirrored, armored, brittle, a gold rush or a
+  swarm of enemies.
+</p>
+
+<p>
+  After every level you choose one of three perks and keep it for the rest of
+  the run. There are fourteen of them, and none of them is simply a bigger
+  number. Each one is a rule that hooks into something the game already does,
+  so they stack into each other:
+</p>
+
+<ul>
+  <li><strong>Crystal Blast</strong> - Crystals explode when they break</li>
+  <li>
+    <strong>Chain Reaction</strong> - Every brick an explosion breaks counts
+    towards your combo
+  </li>
+  <li>
+    <strong>Inferno</strong> - Every explosion is wider while the fireball is
+    lit
+  </li>
+  <li>
+    <strong>Glass Cannon</strong> - Raises the combo cap from 5× to 8×, and
+    makes the ball faster to pay for it
+  </li>
+</ul>
+
+<p>
+  Take the first three together and a tower starts clearing itself. That
+  moment, when separate small rules suddenly click into something much bigger,
+  is what the roguelite genre does best.
+</p>
+
+<p>
+  Every act ends with a boss - seven in total, and no two fight the same. A boss
+  is the game's own vocabulary turned against you: a crystal hidden behind a
+  ring of armour plates that orbit it, and the only way in is through a gap.
+  And after each boss comes the most important question of the run:
+  <strong>cash out, or go deeper?</strong> Cash out and you keep every point.
+  Go deeper and the score multiplier rises, but a curse comes with it, and if
+  you die before the next chance to cash out, you lose half of everything you
+  scored since.
+</p>
+
+<h2>The Combo Is the Real Game</h2>
+
+<p>
+  Every brick you break before the ball returns to your paddle raises a
+  multiplier, up to 5×. A tower taken in one long, greedy chain pays several
+  times what the same tower pays when played safe. And there's one small
+  detail that changes how it feels: each link in the chain rings a semitone higher than
+  the last one. A good combo doesn't repeat the same noise - it climbs a
+  musical scale, so you can literally hear how well you're playing.
+</p>
+
+<p>
+  The power-ups follow the same philosophy of decisions rather than free gifts.
+  The most common capsule in the game is Shrink. It makes your paddle small
+  and hard to play with - but while it lasts, the combo multiplier is one step
+  higher. So every capsule drifting down at you is a choice, and you have to
+  make it while it falls.
+</p>
+
+<h2>Under the Hood: C, SDL3 and No Images</h2>
+
+<p>
+  Breakup is written in C17 with SDL3. Just like with
+  <a href="jetshot-ios-game-swift-spritekit.html">Jetshot</a>, there isn't a
+  single image file in the game. All graphics are generated procedurally at
+  startup - the bricks, the neon glow, the parallax starfields, the bloom pass
+  over the whole field. Every sound effect is synthesized in code by a small
+  built-in chiptune engine.
+</p>
+
+<p>
+  The only things the game doesn't generate are the font and the music. The
+  soundtrack is nineteen looping chiptune tracks from
+  <a
+    href="https://tallbeard.itch.io/music-loop-bundle"
+    target="_blank"
+    rel="noopener"
+    >Three Red Hearts</a
+  >
+  by Abstraction, released into the public domain - and it is the reason the
+  game is about 20 MB instead of a few hundred kilobytes.
+</p>
+
+<p>
+  The final boss, The Sovereign, even speaks. Its voice is five sung vowels
+  synthesized at startup. Each one starts as a sawtooth wave, which contains
+  every harmonic just like a human throat does, and runs through three
+  resonators tuned to the formants of that vowel - which is all that makes an
+  "ah" different from an "oo". It's sung in three voices at once, at the root,
+  a fifth above and an octave below, because The Sovereign is not a person and
+  shouldn't sound like one. One vowel per syllable, pitched from the word being
+  said, and you get the melody of speech with nothing in it to understand.
+</p>
+
+<p>
+  The browser version is the very same C code compiled to WebAssembly with
+  Emscripten. Your settings, unlocked perks and best runs survive closing the
+  tab thanks to SDL storing its save directory in the browser's IndexedDB. The
+  game itself never touches the network.
+</p>
+
+<h2>A Daily Run Without a Server</h2>
+
+<p>
+  One feature deserves a closer look - the daily run. Once a day, everybody who
+  plays gets the same run: the same towers in the same order, the same mutators
+  and the same perk offers. It keeps its own best score, so you can compare
+  results with friends.
+</p>
+
+<p>
+  The interesting part is that there's no server behind it. No backend decides
+  what today's run looks like, and nothing is downloaded. The trick is that the
+  <strong>seed is the date</strong>. All randomness in a run comes from a
+  deterministic pseudo-random number generator (PCG), and the same seed always
+  produces the same sequence of numbers. Feed it today's date and every copy of
+  the game, anywhere in the world, builds exactly the same run - even offline.
+</p>
+
+<p>
+  This works only because the game is strict about where randomness comes from.
+  A single call to the system clock or an unseeded random function in the
+  wrong place would quietly break it. That's why the test suite checks the run
+  as a function of its seed: the same seed must always produce the same levels,
+  mutators and perk offers.
+</p>
+
+<h2>A Game That Photographs Itself</h2>
+
+<p>
+  Having no image files has one funny consequence. When it came to screenshots
+  for the itch.io store page, there was simply nothing to crop. Every pixel
+  is drawn at runtime, so the only place a picture of Breakup exists is the
+  frame buffer of a running game.
+</p>
+
+<p>
+  So the game takes its own photos. A single command starts it in a scripted
+  mode where it plays itself - the paddle simply follows the ball - and saves
+  screenshots and GIFs at given frames. In this mode, the game advances by a
+  fixed time step instead of the wall clock, so a frame number is a moment in
+  the game, not a moment on the machine. With a fixed seed, two runs produce
+  byte-identical pictures, and whenever the art changes, the whole press kit
+  can be regenerated instead of re-photographed by hand.
+</p>
+
+<p>
+  A related feature is available to players too. Press <strong>G</strong> and
+  the last eight seconds of play are saved as a GIF. The game keeps a rolling
+  buffer of recent frames all the time, so that perfect chain reaction you want
+  to show somebody is already recorded by the time you reach for the key. The
+  GIF encoder is written from scratch, LZW compression included. (This one only
+  works in the downloaded versions, since the browser has nowhere to put the
+  file.)
+</p>
+
+<h2>Play Breakup</h2>
+
+<p>
+  Breakup is free on Windows, macOS and Linux, and playable in the browser with
+  nothing to install. I recommend playing with the sound on - half of what the
+  game does, it does with noise: the rising scale of a combo, the crack of a
+  crystal, the jingle when a tower finally comes down.
+</p>
+
+<p>
+  If you enjoy arcade games, I'd love for you to
+  <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener"
+    >play Breakup on itch.io</a
+  >
+  and let me know how far you got. And if you're curious how it's built, the
+  <a href="https://github.com/RobertLib/breakup" target="_blank" rel="noopener"
+    >source code is on GitHub</a
+  >
+  under the MIT license.
+</p>
+
+<h2>Final Thoughts</h2>
+
+<p>
+  Breakup was a reminder of how much depth can hide in a simple mechanic. A
+  ball bouncing off a paddle is one of the oldest ideas in video games, and yet
+  by adding towers, perks and a single risky question after every boss, it
+  becomes a game where every run tells a different story.
+</p>
+
+<p>
+  It also continues the approach I took with Jetshot: generating
+  graphics and sound in code instead of drawing them by hand isn't a
+  limitation. It's a different way of thinking about game art - one that
+  programmers can feel right at home in.
+</p>
+
+<p>Thank you for reading, and good luck with the crystals!</p>
