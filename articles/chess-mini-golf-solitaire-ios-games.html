@@ -1,0 +1,372 @@
+<!-- title: Chess, Mini Golf and Solitaire for iPhone -->
+<!-- date: 2026-10-19 -->
+<!-- description: Three new free games for iPhone and iPad: Chess Offline, Mini Golf 3D and Solitaire Klondike. No ads, no in-app purchases, no internet - just the game. -->
+
+<p>
+  Since releasing
+  <a href="jetshot-ios-game-swift-spritekit.html">Jetshot</a>, I've published
+  three more games on the
+  <a
+    href="https://apps.apple.com/us/developer/robert-libsansky/id1634043416"
+    target="_blank"
+    rel="noopener"
+    >App Store</a
+  >: <strong>Chess Offline</strong>, <strong>Mini Golf 3D</strong> and
+  <strong>Solitaire Klondike</strong>. All three are classics everyone knows,
+  all three are free, and all three run on iPhone and iPad in English and
+  Czech.
+</p>
+
+<p>
+  In this article I'll introduce each of them - and share a few stories from
+  under the hood, because each one hides at least one problem that turned out
+  to be far more interesting than it first looked.
+</p>
+
+<h2>Just the Game, Nothing Else</h2>
+
+<p>
+  Classic games are everywhere on the App Store, and they are often some of
+  the most cluttered apps there. A game of solitaire interrupted by a video ad, a
+  chess app that asks you to subscribe before it shows you where you went
+  wrong, a mini golf game that wants you to buy coins. I wanted the opposite,
+  so all three games follow the same rules:
+</p>
+
+<ul>
+  <li><strong>No ads</strong> - Not even a banner</li>
+  <li><strong>No in-app purchases</strong> - Everything is in the free app</li>
+  <li>
+    <strong>No account and no data collected</strong> - Nothing to sign up for
+  </li>
+  <li>
+    <strong>Completely offline</strong> - Chess and Solitaire don't contain a
+    single line of networking code
+  </li>
+</ul>
+
+<p>
+  Each App Store description ends with the same kind of sentence:
+  <em>Just chess. Nothing else.</em> That's the whole idea.
+</p>
+
+<h2>Chess Offline: Play and Review</h2>
+
+<p>
+  <a
+    href="https://apps.apple.com/us/app/chess-offline-play-review/id6809805041"
+    target="_blank"
+    rel="noopener"
+    >Chess Offline</a
+  >
+  lets you play against the computer at five levels, from Beginner to
+  Grandmaster, or against a friend on one device - the board can turn towards
+  whoever is on the move. Its best feature, though, comes after the game.
+</p>
+
+<p>
+  When a game ends, the engine plays it back and grades every single move:
+  brilliant, great, best, excellent, good, book, inaccuracy, mistake, miss or
+  blunder.
+  Each player gets an accuracy score, an evaluation graph shows who was winning
+  when, and the move the engine would rather have played is drawn on the
+  board. On many chess platforms, this kind of game review is a premium
+  feature with a daily limit. Here, it has no limit and works in airplane mode.
+</p>
+
+<p>
+  For newcomers, there's also a nine-chapter guide on how to play, with 27
+  board diagrams. Fifteen of them are playable - the dots on them are real
+  legal moves calculated by the engine, and tapping one plays it.
+</p>
+
+<h3>An Engine of Its Own</h3>
+
+<p>
+  The app doesn't use any third-party chess engine. Its own engine, written in
+  pure Swift, uses the classic techniques of chess programming: alpha-beta
+  search with a transposition table, quiescence search, null-move pruning and
+  static exchange evaluation. That last one is what helps the review tell a
+  brilliant sacrifice from a plain blunder - both give up material on the
+  spot, but only one of them gets something back for it.
+</p>
+
+<p>
+  The two strongest levels open out of a book of 90 named opening lines, so
+  they never replay the same game. The weaker levels vary their openings by
+  picking a little at random among the moves they searched.
+</p>
+
+<p>
+  How do you know a chess engine plays by the rules? Chess programmers use a
+  technique called <strong>perft</strong> (performance test): you count every
+  possible position reachable from a given position in N moves and compare the
+  number with known reference values. From the starting position, there are 20
+  positions after one move, 400 after two, 8,902 after three and 197,281 after
+  four. If your move generator gets a single rule wrong - castling through
+  check, en passant, a promotion - the number won't match. The test suite runs
+  perft on six well-known positions, including the famous "Kiwipete", which
+  packs castling, en passant, promotions and pins into a single position.
+</p>
+
+<h3>A Chess Game You Can Play by Ear</h3>
+
+<p>
+  Every square on the board is an accessibility element. VoiceOver reads its
+  coordinate, what stands on it, whether the piece can move and where a move
+  would land - so a whole game can be played without seeing the screen. The
+  notation is localized too: a knight move written <code>Nf3</code> in English
+  reads <code>Jf3</code> in Czech, while the engine and saved games keep using
+  the English notation internally.
+</p>
+
+<p>
+  A small easter egg for chess fans: the App Store preview video isn't a staged
+  game. It replays the seventeen moves of the famous
+  <strong>Opera Game</strong> - Paul Morphy against the Duke of Brunswick and
+  Count Isouard, played in a box at the Paris opera in 1858.
+</p>
+
+<h2>Mini Golf 3D: 108 Holes</h2>
+
+<p>
+  <a
+    href="https://apps.apple.com/us/app/mini-golf-3d-108-holes/id6799511530"
+    target="_blank"
+    rel="noopener"
+    >Mini Golf 3D</a
+  >
+  is a real minigolf game in 3D, built with SwiftUI and RealityKit. It has 108
+  hand-designed holes across nine worlds - from Green Garden through Frozen
+  Fjord, Neon Nights and Volcano Forge to Orbital Station - each with its own
+  obstacles: sand traps, ice, portals, pinball bumpers, lava, geysers,
+  turntables, cannons, magnets and loops.
+</p>
+
+<p>
+  You play it like a slingshot: drag back from the ball, and the longer the
+  drag, the harder the shot. A dotted aim line predicts the path, including
+  bank shots off the rails, and turns gold the moment the putt is going in.
+  Each world also has a pair of local critters - a hedgehog, a penguin, a
+  snowman, a crab - and they aren't just scenery. The ball bounces off them.
+</p>
+
+<p>
+  The holes are modelled on real minigolf. The shapes follow the standard
+  lanes defined by the World Minigolf Sport Federation - the pyramids, the
+  lightning, the labyrinth, the double gate - and the game uses real rules:
+  the stroke limit is par + 3, and water or lava costs a penalty stroke.
+</p>
+
+<h3>Measuring Difficulty with Dijkstra</h3>
+
+<p>
+  With 108 holes, the hardest design problem wasn't building them - it was
+  making sure the difficulty grows evenly. The surface area of a hole turned
+  out to be a useless measure: the labyrinth is only two square metres and
+  takes four putts, while an open basin twice the size takes one.
+</p>
+
+<p>
+  So difficulty is measured as <strong>travel</strong>: the shortest distance
+  the ball has to roll from the tee to the cup, around every rail and over the
+  ramps and portals. A small offline tool computes it with Dijkstra's algorithm
+  over a grid of 3 cm cells and checks a few rules across all 108 holes. Every
+  hole has between 0.95 and 1.55 metres of travel per par stroke, a world's
+  final hole is always its longest, and the median travel grows from world to
+  world. A second tool walks every hole in 2 cm steps and proves the ball can
+  actually reach both the cup and the hidden bonus star.
+</p>
+
+<h3>The Loop That Physics Couldn't Handle</h3>
+
+<p>
+  Most of the game relies on RealityKit's physics engine, but not the loops. A
+  3 cm ball at putting speed would either catch on the seam between two track
+  segments and fly off into the sky, or glue itself to the track. So inside a
+  loop, the game takes the ball out of the physics engine and moves it around
+  the circle itself, using the energy budget of a real rolling sphere.
+</p>
+
+<p>
+  There's a lovely bit of physics in that: a rolling ball slows down on a slope
+  more gently than a sliding one, because part of its energy is stored in the
+  spin. For a solid sphere, only 5/7 of gravity brakes it along the track. Hit
+  the loop too softly and the ball climbs part way and rolls back; just a bit
+  short, and it loses contact near the top and drops inside the circle - exactly
+  like a real one would.
+</p>
+
+<h3>The Same Hole for Everyone, Every Day</h3>
+
+<p>
+  Mini Golf also has a daily challenge: one hole a day, the same for every
+  player. Just like the daily run in my brick-breaker
+  <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a>, there's no
+  server behind it. The hole is derived from the date alone - the day is hashed
+  with FNV-1a and fed into a SplitMix64 random generator - so every device
+  picks the same hole independently.
+</p>
+
+<p>
+  The tricky part was a seemingly simple rule: never the same hole two days in
+  a row. If today's draw matches yesterday's, it's redrawn. But yesterday might
+  have been redrawn as well, so comparing against yesterday's first draw isn't
+  enough - you need to know what yesterday actually produced, which depends on
+  the day before that. The game unwinds this chain four days back.
+</p>
+
+<h2>Solitaire Klondike: Offline</h2>
+
+<p>
+  <a
+    href="https://apps.apple.com/us/app/solitaire-klondike-offline/id6806802031"
+    target="_blank"
+    rel="noopener"
+    >Solitaire Klondike</a
+  >
+  is the classic solitaire, done properly. It has draw one or draw three, and
+  the scoring you remember from the Windows desktop, worked out in full: +10
+  for a card on a foundation, +5 for turning one over, −2 every ten seconds and
+  a time bonus for finishing quickly. If you prefer, there's Vegas scoring, or
+  no scoring at all.
+</p>
+
+<p>
+  Its goal is that you're never stuck and never guessing. Undo reaches back
+  through the whole game, hints cycle through every move worth making, and
+  when a deal genuinely runs out of legal moves, the board tells you so. Once
+  the win is certain, a magic wand plays the rest of the game for you.
+</p>
+
+<h3>A Whole Board in 65 Bytes</h3>
+
+<p>
+  Undo survives even closing the app, so a deal reopened at a dead end can still
+  be walked back to where it went wrong. That means the full undo history is
+  saved after every single move. Encoding it as JSON would take about 200 bytes
+  per step, rewritten from scratch each time, so the game uses its own compact
+  binary format instead. Each card fits into one byte - suit and rank in seven
+  bits, and the eighth bit says whether it's face up - and a whole board takes
+  just 65 bytes.
+</p>
+
+<h3>400 Games Played on Every Push</h3>
+
+<p>
+  The game logic is tested by a fuzz test that plays 400 deals and checks the
+  board after every single move: 52 distinct cards, valid foundations, valid
+  runs, no face-up card ever buried. It also makes sure the hints and the
+  dead-end detection always agree, so the game can never announce that a deal
+  is dead while a hint is still waiting to be given.
+</p>
+
+<p>
+  Yet one bug slipped through all of that: tapping anywhere on
+  the empty table dealt a card, as if you'd tapped the deck. The logic was fine
+  - the problem was the size of the deck's tap area. In SwiftUI, a view placed
+  with <code>.position</code> claims all the space it's offered, so a tap area
+  applied after it quietly covered the whole board. Unit tests ask the model to
+  make a move; they never actually tap. Today, UI tests launch the app, tap
+  the bare felt and expect nothing to happen.
+</p>
+
+<h2>Apps That Take Their Own Screenshots</h2>
+
+<p>
+  One thing all three games share is how their App Store screenshots and
+  preview videos were made. None of them is a mock-up. Each app has special
+  debug modes that let a script launch it in a given state and let it play by
+  itself, so every score, clock and accuracy figure in the pictures was really
+  earned in a game.
+</p>
+
+<p>
+  For Solitaire, this led to a fun search. I needed a screenshot of the dead-end
+  banner - a deal where the game's own move advisor plays itself into a
+  position with no legal move left, with a score still on the board. Finding
+  one meant playing through hundreds of thousands of deals. Only two in two
+  hundred thousand fit.
+</p>
+
+<h2>Built Natively, Built Small</h2>
+
+<p>
+  All three games are written in Swift and SwiftUI, with no third-party
+  dependencies - only Apple's own frameworks. Solitaire and Chess synthesize
+  their sounds at runtime, Solitaire draws its cards in code, and Mini Golf
+  generates its 3D graphics and textures procedurally. As a result, the apps
+  are tiny by today's standards:
+</p>
+
+<ul>
+  <li><strong>Solitaire Klondike</strong> - about 2.4 MB</li>
+  <li><strong>Chess Offline</strong> - about 5.6 MB</li>
+  <li>
+    <strong>Mini Golf 3D</strong> - about 28 MB, most of which is its
+    soundtrack of 32 music tracks
+  </li>
+</ul>
+
+<p>
+  All three are also built with accessibility in mind - VoiceOver, Dynamic
+  Type and Reduce Motion are supported throughout. And all three are open
+  source on GitHub under the MIT license:
+  <a href="https://github.com/RobertLib/chess" target="_blank" rel="noopener"
+    >chess</a
+  >,
+  <a href="https://github.com/RobertLib/minigolf" target="_blank" rel="noopener"
+    >minigolf</a
+  >
+  and
+  <a href="https://github.com/RobertLib/solitaire" target="_blank" rel="noopener"
+    >solitaire</a
+  >.
+</p>
+
+<h2>Give Them a Try</h2>
+
+<p>
+  If you have an iPhone or iPad, I'd be really happy if you tried them out. A
+  rating or a short review on the App Store helps a lot - for a small
+  independent developer, it's the main way other players can find the games.
+</p>
+
+<ul>
+  <li>
+    <a
+      href="https://apps.apple.com/us/app/chess-offline-play-review/id6809805041"
+      target="_blank"
+      rel="noopener"
+      >Chess Offline: Play &amp; Review</a
+    >
+  </li>
+  <li>
+    <a
+      href="https://apps.apple.com/us/app/mini-golf-3d-108-holes/id6799511530"
+      target="_blank"
+      rel="noopener"
+      >Mini Golf 3D: 108 Holes</a
+    >
+  </li>
+  <li>
+    <a
+      href="https://apps.apple.com/us/app/solitaire-klondike-offline/id6806802031"
+      target="_blank"
+      rel="noopener"
+      >Solitaire Klondike: Offline</a
+    >
+  </li>
+</ul>
+
+<h2>Final Thoughts</h2>
+
+<p>
+  It's easy to think that classic games like chess or solitaire are "solved" -
+  that there's nothing left to build. But doing them properly is full of
+  interesting problems: a chess engine you can trust, a difficulty curve you
+  can measure, an undo history that fits in a few bytes. And sometimes the
+  most valuable feature is simply what the app leaves out.
+</p>
+
+<p>Thank you for reading, and enjoy the games!</p>
