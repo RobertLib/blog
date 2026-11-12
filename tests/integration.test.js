@@ -126,6 +126,10 @@ describe("Integration Tests - Real Usage", () => {
       "config.js",
       "seo-validate.js",
       "html-entities.js",
+      "image-size.js",
+      "pages",
+      "projects.json",
+      "tools",
     ];
     const tempDirs = [];
 
@@ -174,6 +178,9 @@ describe("Integration Tests - Real Usage", () => {
         "feed.xml",
         "styles.css",
         "fonts/inter-latin.woff2",
+        "about.html",
+        "projects.html",
+        "tags/games.html",
         ...articles.map((article) => article.filename),
       ]) {
         expect(fs.existsSync(path.join(dist, file)), file).toBe(true);
@@ -199,10 +206,15 @@ describe("Integration Tests - Real Usage", () => {
           `<loc>https://example.com/${article.filename}</loc>`
         );
       }
-      expect(feed.match(/<item>/g)).toHaveLength(Math.min(articles.length, 10));
+      expect(feed.match(/<item>/g)).toHaveLength(Math.min(articles.length, 20));
+      for (const tag of build.collectTags(articles)) {
+        expect(sitemap).toContain(
+          `<loc>https://example.com/tags/${tag.slug}.html</loc>`
+        );
+      }
 
       const pages = fs
-        .readdirSync(dist)
+        .readdirSync(dist, { recursive: true })
         .filter((file) => /\.(html|xml)$/.test(file));
       for (const file of pages) {
         expect(read(file), file).not.toContain("localhost");

@@ -114,6 +114,7 @@ describe("SEO Validation Tests", () => {
   <title>
     RobLib&#039;s Blog - Programming &amp; Web Development Insights
   </title>
+  <link rel="canonical" href="https://example.com/multi-line.html" />
   <meta
     name="description"
     content="Expert insights on web development, JavaScript, Node.js, and programming best practices. Pragmatic solutions &amp; critical perspectives on web technologies."
@@ -123,10 +124,75 @@ describe("SEO Validation Tests", () => {
     content="T"
   />
   <meta property="og:description" content="D" />
-  <meta property="og:image" content="https://example.com/i.png" />
-</head></html>`;
+  <meta property="og:image" content="https://other.example/i.png" />
+</head><body><h1>Title</h1></body></html>`;
     fs.writeFileSync(path.join(testDir, "multi-line.html"), html);
 
     expect(validateSEO(testDir)).toBe(true);
+  });
+
+  const page = ({ title, description, ogImage = "https://cdn.example/i.png", h1 = "<h1>T</h1>" }) => `
+<html><head>
+  <title>${title}</title>
+  <link rel="canonical" href="https://example.com/page.html" />
+  <meta name="description" content="${description}" />
+  <meta property="og:title" content="T" />
+  <meta property="og:description" content="D" />
+  <meta property="og:image" content="${ogImage}" />
+</head><body>${h1}</body></html>`;
+  const okDescription =
+    "A description long enough to be useful in search results, describing what the page is about in a sentence or two.";
+
+  it("should accept short, specific titles", () => {
+    fs.writeFileSync(
+      path.join(testDir, "short.html"),
+      page({ title: "Chuck in 600 Kilobytes", description: okDescription })
+    );
+
+    expect(validateSEO(testDir)).toBe(true);
+  });
+
+  it("should reject titles that get cut off and thin descriptions", () => {
+    fs.writeFileSync(
+      path.join(testDir, "long.html"),
+      page({ title: "x".repeat(71), description: okDescription })
+    );
+    expect(validateSEO(testDir)).toBe(false);
+
+    fs.writeFileSync(
+      path.join(testDir, "long.html"),
+      page({ title: "A fine title", description: "Too thin." })
+    );
+    expect(validateSEO(testDir)).toBe(false);
+  });
+
+  it("should require exactly one h1", () => {
+    fs.writeFileSync(
+      path.join(testDir, "no-h1.html"),
+      page({ title: "A fine title", description: okDescription, h1: "" })
+    );
+
+    expect(validateSEO(testDir)).toBe(false);
+  });
+
+  it("should check that a local og:image was generated", () => {
+    const html = page({
+      title: "A fine title",
+      description: okDescription,
+      ogImage: "https://example.com/og/page.png",
+    });
+    fs.writeFileSync(path.join(testDir, "page.html"), html);
+    expect(validateSEO(testDir)).toBe(false);
+
+    fs.mkdirSync(path.join(testDir, "og"));
+    fs.writeFileSync(path.join(testDir, "og", "page.png"), "");
+    expect(validateSEO(testDir)).toBe(true);
+  });
+
+  it("should validate pages in subdirectories", () => {
+    fs.mkdirSync(path.join(testDir, "tags"));
+    fs.writeFileSync(path.join(testDir, "tags", "games.html"), shortHtml);
+
+    expect(validateSEO(testDir)).toBe(false);
   });
 });

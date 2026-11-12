@@ -1,82 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RobLib's Blog - Programming & Web Development Insights</title>
-    <meta
-      name="description"
-      content="Expert insights on web development, JavaScript, Node.js, and programming best practices. Pragmatic solutions and critical perspectives on web technologies."
-    />
-    <meta
-      name="keywords"
-      content="web development, programming, javascript, nodejs, frontend, backend, software engineering, coding, web technologies, blog"
-    />
-    <meta name="author" content="{{author}}" />
-    <meta
-      property="og:title"
-      content="RobLib's Blog - Programming & Web Development"
-    />
-    <meta
-      property="og:description"
-      content="Expert insights on web development, JavaScript, Node.js, and programming best practices. Read about pragmatic solutions and critical perspectives on modern web technologies."
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="{{canonical-url}}" />
-    <meta property="og:site_name" content="RobLib's Blog" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="{{base-url}}/og-image.png" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content="RobLib's Blog: Notes on programming and web development"
-    />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="RobLib's Blog - Programming & Web Development"
-    />
-    <meta name="twitter:image" content="{{base-url}}/og-image.png" />
-    <meta
-      name="twitter:image:alt"
-      content="RobLib's Blog: Notes on programming and web development"
-    />
-    <meta
-      name="twitter:description"
-      content="Expert insights on web development, JavaScript, Node.js, and programming best practices."
-    />
-    <meta
-      name="robots"
-      content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
-    />
-    <link rel="canonical" href="{{canonical-url}}" />
-    <meta name="generator" content="Blog Generator v1.0.0" />
+    {{> head-meta}}
     {{> head-assets}}
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Blog",
-        "name": "RobLib's Blog",
-        "description": "Expert insights on web development, JavaScript, Node.js, and programming best practices.",
-        "url": "{{canonical-url}}",
-        "author": {
-          "@type": "Person",
-          "name": "{{json-author}}",
-          "url": "{{canonical-url}}"
-        },
-        "publisher": {
-          "@type": "Person",
-          "name": "{{json-author}}"
-        },
-        "mainEntityOfPage": {
-          "@type": "WebPage",
-          "@id": "{{canonical-url}}"
-        },
-        "inLanguage": "en-US"
-      }
-    </script>
+    {{json-ld}}
   </head>
   <body class="page-home">
     {{> header}}
@@ -85,19 +12,30 @@
       <div class="shell">
         <section class="hero">
           <p class="eyebrow hero__eyebrow">{{author}}</p>
-          <h1 class="hero__title">Notes on programming and web development</h1>
+          <h1 class="hero__title">Small software, games and the web</h1>
           <p class="hero__text">
-            Programming insights, web development tips, and technology
-            perspectives &mdash; written from everyday practice, with a bias for
-            pragmatism over hype.
+            I build things that fit in kilobytes: games that draw every pixel
+            in code, iPhone apps that work offline without ads, and web apps
+            with as few dependencies as possible. This is where I write down
+            how they are made and what I learn on the way &mdash; including
+            where AI helps and where it doesn&rsquo;t.
+          </p>
+          <p class="hero__links">
+            <a href="{{root}}about.html">About me</a>
+            <a href="{{root}}projects.html">Projects</a>
+            <a href="{{root}}feed.xml">RSS</a>
           </p>
         </section>
+
+        {{showcase}}
 
         <section aria-labelledby="latest-heading">
           <h2 class="section-label" id="latest-heading">Latest</h2>
           <div class="post-list">{{articles}}</div>
           {{archive}}
         </section>
+
+        {{subscribe}}
       </div>
     </main>
 

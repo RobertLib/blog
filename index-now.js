@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 
 const { execFileSync } = require("child_process");
-const fs = require("fs");
 const path = require("path");
-const { submitToIndexNow } = require("./build.js");
+const build = require("./build.js");
+const { submitToIndexNow } = build;
 const config = require("./config.js");
 
 // Changes here affect the markup of every page (a test checks that every
 // module build.js loads is listed, except the SEO validator)
-const SITE_WIDE_FILES = ["build.js", "config.js", "html-entities.js"];
+const SITE_WIDE_FILES = [
+  "build.js",
+  "config.js",
+  "html-entities.js",
+  "image-size.js",
+];
 const SITE_WIDE_DIRS = [`${config.build.templatesDir}/`];
-
-function getArticleFiles(articlesDir = config.build.articlesDir) {
-  if (!fs.existsSync(articlesDir)) return [];
-  return fs.readdirSync(articlesDir).filter((file) => file.endsWith(".html"));
-}
 
 function articleUrl(baseUrl, file) {
   return `${baseUrl}/${path.basename(file)}`;
@@ -24,9 +24,26 @@ function listingUrls(baseUrl) {
   return [baseUrl, `${baseUrl}/archive.html`];
 }
 
-function allSiteUrls({ baseUrl, articleFiles }) {
+function tagPageUrl(baseUrl, slug) {
+  return `${baseUrl}/tags/${slug}.html`;
+}
+
+// Every page of the site. Besides the articles, `site` may list standalone
+// pages (pageFiles), whether there is a projects page (hasProjects) and the
+// tag slugs of each article (tagsByArticle).
+function allSiteUrls({
+  baseUrl,
+  articleFiles,
+  pageFiles = [],
+  hasProjects = false,
+  tagsByArticle = {},
+}) {
+  const tagSlugs = [...new Set(Object.values(tagsByArticle).flat())].sort();
   return [
     ...listingUrls(baseUrl),
+    ...(hasProjects ? [`${baseUrl}/projects.html`] : []),
+    ...pageFiles.map((file) => `${baseUrl}/${path.basename(file)}`),
+    ...tagSlugs.map((slug) => tagPageUrl(baseUrl, slug)),
     ...articleFiles.map((file) => articleUrl(baseUrl, file)),
   ];
 }
@@ -34,12 +51,28 @@ function allSiteUrls({ baseUrl, articleFiles }) {
 // Maps files changed by a push to the public URLs whose content changed.
 // Deleted articles are included as well, so search engines learn about
 // removals. Changes to static assets alone don't change any page content.
-function urlsForChangedFiles(changedFiles, { baseUrl, articleFiles }) {
+function urlsForChangedFiles(changedFiles, site) {
+  const { baseUrl, tagsByArticle = {} } = site;
   const articlePrefix = `${config.build.articlesDir}/`;
+  const pagePrefix = `${config.build.pagesDir}/`;
 
-  const changedArticleUrls = changedFiles
-    .filter((file) => file.startsWith(articlePrefix) && file.endsWith(".html"))
-    .map((file) => articleUrl(baseUrl, file));
+  const changedArticles = changedFiles.filter(
+    (file) => file.startsWith(articlePrefix) && file.endsWith(".html")
+  );
+  const changedArticleUrls = changedArticles.map((file) =>
+    articleUrl(baseUrl, file)
+  );
+  // Tag pages list their articles' titles and descriptions
+  const changedTagUrls = changedArticles.flatMap((file) =>
+    (tagsByArticle[path.basename(file)] || []).map((slug) =>
+      tagPageUrl(baseUrl, slug)
+    )
+  );
+  const changedPageUrls = changedFiles
+    .filter((file) => file.startsWith(pagePrefix) && file.endsWith(".html"))
+    .map((file) => `${baseUrl}/${path.basename(file)}`);
+  // The projects list shows on the projects page and the home page
+  const projectsChanged = changedFiles.includes(config.build.projectsFile);
 
   const siteWide = changedFiles.some(
     (file) =>
@@ -48,17 +81,36 @@ function urlsForChangedFiles(changedFiles, { baseUrl, articleFiles }) {
   );
 
   if (siteWide) {
-    return [
-      ...new Set([
-        ...allSiteUrls({ baseUrl, articleFiles }),
-        ...changedArticleUrls,
-      ]),
-    ];
+    return [...new Set([...allSiteUrls(site), ...changedArticleUrls])];
   }
 
-  if (changedArticleUrls.length === 0) return [];
+  const urls = [];
+  if (changedArticleUrls.length > 0) {
+    urls.push(...listingUrls(baseUrl), ...changedArticleUrls, ...changedTagUrls);
+  }
+  if (projectsChanged) {
+    urls.push(baseUrl, `${baseUrl}/projects.html`);
+  }
+  urls.push(...changedPageUrls);
 
-  return [...new Set([...listingUrls(baseUrl), ...changedArticleUrls])];
+  return [...new Set(urls)];
+}
+
+// What the site consists of now, from the same sources the build uses
+function currentSite(baseUrl) {
+  const articles = build.getAllArticles();
+  return {
+    baseUrl,
+    articleFiles: articles.map((article) => article.filename),
+    pageFiles: build.getAllPages().map((page) => page.filename),
+    hasProjects: build.loadProjects().length > 0,
+    tagsByArticle: Object.fromEntries(
+      articles.map((article) => [
+        article.filename,
+        article.tags.map((tag) => tag.slug),
+      ])
+    ),
+  };
 }
 
 // Returns null when the base commit is unknown (first push, force push),
@@ -92,16 +144,15 @@ function getChangedFiles(baseRef) {
 }
 
 function getChangedUrls(baseRef) {
-  const articleFiles = getArticleFiles();
-  const baseUrl = config.site.baseUrl;
+  const site = currentSite(config.site.baseUrl);
   const changedFiles = getChangedFiles(baseRef);
 
   if (changedFiles === null) {
     console.log(`Base ${baseRef || "(none)"} not available, submitting all URLs`);
-    return allSiteUrls({ baseUrl, articleFiles });
+    return allSiteUrls(site);
   }
 
-  return urlsForChangedFiles(changedFiles, { baseUrl, articleFiles });
+  return urlsForChangedFiles(changedFiles, site);
 }
 
 async function submitUrls() {
@@ -168,6 +219,8 @@ if (require.main === module) {
 module.exports = {
   submitUrls,
   urlsForChangedFiles,
+  allSiteUrls,
+  currentSite,
   getChangedUrls,
   SITE_WIDE_FILES,
 };

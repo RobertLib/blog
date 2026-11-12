@@ -12,7 +12,8 @@
     "start": "serve dist",
     "dev": "npm run build && npm start",
     "clean": "rm -rf dist",
-    "indexnow": "NODE_ENV=production BASE_URL=https://roblibs-blog.com node index-now.js"
+    "indexnow": "NODE_ENV=production BASE_URL=https://roblibs-blog.com node index-now.js",
+    "og-images": "node tools/og-images.js"
   },
   "author": "Robert Libšanský",
   "license": "MIT",

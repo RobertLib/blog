@@ -92,4 +92,44 @@
         });
     });
   }
+
+  /* ---------- Click-to-play embeds ---------- */
+  // <figure class="embed" data-embed="https://itch.io/embed-upload/..."
+  // data-embed-ratio="800/552"> holding a poster image and a fallback link.
+  // The game (or video) loads only when asked for, so it never slows the
+  // page down or starts making sound by itself. The build checks the URL
+  // against config.embeds.allowedHosts.
+  var embeds = document.querySelectorAll("[data-embed]");
+  Array.prototype.forEach.call(embeds, function (embed) {
+    var src = embed.getAttribute("data-embed");
+    var title = embed.getAttribute("data-embed-title") || "Embedded content";
+    var stage = embed.querySelector(".embed__stage") || embed;
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "embed__play";
+    button.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>';
+    var label = document.createElement("span");
+    label.textContent =
+      embed.getAttribute("data-embed-label") || "Play in your browser";
+    button.appendChild(label);
+    stage.appendChild(button);
+    embed.classList.add("embed--ready");
+
+    button.addEventListener("click", function () {
+      var ratio = embed.getAttribute("data-embed-ratio");
+      var frame = document.createElement("iframe");
+      frame.src = src;
+      frame.title = title;
+      frame.className = "embed__frame";
+      frame.setAttribute("allow", "autoplay; fullscreen; gamepad");
+      frame.setAttribute("allowfullscreen", "");
+      if (ratio) stage.style.aspectRatio = ratio;
+      stage.innerHTML = "";
+      stage.appendChild(frame);
+      embed.classList.add("embed--playing");
+      frame.focus();
+    });
+  });
 })();

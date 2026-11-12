@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{> head-meta}}
+    {{> head-assets}}
+    {{json-ld}}
+  </head>
+  <body class="page-standalone">
+    {{> header}}
+
+    <main id="main-content">
+      <div class="shell">
+        <article class="post">
+          <header class="post__header">
+            <h1 class="post__title">{{title}}</h1>
+            {{lede}}
+          </header>
+
+          <div class="prose">{{content}}</div>
+        </article>
+
+        {{subscribe}}
+      </div>
+    </main>
+
+    {{> footer}}
+  </body>
+</html>

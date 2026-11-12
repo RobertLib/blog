@@ -1,82 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Archive - RobLib's Blog | All Programming Articles</title>
-    <meta
-      name="description"
-      content="Complete archive of all programming and web development articles. Browse through JavaScript, Node.js, frontend development, and software engineering insights."
-    />
-    <meta
-      name="keywords"
-      content="programming articles, web development archive, javascript tutorials, nodejs guides, software engineering, coding blog"
-    />
-    <meta name="author" content="{{author}}" />
-    <meta
-      name="robots"
-      content="index, follow, max-snippet:-1, max-image-preview:large"
-    />
-    <link rel="canonical" href="{{canonical-url}}" />
-    <meta
-      property="og:title"
-      content="Archive - RobLib's Blog | All Programming Articles"
-    />
-    <meta
-      property="og:description"
-      content="Complete archive of all programming and web development articles. Browse through topics like JavaScript, Node.js, frontend development, and software engineering insights."
-    />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="{{canonical-url}}" />
-    <meta property="og:site_name" content="RobLib's Blog" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="{{base-url}}/og-image.png" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content="RobLib's Blog: Notes on programming and web development"
-    />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="Archive - RobLib's Blog | All Programming Articles"
-    />
-    <meta
-      name="twitter:description"
-      content="Complete archive of all programming and web development articles."
-    />
-    <meta name="twitter:image" content="{{base-url}}/og-image.png" />
-    <meta
-      name="twitter:image:alt"
-      content="RobLib's Blog: Notes on programming and web development"
-    />
-    <meta name="generator" content="Blog Generator v1.0.0" />
+    {{> head-meta}}
     {{> head-assets}}
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        "name": "Archive - RobLib's Blog",
-        "description": "Complete archive of all programming and web development articles.",
-        "url": "{{canonical-url}}",
-        "author": {
-          "@type": "Person",
-          "name": "{{json-author}}",
-          "url": "{{base-url}}"
-        },
-        "publisher": {
-          "@type": "Person",
-          "name": "{{json-author}}"
-        },
-        "mainEntityOfPage": {
-          "@type": "WebPage",
-          "@id": "{{canonical-url}}"
-        },
-        "inLanguage": "en-US"
-      }
-    </script>
+    {{json-ld}}
   </head>
   <body class="page-archive">
     {{> header}}
@@ -86,11 +13,12 @@
         <div class="page-head">
           <h1>Archive</h1>
           <p>
-            Every article published on the blog &mdash; insights on web
-            development, programming, and technology.
+            Every post on the blog &mdash; browse by topic or by year.
           </p>
         </div>
+        {{topics}}
         {{archive}}
+        {{subscribe}}
       </div>
     </main>
 

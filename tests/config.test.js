@@ -19,9 +19,8 @@ describe("Config", () => {
     const config = require("../config.js");
 
     expect(config.site.title).toBe("RobLib's Blog");
-    expect(config.site.description).toBe(
-      "Blog about programming and web technologies"
-    );
+    expect(config.site.description.length).toBeGreaterThan(50);
+    expect(config.site.twitter).toBe("@RobertLibsansky");
     expect(config.site.author).toBe("Robert Libsansky");
     expect(config.site.baseUrl).toBe("http://localhost:3000");
   });
@@ -75,6 +74,22 @@ describe("Config", () => {
     expect(typeof config.site.description).toBe("string");
     expect(typeof config.site.author).toBe("string");
     expect(typeof config.site.baseUrl).toBe("string");
+  });
+
+  it("should leave analytics and the newsletter off until configured", () => {
+    const config = require("../config.js");
+
+    expect(config.analytics.goatcounter).toBe("");
+    expect(config.newsletter.buttondown).toBe("");
+  });
+
+  it("should only allow embeds from known hosts", () => {
+    const config = require("../config.js");
+
+    expect(config.embeds.allowedHosts).toContain("itch.io");
+    config.embeds.allowedHosts.forEach((host) =>
+      expect(host).toMatch(/^[a-z0-9.-]+$/)
+    );
   });
 
   it("should have all required build properties", () => {

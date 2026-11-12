@@ -1,81 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{title}} - RobLib's Blog</title>
-    <meta name="description" content="{{description}}" />
-    <meta name="author" content="{{author}}" />
-    <meta name="keywords" content="{{keywords}}" />
-    <meta
-      name="robots"
-      content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
-    />
-    <link rel="canonical" href="{{canonical-url}}" />
-    <meta property="og:title" content="{{title}}" />
-    <meta property="og:description" content="{{description}}" />
-    <meta property="og:type" content="article" />
-    <meta property="og:url" content="{{canonical-url}}" />
-    <meta property="og:site_name" content="RobLib's Blog" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:image" content="{{base-url}}/og-image.png" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content="RobLib's Blog: Notes on programming and web development"
-    />
-    <meta property="article:author" content="{{author}}" />
-    <meta property="article:published_time" content="{{date}}" />
-    <meta property="article:modified_time" content="{{modified-date}}" />
-    <meta property="article:section" content="Programming" />
-    <meta property="article:tag" content="{{keywords}}" />
-    <meta name="generator" content="Blog Generator v1.0.0" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{{title}}" />
-    <meta name="twitter:description" content="{{description}}" />
-    <meta name="twitter:creator" content="@robertlib" />
-    <meta name="twitter:image" content="{{base-url}}/og-image.png" />
-    <meta
-      name="twitter:image:alt"
-      content="RobLib's Blog: Notes on programming and web development"
-    />
+    {{> head-meta}}
+    {{extra-meta}}
     {{> head-assets}}
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        "headline": "{{json-title}}",
-        "description": "{{json-description}}",
-        "url": "{{canonical-url}}",
-        "image": {
-          "@type": "ImageObject",
-          "url": "{{base-url}}/og-image.png",
-          "width": 1200,
-          "height": 630
-        },
-        "datePublished": "{{date}}",
-        "dateModified": "{{modified-date}}",
-        "author": {
-          "@type": "Person",
-          "name": "{{json-author}}",
-          "url": "{{base-url}}"
-        },
-        "publisher": {
-          "@type": "Person",
-          "name": "{{json-author}}"
-        },
-        "mainEntityOfPage": {
-          "@type": "WebPage",
-          "@id": "{{canonical-url}}"
-        },
-        "inLanguage": "en-US",
-        "keywords": "{{json-keywords}}",
-        "wordCount": {{word-count}},
-        "timeRequired": "PT{{reading-time-minutes}}M"
-      }
-    </script>
+    {{json-ld}}
   </head>
   <body class="page-post">
     <div class="progress" aria-hidden="true"></div>
@@ -85,22 +14,22 @@
       <div class="shell">
         <article class="post">
           <header class="post__header">
-            <p class="eyebrow post__meta">
-              <time datetime="{{date}}">{{formatted-date}}</time>
-              <span class="dot" aria-hidden="true"></span>
-              <span>{{reading-time}}</span>
-            </p>
+            <p class="eyebrow post__meta">{{post-meta}}</p>
             <h1 class="post__title">{{title}}</h1>
             {{lede}}
+            {{post-tags}}
+            {{source-link}}
           </header>
 
           <div class="prose">{{content}}</div>
+
+          {{discussion}}
 
           <div class="share">
             <span class="meta share__label">Share</span>
             <a
               class="share__btn"
-              href="https://twitter.com/intent/tweet?url={{share-url}}&amp;text={{share-title}}"
+              href="https://twitter.com/intent/tweet?url={{share-url}}&amp;text={{share-title}}{{share-via}}"
               target="_blank"
               rel="noopener"
             >
@@ -147,6 +76,8 @@
               <span data-copy-label>Copy link</span>
             </button>
           </div>
+
+          {{subscribe}}
 
           {{related-articles}}
         </article>

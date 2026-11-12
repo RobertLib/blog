@@ -1,25 +1,19 @@
 <!DOCTYPE html>
 <!--
-  Source for static/og-image.png (1200x630 social card).
-  Regenerate after editing:
-
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-    --headless=new --disable-gpu --hide-scrollbars \
-    --allow-file-access-from-files --force-device-scale-factor=1 \
-    --window-size=1200,630 \
-    --screenshot="$PWD/static/og-image.png" \
-    "file://$PWD/tools/og-image.html"
+  Social card template (1200x630). tools/og-images.js fills in the
+  placeholders for every page and screenshots the result with headless
+  Chrome into static/. Editing this file marks every card as out of date.
 -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>OG image source</title>
+    <title>Social card</title>
     <style>
       @font-face {
         font-family: "Inter";
         font-style: normal;
         font-weight: 400 700;
-        src: url("../static/fonts/inter-latin.woff2") format("woff2");
+        src: url("{{font-url}}") format("woff2");
       }
 
       * {
@@ -69,8 +63,39 @@
         );
       }
 
+      /* Optional picture on the right, fading into the background */
+      .picture {
+        position: absolute;
+        top: 41px;
+        right: 41px;
+        bottom: 41px;
+        width: 500px;
+        overflow: hidden;
+        border-radius: 0 3px 3px 0;
+        background-image: url("{{image-url}}");
+        background-size: cover;
+        background-position: center;
+      }
+
+      .picture::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to right,
+          #111214 0%,
+          rgba(17, 18, 20, 0.5) 22%,
+          rgba(17, 18, 20, 0) 55%
+        );
+      }
+
+      .no-image .picture {
+        display: none;
+      }
+
       .frame {
         position: absolute;
+        z-index: 1;
         inset: 40px;
         border: 1px solid rgba(233, 231, 226, 0.1);
         border-radius: 4px;
@@ -83,6 +108,16 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+      }
+
+      .has-image .inner {
+        right: 500px;
+        padding-right: 8px;
+      }
+
+      .has-image .foot {
+        flex-direction: column;
+        gap: 6px;
       }
 
       .brand {
@@ -110,20 +145,41 @@
         letter-spacing: -0.015em;
       }
 
+      .eyebrow {
+        margin-bottom: 18px;
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 18px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #e08a50;
+      }
+
+      .eyebrow:empty {
+        display: none;
+      }
+
+      .headline-box {
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        min-height: 0;
+        padding-block: 28px;
+      }
+
       .headline {
         font-size: 66px;
         font-weight: 600;
         letter-spacing: -0.035em;
-        line-height: 1.06;
-        max-width: 15ch;
+        line-height: 1.08;
         color: #fbfaf8;
+        text-wrap: balance;
       }
 
       .rule {
         width: 72px;
         height: 3px;
         background: #e08a50;
-        margin-top: 34px;
+        margin-top: 30px;
         border-radius: 2px;
       }
 
@@ -131,6 +187,7 @@
         display: flex;
         align-items: baseline;
         justify-content: space-between;
+        gap: 24px;
         font-family: ui-monospace, "SF Mono", Menlo, monospace;
         font-size: 16px;
         letter-spacing: 0.12em;
@@ -139,8 +196,9 @@
       }
     </style>
   </head>
-  <body>
+  <body class="{{body-class}}">
     <div class="grid"></div>
+    <div class="picture"></div>
     <div class="frame"></div>
     <div class="inner">
       <div class="brand">
@@ -148,9 +206,12 @@
         <span class="brand-name">RobLib&rsquo;s Blog</span>
       </div>
 
-      <div>
-        <h1 class="headline">Notes on programming and web development</h1>
-        <div class="rule"></div>
+      <div class="headline-box">
+        <div class="headline-inner">
+          <p class="eyebrow">{{eyebrow}}</p>
+          <h1 class="headline">{{title}}</h1>
+          <div class="rule"></div>
+        </div>
       </div>
 
       <div class="foot">
@@ -158,5 +219,21 @@
         <span>Robert Libsansky</span>
       </div>
     </div>
+    <script>
+      // Shrinks long headlines until they fit their box
+      function fit() {
+        var box = document.querySelector(".headline-box");
+        var inner = document.querySelector(".headline-inner");
+        var headline = document.querySelector(".headline");
+        var room = box.clientHeight - 56; // minus the vertical padding
+        var size = 66;
+        while (inner.offsetHeight > room && size > 30) {
+          size -= 2;
+          headline.style.fontSize = size + "px";
+        }
+        document.body.setAttribute("data-fitted", size);
+      }
+      document.fonts.ready.then(fit);
+    </script>
   </body>
 </html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{> head-meta}}
+    {{> head-assets}}
+    {{json-ld}}
+  </head>
+  <body class="page-projects">
+    {{> header}}
+
+    <main id="main-content">
+      <div class="shell">
+        <div class="page-head">
+          <h1>Projects</h1>
+          <p>
+            Games, apps and websites I have built and released, with links to
+            play them, the source code and the stories behind them.
+          </p>
+        </div>
+        {{projects}}
+        {{subscribe}}
+      </div>
+    </main>
+
+    {{> footer}}
+  </body>
+</html>

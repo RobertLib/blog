@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const config = require("./config");
 const { decodeEntities } = require("./html-entities");
+const { imageSize } = require("./image-size");
 const { validateSEO } = require("./seo-validate");
 
 function getNestedValue(obj, path) {
@@ -47,7 +48,19 @@ const ARTICLES_DIR = config.build.articlesDir;
 const OUTPUT_DIR = config.build.outputDir;
 const TEMPLATES_DIR = config.build.templatesDir;
 const STATIC_DIR = config.build.staticDir;
+const PAGES_DIR = config.build.pagesDir || "pages";
+const PROJECTS_FILE = config.build.projectsFile || "projects.json";
 const RECENT_ARTICLES_COUNT = config.build.recentArticlesCount;
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+// Social card used when an article has none of its own
+const DEFAULT_SOCIAL_IMAGE = "og-image.png";
+// Generated per-article social cards (tools/og-images.js)
+const SOCIAL_CARDS_DIR = "og";
+// The <title> suffix, dropped when it would push the title past what search
+// results display
+const TITLE_SUFFIX = ` - ${config.site.title}`;
+const MAX_DISPLAYED_TITLE = 60;
 
 const templateCache = new Map();
 
@@ -100,7 +113,7 @@ function expandPartials(template) {
 
 function extractMetadata(content) {
   const metadata = {};
-  const metaRegex = /<!--\s*(\w+):\s*(.+?)\s*-->/g;
+  const metaRegex = /<!--\s*([\w-]+):\s*(.+?)\s*-->/g;
   let match;
 
   while ((match = metaRegex.exec(content)) !== null) {
@@ -109,7 +122,9 @@ function extractMetadata(content) {
     metadata[key] = value;
   }
 
-  const cleanContent = content.replace(/<!--\s*\w+:\s*.+?\s*-->/g, "").trim();
+  const cleanContent = content
+    .replace(/<!--\s*[\w-]+:\s*.+?\s*-->/g, "")
+    .trim();
   return { metadata, content: cleanContent };
 }
 
@@ -172,12 +187,102 @@ function formatDateISO(dateString) {
   return date.toISOString();
 }
 
+// URL-safe form of a tag label: "Next.js" -> "nextjs", "Web Development" ->
+// "web-development"
+function slugify(text) {
+  return String(text)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[.'’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// "Games, C, WebAssembly" -> [{ label: "Games", slug: "games" }, ...]
+// Duplicates (by slug) are dropped, keeping the first spelling.
+function parseTags(value) {
+  if (!value) return [];
+  const seen = new Set();
+  const tags = [];
+  for (const raw of String(value).split(",")) {
+    const label = raw.trim();
+    const slug = slugify(label);
+    if (!label || !slug || seen.has(slug)) continue;
+    seen.add(slug);
+    tags.push({ label, slug });
+  }
+  return tags;
+}
+
+// Comma- or whitespace-separated URLs
+function parseUrlList(value) {
+  if (!value) return [];
+  return String(value)
+    .split(/[\s,]+/)
+    .map((url) => url.trim())
+    .filter(Boolean);
+}
+
+function isHttpUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch (error) {
+    return false;
+  }
+}
+
+// Only https pages on the hosts listed in config.embeds may be embedded
+function isAllowedEmbedUrl(value, allowedHosts = config.embeds.allowedHosts) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && allowedHosts.includes(url.hostname);
+  } catch (error) {
+    return false;
+  }
+}
+
+// A path inside static/ ("images/chuck/tower.png"), not a URL or data URI
+function isLocalPath(value) {
+  return (
+    Boolean(value) &&
+    !/^[a-z][a-z0-9+.-]*:/i.test(value) &&
+    !value.startsWith("//") &&
+    !value.startsWith("#")
+  );
+}
+
+function stripLeadingSlash(value) {
+  return String(value).replace(/^\/+/, "");
+}
+
+// Meta description for posts that don't set one (notes): the opening text,
+// cut at a word boundary
+function deriveDescription(html, maxLength = 160) {
+  const text = stripHtml(html).replace(/\s+/g, " ").trim();
+  if (text.length <= maxLength) return text;
+  const cut = text.slice(0, maxLength - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 80 ? cut.slice(0, lastSpace) : cut).replace(
+    /[\s,;:.\-–—]+$/,
+    ""
+  )}…`;
+}
+
+const ARTICLE_TYPES = ["article", "note"];
+
 function validateArticle(article) {
   const errors = [];
   const warnings = [];
+  const type = article.type || "article";
 
   if (!article.title || article.title.trim().length === 0) {
     errors.push("Missing or empty title");
+  }
+
+  if (!ARTICLE_TYPES.includes(type)) {
+    errors.push(`Unknown type "${type}" (use ${ARTICLE_TYPES.join(" or ")})`);
   }
 
   if (!article.date) {
@@ -199,11 +304,29 @@ function validateArticle(article) {
     errors.push("Article content is empty");
   }
 
-  if (!article.description || article.description.trim().length === 0) {
+  // Notes are short enough for their opening text to describe them
+  if (
+    type !== "note" &&
+    (!article.description || article.description.trim().length === 0)
+  ) {
     errors.push("Missing description");
   }
 
-  if (article.content.length < 100) {
+  if (article.link && !isHttpUrl(article.link)) {
+    errors.push(`Invalid link URL: ${article.link}`);
+  }
+
+  for (const url of parseUrlList(article.discuss)) {
+    if (!isHttpUrl(url)) errors.push(`Invalid discuss URL: ${url}`);
+  }
+
+  if (article.image && !isLocalPath(article.image)) {
+    errors.push(
+      `Image must be a path inside the static directory: ${article.image}`
+    );
+  }
+
+  if (article.content && article.content.length < 100 && type !== "note") {
     warnings.push("Content is very short");
   }
 
@@ -214,7 +337,11 @@ function validateArticle(article) {
   return { errors, warnings };
 }
 
-function getArticleData(articleFile, articlesDir = ARTICLES_DIR) {
+function getArticleData(
+  articleFile,
+  articlesDir = ARTICLES_DIR,
+  staticDir = STATIC_DIR
+) {
   try {
     const articlePath = path.join(articlesDir, articleFile);
     const rawContent = fs.readFileSync(articlePath, "utf8");
@@ -228,6 +355,21 @@ function getArticleData(articleFile, articlesDir = ARTICLES_DIR) {
     };
 
     const { errors, warnings } = validateArticle(article);
+
+    article.type = article.type || "article";
+    article.tags = parseTags(metadata.tags);
+    article.discuss = parseUrlList(metadata.discuss);
+    if (!article.description) {
+      article.description = deriveDescription(content);
+    }
+    if (article.image) {
+      article.image = stripLeadingSlash(article.image);
+      if (!fs.existsSync(path.join(staticDir, article.image))) {
+        throw new Error(
+          `Image not found: ${path.join(staticDir, article.image)}`
+        );
+      }
+    }
     if (warnings.length > 0) {
       console.warn(
         `Article ${articleFile} has warnings: ${warnings.join(", ")}`
@@ -397,10 +539,65 @@ function replaceTemplate(template, replacements) {
 
 // Attribute rules only match inside tags, so prose and code samples that
 // merely mention "onload=" or "javascript:" stay intact.
+// Value of an attribute in a single opening tag, entities decoded
+function getAttribute(tag, name) {
+  const match = tag.match(
+    new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "i")
+  );
+  if (!match) return null;
+  return decodeEntities(match[1] ?? match[2] ?? match[3]);
+}
+
+function hasAttribute(tag, name) {
+  return new RegExp(`\\s${name}(?:\\s*=|[\\s/>])`, "i").test(tag);
+}
+
+// Adds an attribute before the end of an opening tag unless it is present
+function addAttribute(tag, name, value) {
+  if (hasAttribute(tag, name)) return tag;
+  return tag.replace(
+    /\s*\/?>$/,
+    (end) => ` ${name}="${escapeHtml(String(value))}"${end}`
+  );
+}
+
+function removeAttribute(tag, name) {
+  return tag.replace(
+    new RegExp(`\\s${name}\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)`, "gi"),
+    ""
+  );
+}
+
+// Iframes survive only when they point at an allowed host; they load lazily.
+function sanitizeIframe(iframe) {
+  const open = iframe.match(/^<iframe\b[^>]*>/i)[0];
+  const src = getAttribute(open, "src");
+  if (!src || !isAllowedEmbedUrl(src)) {
+    if (src) console.warn(`Removed iframe from a host not allowed: ${src}`);
+    return "";
+  }
+  return addAttribute(open, "loading", "lazy") + iframe.slice(open.length);
+}
+
+// Click-to-play blocks ([data-embed]) become iframes in the browser, so
+// their URLs go through the same allowlist
+function sanitizeEmbedBlocks(html) {
+  return html.replace(/<[a-z][^>]*\sdata-embed\s*=[^>]*>/gi, (tag) => {
+    const src = getAttribute(tag, "data-embed");
+    if (src && isAllowedEmbedUrl(src)) return tag;
+    console.warn(`Removed embed from a host not allowed: ${src}`);
+    return removeAttribute(tag, "data-embed");
+  });
+}
+
 function sanitizeHtml(html) {
   let result = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gis, "")
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gis, "");
+    .replace(
+      /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gis,
+      sanitizeIframe
+    );
+  result = sanitizeEmbedBlocks(result);
 
   // One attribute per tag per pass, so repeat until nothing changes
   let previous;
@@ -417,45 +614,277 @@ function sanitizeHtml(html) {
   return result;
 }
 
-// Placeholders shared by every page template
-function commonReplacements() {
+// Local images get their pixel size (no layout shift while loading) and,
+// except the first one, which is likely in view on load, lazy loading.
+// A local image that doesn't exist fails the build.
+function enhanceImages(html, staticDir = STATIC_DIR) {
+  let index = 0;
+  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+    let result = tag;
+    const src = getAttribute(tag, "src");
+
+    if (src && isLocalPath(src)) {
+      const file = path.join(
+        staticDir,
+        stripLeadingSlash(src.split(/[?#]/)[0])
+      );
+      if (!fs.existsSync(file)) {
+        throw new Error(`Image not found: ${file}`);
+      }
+      if (!hasAttribute(tag, "width") && !hasAttribute(tag, "height")) {
+        const size = imageSize(file);
+        if (size) {
+          result = addAttribute(result, "width", size.width);
+          result = addAttribute(result, "height", size.height);
+        }
+      }
+    }
+
+    if (!hasAttribute(tag, "alt")) {
+      console.warn(`Image without alt text: ${src}`);
+    }
+
+    result = addAttribute(result, "decoding", "async");
+    if (index++ > 0) result = addAttribute(result, "loading", "lazy");
+    return result;
+  });
+}
+
+// Relative links and image sources resolved against the page URL, for
+// content shown outside the site (RSS readers)
+function absolutizeUrls(html, pageUrl) {
+  return html.replace(
+    /(\s(?:href|src)\s*=\s*)(["'])(.*?)\2/gi,
+    (match, prefix, quote, value) => {
+      if (!value || /^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("//")) {
+        return match;
+      }
+      return `${prefix}${quote}${new URL(value, pageUrl).href}${quote}`;
+    }
+  );
+}
+
+// ------------------------------------------------------------
+// Shared page parts
+// ------------------------------------------------------------
+
+const DEFAULT_SOCIAL_IMAGE_ALT = `${config.site.title}: small software, games and the web`;
+
+function twitterProfileUrl() {
+  const handle = String(config.site.twitter || "").replace(/^@/, "");
+  return handle ? `https://x.com/${handle}` : null;
+}
+
+// GoatCounter page view counting; production builds only, so local
+// previews are never counted
+function analyticsHtml(
+  analytics = config.analytics,
+  production = IS_PRODUCTION
+) {
+  const code = analytics && analytics.goatcounter;
+  if (!code || !production) return "";
+  if (!/^[a-z0-9-]+$/i.test(code)) {
+    throw new Error(`Invalid GoatCounter code: ${code}`);
+  }
+  return `<script data-goatcounter="https://${code}.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>`;
+}
+
+// Email sign-up through Buttondown when configured, otherwise an RSS call
+// to action
+function subscribeHtml(root = "", newsletter = config.newsletter) {
+  const user = newsletter && newsletter.buttondown;
+  const rss = `<a href="${root}feed.xml">RSS</a>`;
+  const xUrl = twitterProfileUrl();
+  const xLink = xUrl
+    ? ` or follow <a href="${escapeHtml(xUrl)}" target="_blank" rel="noopener">${escapeHtml(config.site.twitter)}</a> on X`
+    : "";
+
+  if (user) {
+    if (!/^[\w-]+$/.test(user)) {
+      throw new Error(`Invalid Buttondown username: ${user}`);
+    }
+    return `
+        <section class="subscribe" aria-labelledby="subscribe-title">
+          <h2 class="subscribe__title" id="subscribe-title">Get new posts by email</h2>
+          <p class="subscribe__text">
+            One short email whenever something new is published. No spam,
+            unsubscribe with one click.
+          </p>
+          <form class="subscribe__form" action="https://buttondown.com/api/emails/embed-subscribe/${user}" method="post" target="_blank">
+            <label class="visually-hidden" for="subscribe-email">Email address</label>
+            <input class="subscribe__input" type="email" name="email" id="subscribe-email" placeholder="you@example.com" autocomplete="email" required />
+            <input type="hidden" name="embed" value="1" />
+            <button class="button button--accent" type="submit">Subscribe</button>
+          </form>
+          <p class="subscribe__alt meta">Prefer a feed reader? Follow via ${rss}${xLink}.</p>
+        </section>`;
+  }
+
+  return `
+        <section class="subscribe" aria-labelledby="subscribe-title">
+          <h2 class="subscribe__title" id="subscribe-title">Follow along</h2>
+          <p class="subscribe__text">
+            New posts about small software, games and the web. Subscribe via
+            ${rss}${xLink}.
+          </p>
+          <p class="subscribe__actions">
+            <a class="button button--accent" href="${root}feed.xml">Subscribe via RSS</a>
+          </p>
+        </section>`;
+}
+
+// Placeholders shared by every page template. `root` prefixes asset and page
+// links: empty (relative) at the top level, "../" in subdirectories and the
+// absolute site URL on the 404 page.
+function commonReplacements(root = "") {
   return {
     "base-url": BASE_URL,
-    // Prefix for asset and page links in the partials; relative by default
-    root: "",
+    root,
     author: escapeHtml(config.site.author),
     "json-author": escapeJsonString(config.site.author),
+    twitter: escapeHtml(config.site.twitter || ""),
     year: new Date().getFullYear(),
+    analytics: analyticsHtml(),
+    subscribe: subscribeHtml(root),
     // Marks the current page in the header navigation
-    "nav-home-current": "",
     "nav-archive-current": "",
+    "nav-projects-current": "",
+    "nav-about-current": "",
   };
 }
 
 const CURRENT_PAGE = ' aria-current="page"';
 
-function generateIndexHtml(articles = null) {
-  const allArticles = articles || getAllArticles();
-  const template = loadTemplate("index");
+// The suffix is dropped when the full title would be cut off in search
+// results
+function pageTitle(title) {
+  const full = `${title}${TITLE_SUFFIX}`;
+  return full.length <= MAX_DISPLAYED_TITLE ? full : title;
+}
 
-  const recentArticles = allArticles.slice(0, RECENT_ARTICLES_COUNT);
+const IMAGE_TYPES = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+};
 
-  const articlesList = recentArticles
-    .map((article) => {
-      const readingTime = estimateReadingTime(article.content);
-      return `
-        <article class="post-card">
-          <p class="eyebrow post-card__meta">
-            <time datetime="${escapeHtml(article.date)}">${formatDate(
-        article.date
-      )}</time>
-            <span class="dot" aria-hidden="true"></span>
-            <span>${readingTime} min read</span>
-          </p>
+// The page's own generated card (og/<key>.png) when it exists
+function socialImageFile(key, staticDir = STATIC_DIR) {
+  if (key) {
+    const card = `${SOCIAL_CARDS_DIR}/${key}.png`;
+    if (fs.existsSync(path.join(staticDir, card))) return card;
+  }
+  return DEFAULT_SOCIAL_IMAGE;
+}
+
+function socialImageReplacements(file, alt, staticDir = STATIC_DIR) {
+  const filePath = path.join(staticDir, file);
+  const size = fs.existsSync(filePath) ? imageSize(filePath) : null;
+  return {
+    "social-image": escapeHtml(`${BASE_URL}/${file}`),
+    "social-image-type":
+      IMAGE_TYPES[path.extname(file).toLowerCase()] || "image/png",
+    "social-image-width": size ? size.width : 1200,
+    "social-image-height": size ? size.height : 630,
+    "social-image-alt": escapeHtml(alt),
+  };
+}
+
+function jsonLdScript(data) {
+  return `<script type="application/ld+json">${JSON.stringify(
+    data,
+    null,
+    2
+  ).replace(/</g, "\\u003c")}</script>`;
+}
+
+// Everything the head-meta partial needs
+function headReplacements({
+  title,
+  documentTitle = pageTitle(title),
+  socialTitle = title,
+  description,
+  canonicalUrl,
+  ogType = "website",
+  socialKey = null,
+  socialAlt = null,
+  jsonLd = null,
+  extraMeta = "",
+}) {
+  const imageFile = socialImageFile(socialKey);
+  const alt =
+    imageFile === DEFAULT_SOCIAL_IMAGE
+      ? DEFAULT_SOCIAL_IMAGE_ALT
+      : socialAlt || socialTitle;
+  return {
+    "page-title": escapeHtml(documentTitle),
+    "social-title": escapeHtml(socialTitle),
+    description: escapeHtml(description || ""),
+    "canonical-url": escapeHtml(canonicalUrl),
+    "og-type": ogType,
+    ...socialImageReplacements(imageFile, alt),
+    "extra-meta": extraMeta,
+    "json-ld": jsonLd ? jsonLdScript(jsonLd) : "",
+  };
+}
+
+function authorSchema() {
+  return {
+    "@type": "Person",
+    "@id": `${BASE_URL}/about.html#person`,
+    name: config.site.author,
+    url: `${BASE_URL}/about.html`,
+    image: config.site.authorImage
+      ? `${BASE_URL}/${config.site.authorImage}`
+      : undefined,
+    jobTitle: config.site.authorJobTitle,
+    sameAs: (config.site.profiles || []).map((profile) => profile.url),
+  };
+}
+
+function tagUrl(tag, root = "") {
+  return `${root}tags/${tag.slug}.html`;
+}
+
+function tagLinksHtml(tags, root = "", className = "tag") {
+  return (tags || [])
+    .map(
+      (tag) =>
+        `<a class="${className}" href="${tagUrl(tag, root)}">${escapeHtml(
+          tag.label
+        )}</a>`
+    )
+    .join("");
+}
+
+const isNote = (article) => article.type === "note";
+
+// Eyebrow line of an article in lists and on its page
+function postMetaHtml(article, { long = true } = {}) {
+  const parts = [];
+  if (isNote(article)) parts.push('<span class="badge">Note</span>');
+  parts.push(
+    `<time datetime="${escapeHtml(article.date)}">${
+      long ? formatDate(article.date) : formatDateShort(article.date)
+    }</time>`
+  );
+  if (!isNote(article)) {
+    parts.push(`<span>${estimateReadingTime(article.content)} min read</span>`);
+  }
+  return parts.join('<span class="dot" aria-hidden="true"></span>');
+}
+
+function postCardHtml(article, root = "") {
+  const tags = article.tags || [];
+  return `
+        <article class="post-card${isNote(article) ? " post-card--note" : ""}">
+          <p class="eyebrow post-card__meta">${postMetaHtml(article)}</p>
           <h2 class="post-card__title">
-            <a href="${escapeHtml(article.filename)}">${escapeHtml(
-        article.title
-      )}</a>
+            <a href="${root}${escapeHtml(article.filename)}">${escapeHtml(
+    article.title
+  )}</a>
           </h2>
           ${
             article.description
@@ -464,9 +893,377 @@ function generateIndexHtml(articles = null) {
                 )}</p>`
               : ""
           }
+          ${
+            tags.length > 0
+              ? `<p class="post-card__tags">${tagLinksHtml(tags, root)}</p>`
+              : ""
+          }
         </article>
       `;
-    })
+}
+
+// ------------------------------------------------------------
+// Tags
+// ------------------------------------------------------------
+
+// Every tag with its articles (newest first), most used first
+function collectTags(articles) {
+  const bySlug = new Map();
+  for (const article of articles) {
+    for (const tag of article.tags || []) {
+      if (!bySlug.has(tag.slug)) {
+        bySlug.set(tag.slug, { ...tag, articles: [] });
+      }
+      bySlug.get(tag.slug).articles.push(article);
+    }
+  }
+  return [...bySlug.values()]
+    .map((tag) => ({
+      ...tag,
+      articles: [...tag.articles].sort(compareNewestFirst),
+    }))
+    .sort(
+      (a, b) =>
+        b.articles.length - a.articles.length || a.label.localeCompare(b.label)
+    );
+}
+
+function topicsHtml(tags, root = "") {
+  if (tags.length === 0) return "";
+  const items = tags
+    .map(
+      (tag) =>
+        `<li><a class="tag" href="${tagUrl(tag, root)}">${escapeHtml(
+          tag.label
+        )}<span class="tag__count">${tag.articles.length}</span></a></li>`
+    )
+    .join("");
+  return `
+        <section class="topics" aria-labelledby="topics-heading">
+          <h2 class="section-label" id="topics-heading">Topics</h2>
+          <ul class="tag-cloud">${items}</ul>
+        </section>`;
+}
+
+function truncateText(text, maxLength) {
+  const clean = String(text).replace(/\s+/g, " ").trim();
+  if (clean.length <= maxLength) return clean;
+  const cut = clean.slice(0, maxLength - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > maxLength / 2 ? cut.slice(0, lastSpace) : cut).replace(
+    /[\s,;:.\-–—]+$/,
+    ""
+  )}…`;
+}
+
+function tagDescription(tag) {
+  const count = tag.articles.length;
+  const titles = tag.articles.map((article) => article.title).join("; ");
+  return truncateText(
+    `${count} ${count === 1 ? "post" : "posts"} about ${tag.label} by ${
+      config.site.author
+    }: ${titles}`,
+    160
+  );
+}
+
+function generateTagHtml(tag) {
+  const template = loadTemplate("tag");
+  const root = "../";
+  const canonicalUrl = `${BASE_URL}/${tagUrl(tag)}`;
+  const count = tag.articles.length;
+  const description = tagDescription(tag);
+
+  return replaceTemplate(template, {
+    ...commonReplacements(root),
+    ...headReplacements({
+      title: tag.label,
+      socialTitle: `Articles about ${tag.label}`,
+      description,
+      canonicalUrl,
+      socialKey: `tag-${tag.slug}`,
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: `${tag.label} - ${config.site.title}`,
+        description,
+        url: canonicalUrl,
+        inLanguage: "en-US",
+        author: authorSchema(),
+      },
+    }),
+    "nav-archive-current": CURRENT_PAGE,
+    "tag-label": escapeHtml(tag.label),
+    "tag-summary": `${count} ${count === 1 ? "post" : "posts"}, newest first.`,
+    articles: tag.articles.map((article) => postCardHtml(article, root)).join(""),
+  });
+}
+
+// ------------------------------------------------------------
+// Projects (projects.json): the Projects page and the home page showcase
+// ------------------------------------------------------------
+
+const PROJECT_CATEGORIES = [
+  { key: "games", title: "Games" },
+  { key: "apps", title: "Apps" },
+  { key: "web", title: "Web" },
+];
+
+function validateProject(project, index) {
+  const errors = [];
+  const label = project && project.name ? project.name : `#${index + 1}`;
+  if (!project || typeof project !== "object") {
+    return [`Project ${label} is not an object`];
+  }
+  for (const key of ["name", "summary", "url"]) {
+    if (!project[key] || typeof project[key] !== "string") {
+      errors.push(`Project ${label}: missing ${key}`);
+    }
+  }
+  if (!PROJECT_CATEGORIES.some((c) => c.key === project.category)) {
+    errors.push(
+      `Project ${label}: category must be one of ${PROJECT_CATEGORIES.map(
+        (c) => c.key
+      ).join(", ")}`
+    );
+  }
+  for (const key of ["url", "source"]) {
+    if (project[key] && !isHttpUrl(project[key])) {
+      errors.push(`Project ${label}: invalid ${key} URL`);
+    }
+  }
+  return errors;
+}
+
+function loadProjects(
+  file = PROJECTS_FILE,
+  { articlesDir = ARTICLES_DIR, staticDir = STATIC_DIR } = {}
+) {
+  if (!fs.existsSync(file)) return [];
+  let projects;
+  try {
+    projects = JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    throw new Error(`Invalid ${file}: ${error.message}`);
+  }
+  if (!Array.isArray(projects)) {
+    throw new Error(`${file} must contain an array of projects`);
+  }
+
+  const errors = projects.flatMap(validateProject);
+  for (const project of projects) {
+    if (
+      project.article &&
+      !fs.existsSync(path.join(articlesDir, project.article))
+    ) {
+      errors.push(`Project ${project.name}: article ${project.article} not found`);
+    }
+    if (project.image && !fs.existsSync(path.join(staticDir, project.image))) {
+      errors.push(`Project ${project.name}: image ${project.image} not found`);
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(`Invalid projects:\n${errors.join("\n")}`);
+  }
+  return projects;
+}
+
+function externalLink(url, label, className = "") {
+  return `<a${className ? ` class="${className}"` : ""} href="${escapeHtml(
+    url
+  )}" target="_blank" rel="noopener">${label}</a>`;
+}
+
+function projectCardHtml(project, root = "") {
+  const links = [
+    externalLink(
+      project.url,
+      escapeHtml(project.linkLabel || "Open"),
+      "project__link project__link--primary"
+    ),
+  ];
+  if (project.article) {
+    links.push(
+      `<a class="project__link" href="${root}${escapeHtml(
+        project.article
+      )}">Read the story</a>`
+    );
+  }
+  if (project.source) {
+    links.push(externalLink(project.source, "Source code", "project__link"));
+  }
+
+  const media = project.image
+    ? `<a class="project__media" href="${escapeHtml(
+        project.url
+      )}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="${root}${escapeHtml(
+        project.image
+      )}" alt="" /></a>`
+    : "";
+
+  return `
+          <article class="project${project.image ? "" : " project--text"}">
+            ${media}
+            <div class="project__body">
+              <h3 class="project__title">${escapeHtml(project.name)}</h3>
+              ${
+                project.platforms
+                  ? `<p class="project__platforms meta">${escapeHtml(
+                      project.platforms
+                    )}</p>`
+                  : ""
+              }
+              <p class="project__summary">${escapeHtml(project.summary)}</p>
+              <p class="project__links">${links.join("")}</p>
+            </div>
+          </article>`;
+}
+
+function featuredProjectsHtml(projects, root = "") {
+  const featured = projects.filter((project) => project.featured);
+  if (featured.length === 0) return "";
+  return enhanceImages(`
+        <section class="showcase" aria-labelledby="showcase-heading">
+          <div class="showcase__head">
+            <h2 class="section-label" id="showcase-heading">Games I made</h2>
+            <a class="showcase__all" href="${root}projects.html">All projects</a>
+          </div>
+          <div class="project-grid">${featured
+            .map((project) => projectCardHtml(project, root))
+            .join("")}
+          </div>
+        </section>`);
+}
+
+function generateProjectsHtml(projects) {
+  const template = loadTemplate("projects");
+  const canonicalUrl = `${BASE_URL}/projects.html`;
+  const description =
+    "Games, iPhone apps and websites by Robert Libsansky: free browser games written in C, offline iOS games without ads, and small web tools.";
+
+  const sections = PROJECT_CATEGORIES.map(({ key, title }) => {
+    const items = projects.filter((project) => project.category === key);
+    if (items.length === 0) return "";
+    return `
+        <section class="project-group" aria-labelledby="projects-${key}">
+          <h2 class="section-label" id="projects-${key}">${title}</h2>
+          <div class="project-grid">${items
+            .map((project) => projectCardHtml(project))
+            .join("")}
+          </div>
+        </section>`;
+  }).join("");
+
+  return replaceTemplate(template, {
+    ...commonReplacements(),
+    ...headReplacements({
+      title: "Projects",
+      socialTitle: "Projects: games, apps and websites",
+      description,
+      canonicalUrl,
+      socialKey: "projects",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: `Projects - ${config.site.title}`,
+        description,
+        url: canonicalUrl,
+        inLanguage: "en-US",
+        author: authorSchema(),
+      },
+    }),
+    "nav-projects-current": CURRENT_PAGE,
+    projects: enhanceImages(sections),
+  });
+}
+
+// ------------------------------------------------------------
+// Standalone pages (pages/*.html): About and the like
+// ------------------------------------------------------------
+
+function getPageData(file, pagesDir = PAGES_DIR) {
+  const raw = fs.readFileSync(path.join(pagesDir, file), "utf8");
+  const { metadata, content } = extractMetadata(raw);
+  const errors = [];
+  if (!metadata.title) errors.push("Missing title");
+  if (!metadata.description) errors.push("Missing description");
+  if (!content) errors.push("Page content is empty");
+  if (errors.length > 0) {
+    throw new Error(`Page ${file} is invalid: ${errors.join(", ")}`);
+  }
+  return {
+    ...metadata,
+    content,
+    filename: file,
+    slug: path.basename(file, ".html"),
+  };
+}
+
+function getAllPages(pagesDir = PAGES_DIR) {
+  if (!fs.existsSync(pagesDir)) return [];
+  return fs
+    .readdirSync(pagesDir)
+    .filter((file) => file.endsWith(".html"))
+    .sort()
+    .map((file) => getPageData(file, pagesDir));
+}
+
+function generatePageHtml(page) {
+  const template = loadTemplate("page");
+  const canonicalUrl = `${BASE_URL}/${page.filename}`;
+  const profile = page.schema === "profile";
+  const jsonLd = profile
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        name: page.title,
+        description: page.description,
+        url: canonicalUrl,
+        inLanguage: "en-US",
+        mainEntity: authorSchema(),
+      }
+    : {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: page.title,
+        description: page.description,
+        url: canonicalUrl,
+        inLanguage: "en-US",
+        author: authorSchema(),
+      };
+
+  const navKey = `nav-${page.nav || page.slug}-current`;
+
+  return replaceTemplate(template, {
+    ...commonReplacements(),
+    ...headReplacements({
+      title: page.title,
+      description: page.description,
+      canonicalUrl,
+      ogType: profile ? "profile" : "website",
+      socialKey: page.slug,
+      jsonLd,
+    }),
+    ...(navKey in commonReplacements() ? { [navKey]: CURRENT_PAGE } : {}),
+    title: escapeHtml(page.title),
+    lede: page.lede ? `<p class="page-head__lede">${escapeHtml(page.lede)}</p>` : "",
+    content: enhanceImages(sanitizeHtml(page.content)),
+  });
+}
+
+// ------------------------------------------------------------
+// Home and archive
+// ------------------------------------------------------------
+
+const HOME_TITLE = `${config.site.title}: Small Software, Games and the Web`;
+
+function generateIndexHtml(articles = null, projects = null) {
+  const allArticles = articles || getAllArticles();
+  const allProjects = projects || loadProjects();
+
+  const recentArticles = allArticles.slice(0, RECENT_ARTICLES_COUNT);
+  const articlesList = recentArticles
+    .map((article) => postCardHtml(article))
     .join("");
 
   let archiveLink = "";
@@ -475,20 +1272,33 @@ function generateIndexHtml(articles = null) {
       '<p class="list-footer"><a href="archive.html" class="button">View archive</a></p>';
   }
 
-  return replaceTemplate(template, {
+  return replaceTemplate(loadTemplate("index"), {
     ...commonReplacements(),
-    "nav-home-current": CURRENT_PAGE,
+    ...headReplacements({
+      title: HOME_TITLE,
+      documentTitle: HOME_TITLE,
+      description: config.site.description,
+      canonicalUrl: BASE_URL,
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        name: config.site.title,
+        description: config.site.description,
+        url: BASE_URL,
+        inLanguage: "en-US",
+        author: authorSchema(),
+        publisher: authorSchema(),
+      },
+    }),
     articles: articlesList,
     archive: archiveLink,
-    "canonical-url": BASE_URL,
-    title: config.site.title,
-    description: config.site.description,
+    showcase: featuredProjectsHtml(allProjects),
   });
 }
 
+
 function generateArchiveHtml(articles = null) {
   const allArticles = articles || getAllArticles();
-  const template = loadTemplate("archive");
 
   const articlesByYear = {};
   allArticles.forEach((article) => {
@@ -509,9 +1319,9 @@ function generateArchiveHtml(articles = null) {
         .map(
           (article) => `
             <li class="archive-item">
-              <a href="${escapeHtml(article.filename)}">${escapeHtml(
-            article.title
-          )}</a>
+              <a href="${escapeHtml(article.filename)}">${
+            isNote(article) ? '<span class="badge">Note</span> ' : ""
+          }${escapeHtml(article.title)}</a>
               <time datetime="${escapeHtml(
                 article.date
               )}">${formatDateShort(article.date)}</time>
@@ -531,13 +1341,29 @@ function generateArchiveHtml(articles = null) {
     })
     .join("");
 
-  return replaceTemplate(template, {
+  const canonicalUrl = `${BASE_URL}/archive.html`;
+  const description = `Every post on ${config.site.title} by ${config.site.author}, by topic and by year: indie games in C and Swift, offline iPhone apps, web development and AI.`;
+
+  return replaceTemplate(loadTemplate("archive"), {
     ...commonReplacements(),
+    ...headReplacements({
+      title: "Archive",
+      socialTitle: `Archive - ${config.site.title}`,
+      description,
+      canonicalUrl,
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: `Archive - ${config.site.title}`,
+        description,
+        url: canonicalUrl,
+        inLanguage: "en-US",
+        author: authorSchema(),
+      },
+    }),
     "nav-archive-current": CURRENT_PAGE,
+    topics: topicsHtml(collectTags(allArticles)),
     archive: archiveContent,
-    "canonical-url": `${BASE_URL}/archive.html`,
-    title: config.site.title,
-    description: config.site.description,
   });
 }
 
@@ -588,47 +1414,62 @@ function copyStatic() {
   }
 }
 
+// ------------------------------------------------------------
+// Articles
+// ------------------------------------------------------------
+
+const keywordCache = new WeakMap();
+
+function keywordsOf(article) {
+  if (!keywordCache.has(article)) {
+    keywordCache.set(
+      article,
+      extractKeywords(article.content, article.title).toLowerCase().split(", ")
+    );
+  }
+  return keywordCache.get(article);
+}
+
+// Shared tags count most; overlapping frequent words break ties and fill in
+// for untagged articles. Falls back to the newest articles.
 function getRelatedArticles(currentArticle, allArticles, maxCount = 3) {
   if (!currentArticle || !allArticles) return [];
 
-  const currentKeywords = extractKeywords(
-    currentArticle.content,
-    currentArticle.title
-  )
-    .toLowerCase()
-    .split(", ");
+  const currentTags = new Set((currentArticle.tags || []).map((t) => t.slug));
+  const currentKeywords = keywordsOf(currentArticle);
 
-  // Filter out current article and calculate similarity scores
-  const otherArticles = allArticles
-    .filter((article) => article.filename !== currentArticle.filename)
+  const others = allArticles.filter(
+    (article) => article.filename !== currentArticle.filename
+  );
+
+  const scored = others
     .map((article) => {
-      const articleKeywords = extractKeywords(article.content, article.title)
-        .toLowerCase()
-        .split(", ");
-
-      // Calculate keyword overlap
-      const commonKeywords = currentKeywords.filter((keyword) =>
+      const tagScore = (article.tags || []).filter((tag) =>
+        currentTags.has(tag.slug)
+      ).length;
+      const articleKeywords = keywordsOf(article);
+      const keywordScore = currentKeywords.filter((keyword) =>
         articleKeywords.some(
           (ak) => ak.includes(keyword) || keyword.includes(ak)
         )
-      );
-
-      const score = commonKeywords.length;
-      return { ...article, score };
+      ).length;
+      return { article, tagScore, keywordScore };
     })
-    .filter((article) => article.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxCount);
+    .filter(({ tagScore, keywordScore }) => tagScore > 0 || keywordScore > 0)
+    .sort(
+      (a, b) =>
+        b.tagScore - a.tagScore ||
+        b.keywordScore - a.keywordScore ||
+        compareNewestFirst(a.article, b.article)
+    )
+    .slice(0, maxCount)
+    .map(({ article }) => article);
 
-  // If no keyword matches, return most recent articles
-  if (otherArticles.length === 0) {
-    return allArticles
-      .filter((article) => article.filename !== currentArticle.filename)
-      .sort(compareNewestFirst)
-      .slice(0, maxCount);
+  if (scored.length === 0) {
+    return [...others].sort(compareNewestFirst).slice(0, maxCount);
   }
 
-  return otherArticles;
+  return scored;
 }
 
 function generateRelatedArticlesHTML(relatedArticles) {
@@ -698,43 +1539,142 @@ function generateArticleNavigation(currentArticle, allArticles) {
   `;
 }
 
+const DISCUSSION_SITES = {
+  "news.ycombinator.com": "Hacker News",
+  "lobste.rs": "Lobsters",
+  "x.com": "X",
+  "twitter.com": "X",
+  "bsky.app": "Bluesky",
+  "itch.io": "itch.io",
+};
+
+// "Hacker News", "Lobsters", "r/gamedev" ... for a discussion URL
+function discussionLabel(value) {
+  const url = new URL(value);
+  const host = url.hostname.replace(/^www\./, "");
+  if (/(^|\.)reddit\.com$/.test(host)) {
+    const sub = url.pathname.match(/^\/r\/([^/]+)/);
+    return sub ? `r/${sub[1]}` : "Reddit";
+  }
+  return DISCUSSION_SITES[host] || host;
+}
+
+function discussionHtml(urls) {
+  if (!urls || urls.length === 0) return "";
+  const links = urls
+    .map((url) =>
+      externalLink(url, escapeHtml(discussionLabel(url)), "share__btn")
+    )
+    .join("");
+  return `
+          <div class="share discuss">
+            <span class="meta share__label">Discuss</span>
+            ${links}
+          </div>`;
+}
+
+function sourceLinkHtml(article) {
+  if (!article.link) return "";
+  const host = new URL(article.link).hostname.replace(/^www\./, "");
+  return `<p class="post__source">${externalLink(
+    article.link,
+    `<span class="post__source-label">Link</span> ${escapeHtml(host)}`,
+    ""
+  )}</p>`;
+}
+
+function articleSchema(article, { canonicalUrl, socialImage, wordCount, readingTime, keywords }) {
+  const images = [`${BASE_URL}/${socialImage}`];
+  if (article.image) images.push(`${BASE_URL}/${article.image}`);
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: article.title || "Untitled",
+    description: article.description || "",
+    url: canonicalUrl,
+    image: images,
+    datePublished: formatDateISO(article.date),
+    dateModified: article.modified || formatDateISO(article.date),
+    author: authorSchema(),
+    publisher: authorSchema(),
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
+    inLanguage: "en-US",
+    keywords,
+    articleSection: (article.tags || [])[0]?.label,
+    wordCount,
+    timeRequired: `PT${readingTime}M`,
+  };
+}
+
 function renderArticleHtml(article, articles) {
-  const template = loadTemplate("article");
   const readingTime = estimateReadingTime(article.content);
-  const keywords = extractKeywords(article.content, article.title);
+  const tags = article.tags || [];
+  const keywords =
+    tags.length > 0
+      ? tags.map((tag) => tag.label).join(", ")
+      : extractKeywords(article.content, article.title);
   const wordCount = countWords(article.content);
   const canonicalUrl = `${BASE_URL}/${article.filename}`;
+  const published = formatDateISO(article.date);
+  const modified = article.modified || published;
+  const socialImage = socialImageFile(article.slug);
 
-  // Generate related articles and navigation
-  const relatedArticles = getRelatedArticles(article, articles);
-  const relatedArticlesHTML = generateRelatedArticlesHTML(relatedArticles);
-  const navigationHTML = generateArticleNavigation(article, articles);
+  const extraMeta = [
+    `<meta property="article:author" content="${BASE_URL}/about.html" />`,
+    `<meta property="article:published_time" content="${published}" />`,
+    `<meta property="article:modified_time" content="${modified}" />`,
+    `<meta property="article:section" content="${escapeHtml(
+      tags[0] ? tags[0].label : "Programming"
+    )}" />`,
+    ...tags.map(
+      (tag) =>
+        `<meta property="article:tag" content="${escapeHtml(tag.label)}" />`
+    ),
+  ].join("\n    ");
 
-  return replaceTemplate(template, {
+  const shareText = encodeURIComponent(article.title || "");
+  const via = String(config.site.twitter || "").replace(/^@/, "");
+
+  return replaceTemplate(loadTemplate("article"), {
     ...commonReplacements(),
+    ...headReplacements({
+      title: article.title || "Untitled",
+      description: article.description,
+      canonicalUrl,
+      ogType: "article",
+      socialKey: article.slug,
+      extraMeta,
+      jsonLd: articleSchema(article, {
+        canonicalUrl,
+        socialImage,
+        wordCount,
+        readingTime,
+        keywords,
+      }),
+    }),
     title: escapeHtml(article.title || "Untitled"),
-    date: formatDateISO(article.date),
-    "modified-date": article.modified || formatDateISO(article.date),
-    "formatted-date": formatDate(article.date),
-    description: escapeHtml(article.description || ""),
-    content: sanitizeHtml(article.content),
-    "reading-time": `${readingTime} min read`,
-    "reading-time-minutes": readingTime,
-    "canonical-url": canonicalUrl,
-    keywords: keywords,
-    "word-count": wordCount,
-    // JSON-LD lives in a <script>, which needs JSON escaping, not HTML
-    "json-title": escapeJsonString(article.title || "Untitled"),
-    "json-description": escapeJsonString(article.description || ""),
-    "json-keywords": escapeJsonString(keywords),
+    "post-meta": postMetaHtml(article),
+    content: enhanceImages(sanitizeHtml(article.content)),
+    // Notes have no separate description: it is their opening text
+    lede:
+      article.description && !isNote(article)
+        ? `<p class="post__lede">${escapeHtml(article.description)}</p>`
+        : "",
+    "post-tags":
+      tags.length > 0
+        ? `<p class="post__tags">${tagLinksHtml(tags)}</p>`
+        : "",
+    "source-link": sourceLinkHtml(article),
+    discussion: discussionHtml(article.discuss),
     // Query-string values for the share links
     "share-url": encodeURIComponent(canonicalUrl),
-    "share-title": encodeURIComponent(article.title || ""),
-    lede: article.description
-      ? `<p class="post__lede">${escapeHtml(article.description)}</p>`
-      : "",
-    "related-articles": relatedArticlesHTML,
-    navigation: navigationHTML,
+    "share-title": shareText,
+    "share-via": via ? `&amp;via=${encodeURIComponent(via)}` : "",
+    "canonical-url": escapeHtml(canonicalUrl),
+    "related-articles": generateRelatedArticlesHTML(
+      getRelatedArticles(article, articles)
+    ),
+    navigation: generateArticleNavigation(article, articles),
   });
 }
 
@@ -753,8 +1693,8 @@ function buildArticle(articleFile, articleData = null, allArticles = null) {
   }
 }
 
-function buildIndex(articles) {
-  const html = generateIndexHtml(articles);
+function buildIndex(articles, projects = null) {
+  const html = generateIndexHtml(articles, projects);
   fs.writeFileSync(path.join(OUTPUT_DIR, "index.html"), html);
 }
 
@@ -763,13 +1703,48 @@ function buildArchive(articles) {
   fs.writeFileSync(path.join(OUTPUT_DIR, "archive.html"), html);
 }
 
+function buildTags(articles) {
+  const tags = collectTags(articles);
+  if (tags.length === 0) return tags;
+  ensureDir(path.join(OUTPUT_DIR, "tags"));
+  for (const tag of tags) {
+    fs.writeFileSync(
+      path.join(OUTPUT_DIR, tagUrl(tag)),
+      generateTagHtml(tag)
+    );
+  }
+  return tags;
+}
+
+function buildPages(pages, articles) {
+  const articleFiles = new Set(articles.map((article) => article.filename));
+  const reserved = new Set(["index.html", "archive.html", "projects.html", "404.html"]);
+  for (const page of pages) {
+    if (articleFiles.has(page.filename) || reserved.has(page.filename)) {
+      throw new Error(
+        `Page ${page.filename} would overwrite another page of the site`
+      );
+    }
+    fs.writeFileSync(
+      path.join(OUTPUT_DIR, page.filename),
+      generatePageHtml(page)
+    );
+  }
+}
+
+function buildProjects(projects) {
+  if (projects.length === 0) return;
+  fs.writeFileSync(
+    path.join(OUTPUT_DIR, "projects.html"),
+    generateProjectsHtml(projects)
+  );
+}
+
 // GitHub Pages serves 404.html for any missing path, including nested ones,
 // so the template references assets through absolute URLs.
 function generateNotFoundHtml() {
-  const template = loadTemplate("404");
-  return replaceTemplate(template, {
-    ...commonReplacements(),
-    root: `${BASE_URL}/`,
+  return replaceTemplate(loadTemplate("404"), {
+    ...commonReplacements(`${BASE_URL}/`),
   });
 }
 
@@ -778,37 +1753,68 @@ function buildNotFound() {
   fs.writeFileSync(path.join(OUTPUT_DIR, "404.html"), html);
 }
 
-function renderSitemap(articles) {
-  const sitemapItems = [];
-  const day = (iso) => iso.split("T")[0];
+// ------------------------------------------------------------
+// Sitemap and feed
+// ------------------------------------------------------------
+
+const day = (iso) => iso.split("T")[0];
+
+const newestDay = (days) =>
+  days.length > 0
+    ? days.reduce((a, b) => (a > b ? a : b))
+    : day(new Date().toISOString());
+
+// Every indexable page of the site, for the sitemap and IndexNow
+function sitePages(articles, { pages = [], projects = [], pageDates = new Map() } = {}) {
   const articleLastmods = articles.map((article) =>
     day(article.modified || formatDateISO(article.date))
   );
   // Listing pages change exactly when some article does
-  const listingLastmod =
-    articleLastmods.length > 0
-      ? articleLastmods.reduce((a, b) => (a > b ? a : b))
-      : day(new Date().toISOString());
+  const listingLastmod = newestDay(articleLastmods);
 
-  // Add homepage
-  sitemapItems.push({
-    url: BASE_URL,
-    lastmod: listingLastmod,
-    changefreq: "daily",
-    priority: 1.0,
-  });
+  const entries = [
+    { url: BASE_URL, lastmod: listingLastmod, changefreq: "daily", priority: 1.0 },
+    {
+      url: `${BASE_URL}/archive.html`,
+      lastmod: listingLastmod,
+      changefreq: "weekly",
+      priority: 0.8,
+    },
+  ];
 
-  // Add archive page
-  sitemapItems.push({
-    url: `${BASE_URL}/archive.html`,
-    lastmod: listingLastmod,
-    changefreq: "weekly",
-    priority: 0.8,
-  });
+  if (projects.length > 0) {
+    entries.push({
+      url: `${BASE_URL}/projects.html`,
+      lastmod: pageDates.get(PROJECTS_FILE),
+      changefreq: "monthly",
+      priority: 0.8,
+    });
+  }
 
-  // Add articles
+  for (const page of pages) {
+    entries.push({
+      url: `${BASE_URL}/${page.filename}`,
+      lastmod: pageDates.get(page.filename),
+      changefreq: "monthly",
+      priority: 0.7,
+    });
+  }
+
+  for (const tag of collectTags(articles)) {
+    entries.push({
+      url: `${BASE_URL}/${tagUrl(tag)}`,
+      lastmod: newestDay(
+        tag.articles.map((article) =>
+          day(article.modified || formatDateISO(article.date))
+        )
+      ),
+      changefreq: "weekly",
+      priority: 0.6,
+    });
+  }
+
   articles.forEach((article, index) => {
-    sitemapItems.push({
+    entries.push({
       url: `${BASE_URL}/${article.filename}`,
       lastmod: articleLastmods[index],
       changefreq: "monthly",
@@ -816,13 +1822,23 @@ function renderSitemap(articles) {
     });
   });
 
+  return entries;
+}
+
+function renderSitemap(articles, options = {}) {
+  const sitemapItems = sitePages(articles, options);
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemapItems
   .map(
     (item) => `  <url>
-    <loc>${item.url}</loc>
-    <lastmod>${item.lastmod}</lastmod>
+    <loc>${item.url}</loc>${
+      item.lastmod
+        ? `
+    <lastmod>${item.lastmod}</lastmod>`
+        : ""
+    }
     <changefreq>${item.changefreq}</changefreq>
     <priority>${item.priority}</priority>
   </url>`
@@ -831,19 +1847,37 @@ ${sitemapItems
 </urlset>`;
 }
 
-function generateSitemap(articles) {
+function generateSitemap(articles, options = {}) {
   fs.writeFileSync(
     path.join(OUTPUT_DIR, "sitemap.xml"),
-    renderSitemap(articles)
+    renderSitemap(articles, options)
   );
   console.log("✅ Sitemap generated");
 }
 
+const RSS_ITEMS = 20;
+
+function cdata(text) {
+  return `<![CDATA[${String(text).replace(/]]>/g, "]]]]><![CDATA[>")}]]>`;
+}
+
+// Full article HTML as a feed reader shows it, with absolute URLs
+function feedContent(article) {
+  const url = `${BASE_URL}/${article.filename}`;
+  let html = sanitizeHtml(article.content);
+  if (article.link) {
+    html = `<p>Link: <a href="${escapeHtml(article.link)}">${escapeHtml(
+      article.link
+    )}</a></p>\n${html}`;
+  }
+  return absolutizeUrls(html, url);
+}
+
 function renderRSSFeed(articles) {
-  const recentArticles = articles.slice(0, 10);
+  const recentArticles = articles.slice(0, RSS_ITEMS);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>${escapeXml(config.site.title)}</title>
     <link>${BASE_URL}</link>
@@ -858,9 +1892,17 @@ function renderRSSFeed(articles) {
       <title>${escapeXml(article.title)}</title>
       <link>${BASE_URL}/${article.filename}</link>
       <description>${escapeXml(article.description || "")}</description>
+      <content:encoded>${cdata(feedContent(article))}</content:encoded>
       <dc:creator>${escapeXml(config.site.author)}</dc:creator>
       <pubDate>${parseDate(article.date).toUTCString()}</pubDate>
-      <guid>${BASE_URL}/${article.filename}</guid>
+      <guid isPermaLink="true">${BASE_URL}/${article.filename}</guid>${(
+          article.tags || []
+        )
+          .map(
+            (tag) => `
+      <category>${escapeXml(tag.label)}</category>`
+          )
+          .join("")}
     </item>`
       )
       .join("")}
@@ -880,6 +1922,100 @@ function escapeXml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+// ------------------------------------------------------------
+// Social cards (generated by tools/og-images.js)
+// ------------------------------------------------------------
+
+const SOCIAL_CARD_TEMPLATE = path.join("tools", "og-card.html");
+// Hash of what each card was generated from; kept out of static/ so it is
+// not deployed
+const SOCIAL_CARD_MANIFEST = path.join("tools", "og-cards.json");
+
+// One card per page that has its own: articles, standalone pages, the
+// projects page and every tag, plus the site-wide default card
+function socialCardSpecs(articles, pages = [], projects = []) {
+  const specs = [
+    {
+      file: DEFAULT_SOCIAL_IMAGE,
+      title: "Small software, games and the web",
+      eyebrow: "",
+      image: null,
+    },
+    ...articles.map((article) => ({
+      file: `${SOCIAL_CARDS_DIR}/${article.slug}.png`,
+      title: article.title,
+      eyebrow: isNote(article)
+        ? "Note"
+        : (article.tags || []).map((tag) => tag.label).slice(0, 3).join(" · "),
+      image: article.image || null,
+    })),
+    ...pages.map((page) => ({
+      file: `${SOCIAL_CARDS_DIR}/${page.slug}.png`,
+      title: page.title,
+      eyebrow: "",
+      image: page.image ? stripLeadingSlash(page.image) : null,
+    })),
+    ...collectTags(articles).map((tag) => ({
+      file: `${SOCIAL_CARDS_DIR}/tag-${tag.slug}.png`,
+      title: `Articles about ${tag.label}`,
+      eyebrow: "Topic",
+      image: null,
+    })),
+  ];
+  if (projects.length > 0) {
+    const cover = projects.find((project) => project.featured && project.image);
+    specs.push({
+      file: `${SOCIAL_CARDS_DIR}/projects.png`,
+      title: "Games, apps and websites I made",
+      eyebrow: "Projects",
+      image: cover ? cover.image : null,
+    });
+  }
+  return specs;
+}
+
+// Changes when the card's text, image or the card design changes
+function socialCardHash(spec, staticDir = STATIC_DIR) {
+  const hash = require("crypto").createHash("sha256");
+  hash.update(JSON.stringify([spec.title, spec.eyebrow, spec.image]));
+  if (fs.existsSync(SOCIAL_CARD_TEMPLATE)) {
+    hash.update(fs.readFileSync(SOCIAL_CARD_TEMPLATE));
+  }
+  if (spec.image && fs.existsSync(path.join(staticDir, spec.image))) {
+    hash.update(fs.readFileSync(path.join(staticDir, spec.image)));
+  }
+  return hash.digest("hex").slice(0, 16);
+}
+
+function readSocialCardManifest(file = SOCIAL_CARD_MANIFEST) {
+  if (!fs.existsSync(file)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    return {};
+  }
+}
+
+// Cards that are missing or don't match their page any more
+function staleSocialCards(
+  specs,
+  staticDir = STATIC_DIR,
+  manifest = readSocialCardManifest()
+) {
+  return specs.filter(
+    (spec) =>
+      !fs.existsSync(path.join(staticDir, spec.file)) ||
+      manifest[spec.file] !== socialCardHash(spec, staticDir)
+  );
+}
+
+// Last commit day of files in a directory, for sitemap <lastmod>
+function getFileDates(dir) {
+  return new Map(
+    [...getGitDates(dir)].map(([file, dates]) => [file, day(dates.modified)])
+  );
 }
 
 const INDEXNOW_TIMEOUT_MS = 15000;
@@ -1187,22 +2323,51 @@ async function build() {
       throw new Error(`Failed to generate articles:\n${failures.join("\n")}`);
     }
 
-    buildIndex(articles);
+    const pages = getAllPages();
+    const projects = loadProjects();
+
+    buildIndex(articles, projects);
     console.log("Generated index.html");
 
     buildArchive(articles);
     console.log("Generated archive.html");
 
+    const tags = buildTags(articles);
+    console.log(`Generated ${tags.length} tag pages`);
+
+    buildProjects(projects);
+    if (projects.length > 0) console.log("Generated projects.html");
+
+    buildPages(pages, articles);
+    pages.forEach((page) => console.log(`Generated: ${page.filename}`));
+
     buildNotFound();
     console.log("Generated 404.html");
 
-    generateSitemap(articles);
+    // Last commit days of the pages and projects.json, for <lastmod>
+    const pageDates = new Map([
+      ...getFileDates(PAGES_DIR),
+      ...[...getFileDates(path.dirname(PROJECTS_FILE))].filter(
+        ([file]) => file === path.basename(PROJECTS_FILE)
+      ),
+    ]);
+    generateSitemap(articles, { pages, projects, pageDates });
     console.log("Generated sitemap.xml");
 
     generateRSSFeed(articles);
     console.log("Generated feed.xml");
 
     console.log(`\nBuild complete: ${articles.length} articles generated`);
+
+    const staleCards = staleSocialCards(
+      socialCardSpecs(articles, pages, projects)
+    );
+    if (staleCards.length > 0) {
+      console.warn(
+        `\n⚠️  ${staleCards.length} social cards are missing or out of date (pages fall back to the default card). Run: npm run og-images`
+      );
+      staleCards.forEach((spec) => console.warn(`   - ${spec.file}`));
+    }
 
     // IndexNow is submitted by the deploy workflow once the site is live
     // (see index-now.js), never from the build itself.
@@ -1236,6 +2401,36 @@ if (typeof module !== "undefined" && module.exports) {
     validateArticle,
     getArticleData,
     getAllArticles,
+    getAllPages,
+    getPageData,
+    loadProjects,
+    collectTags,
+    slugify,
+    parseTags,
+    parseUrlList,
+    isAllowedEmbedUrl,
+    deriveDescription,
+    enhanceImages,
+    absolutizeUrls,
+    discussionLabel,
+    pageTitle,
+    analyticsHtml,
+    subscribeHtml,
+    getRelatedArticles,
+    generateTagHtml,
+    generatePageHtml,
+    generateProjectsHtml,
+    sitePages,
+    socialCardSpecs,
+    socialCardHash,
+    staleSocialCards,
+    readSocialCardManifest,
+    SOCIAL_CARD_MANIFEST,
+    SOCIAL_CARD_TEMPLATE,
+    SOCIAL_CARDS_DIR,
+    buildTags,
+    buildPages,
+    buildProjects,
     escapeHtml,
     escapeJsonString,
     stripHtml,

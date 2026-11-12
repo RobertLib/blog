@@ -143,7 +143,8 @@ describe("Blog HTML Generation", () => {
       expect(data.datePublished).toBe("2024-01-15T00:00:00.000Z");
       expect(data.dateModified).toBe(article.modified);
       expect(data.author.name).toBe(config.site.author);
-      expect(data.image.url).toBe(`${BASE_URL}/og-image.png`);
+      expect(data.author.url).toBe(`${BASE_URL}/about.html`);
+      expect(data.image[0]).toBe(`${BASE_URL}/og-image.png`);
     });
 
     it("should HTML-escape the title in markup", () => {
@@ -203,17 +204,35 @@ describe("Blog HTML Generation", () => {
   });
 
   describe("renderRSSFeed", () => {
-    it("should include at most 10 escaped items with an author", () => {
-      const articles = Array.from({ length: 12 }, (_, i) =>
+    it("should include at most 20 escaped items with an author", () => {
+      const articles = Array.from({ length: 25 }, (_, i) =>
         makeArticle({ slug: `post-${i}`, title: `Post ${i} & more` })
       );
       const rss = build.renderRSSFeed(articles);
 
-      expect(rss.match(/<item>/g)).toHaveLength(10);
+      expect(rss.match(/<item>/g)).toHaveLength(20);
       expect(rss).toContain("<title>Post 0 &amp; more</title>");
-      expect(rss).not.toContain("post-10.html");
+      expect(rss).not.toContain("post-20.html");
       expect(rss).toContain(`<dc:creator>${config.site.author}</dc:creator>`);
       expect(rss).toContain("<pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>");
+    });
+
+    it("should carry full content with absolute links and tag categories", () => {
+      const rss = build.renderRSSFeed([
+        makeArticle({
+          content:
+            '<p>See <a href="other.html">this</a> and <img src="images/x.png" alt="x" />]]></p>',
+          tags: [{ label: "Games", slug: "games" }],
+        }),
+      ]);
+      const encoded = rss.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/)[1];
+
+      expect(encoded.startsWith("<![CDATA[")).toBe(true);
+      expect(encoded).toContain(`href="${BASE_URL}/other.html"`);
+      expect(encoded).toContain(`src="${BASE_URL}/images/x.png"`);
+      // A literal "]]>" in content must not end the CDATA section early
+      expect(encoded).toContain("]]]]><![CDATA[>");
+      expect(rss).toContain("<category>Games</category>");
     });
   });
 
@@ -316,7 +335,7 @@ describe("Blog HTML Generation", () => {
 
 describe("Template partials", () => {
   it("should expand every partial in every page template", () => {
-    for (const name of ["index", "archive", "article", "404"]) {
+    for (const name of ["index", "archive", "article", "tag", "page", "projects", "404"]) {
       const template = build.loadTemplate(name);
 
       expect(template, name).not.toContain("{{>");
@@ -332,9 +351,25 @@ describe("Template partials", () => {
     const current = (html) =>
       html.match(/<a href="([^"]*)" aria-current="page">/g) || [];
 
-    expect(current(home)).toEqual([`<a href="${BASE_URL}" aria-current="page">`]);
+    const projects = build.generateProjectsHtml([]);
+    const about = build.generatePageHtml({
+      title: "About me",
+      description: "About the author of the blog",
+      content: "<p>Hello</p>",
+      filename: "about.html",
+      slug: "about",
+    });
+
+    // The wordmark links home, so the home page has no current nav item
+    expect(current(home)).toEqual([]);
     expect(current(archive)).toEqual([
       '<a href="archive.html" aria-current="page">',
+    ]);
+    expect(current(projects)).toEqual([
+      '<a href="projects.html" aria-current="page">',
+    ]);
+    expect(current(about)).toEqual([
+      '<a href="about.html" aria-current="page">',
     ]);
     expect(current(build.generateNotFoundHtml())).toEqual([]);
   });

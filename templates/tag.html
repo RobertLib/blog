@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {{> head-meta}}
+    {{> head-assets}}
+    {{json-ld}}
+  </head>
+  <body class="page-tag">
+    {{> header}}
+
+    <main id="main-content">
+      <div class="shell">
+        <div class="page-head">
+          <p class="eyebrow">Topic</p>
+          <h1>{{tag-label}}</h1>
+          <p>{{tag-summary}} <a href="{{root}}archive.html">All topics</a></p>
+        </div>
+        <div class="post-list">{{articles}}</div>
+        {{subscribe}}
+      </div>
+    </main>
+
+    {{> footer}}
+  </body>
+</html>
