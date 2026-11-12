@@ -1666,6 +1666,10 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 0.625rem;
+  /* Positioned at left: 50%, it would otherwise shrink to the stage's right
+     half and wrap the touch note needlessly */
+  width: max-content;
+  max-width: calc(100% - 2rem);
   padding: 0.875rem 1.375rem 0.875rem 1.125rem;
   border: 0;
   border-radius: 999px;
@@ -1687,8 +1691,27 @@ main {
 }
 
 .embed__play svg {
+  flex-shrink: 0;
   width: 1.25rem;
   height: 1.25rem;
+}
+
+/* The label, and under it the note shown on touch-only devices
+   (data-embed-touch-note), which wraps rather than outgrow a narrow stage */
+.embed__play-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+}
+
+.embed__play-note {
+  max-width: 14rem;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: left;
+  white-space: normal;
 }
 
 .embed__frame {

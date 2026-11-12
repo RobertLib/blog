@@ -1263,6 +1263,8 @@ function loadProjects(
 
   const errors = projects.flatMap(validateProject);
   for (const project of projects) {
+    // Already reported by validateProject
+    if (!project || typeof project !== "object") continue;
     if (
       project.article &&
       !fs.existsSync(path.join(articlesDir, project.article))
@@ -1276,7 +1278,13 @@ function loadProjects(
   if (errors.length > 0) {
     throw new Error(`Invalid projects:\n${errors.join("\n")}`);
   }
-  return projects;
+  // Images are paths inside static/ like an article's, with or without a
+  // leading slash; pages link them relative to their own location
+  return projects.map((project) =>
+    project.image
+      ? { ...project, image: stripLeadingSlash(project.image) }
+      : project
+  );
 }
 
 function externalLink(url, label, className = "") {
@@ -2050,7 +2058,7 @@ function renderSitemap(articles, options = {}) {
 ${sitemapItems
   .map(
     (item) => `  <url>
-    <loc>${item.url}</loc>${
+    <loc>${escapeXml(item.url)}</loc>${
       item.lastmod
         ? `
     <lastmod>${item.lastmod}</lastmod>`
@@ -2117,12 +2125,14 @@ function renderRSSFeed(articles) {
         (article) => `
     <item>
       <title>${escapeXml(article.title)}</title>
-      <link>${BASE_URL}/${article.filename}</link>
+      <link>${escapeXml(`${BASE_URL}/${article.filename}`)}</link>
       <description>${escapeXml(article.description || "")}</description>
       <content:encoded>${cdata(feedContent(article))}</content:encoded>
       <dc:creator>${escapeXml(config.site.author)}</dc:creator>
       <pubDate>${parseDate(article.date).toUTCString()}</pubDate>
-      <guid isPermaLink="true">${BASE_URL}/${article.filename}</guid>${(
+      <guid isPermaLink="true">${escapeXml(
+        `${BASE_URL}/${article.filename}`
+      )}</guid>${(
           article.tags || []
         )
           .map(

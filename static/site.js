@@ -189,10 +189,18 @@
   // for, so it never slows the page down or starts making sound by itself.
   // The build checks the URL against config.embeds.allowedHosts and gives the
   // stage the frame's shape from data-embed-ratio.
+  //
+  // On a touch-only device (a phone or tablet without a mouse or trackpad),
+  // data-embed-touch-note ("Needs a keyboard or gamepad") is shown on the
+  // button, so nobody starts a game they can't control without knowing.
+  var touchOnly =
+    window.matchMedia("(pointer: coarse)").matches &&
+    !window.matchMedia("(any-pointer: fine)").matches;
   var embeds = document.querySelectorAll("[data-embed]");
   Array.prototype.forEach.call(embeds, function (embed) {
     var src = embed.getAttribute("data-embed");
     var name = embed.getAttribute("data-embed-title");
+    var touchNote = embed.getAttribute("data-embed-touch-note");
     var stage = embed.querySelector(".embed__stage") || embed;
 
     var button = document.createElement("button");
@@ -201,9 +209,16 @@
     button.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>';
     var label = document.createElement("span");
+    label.className = "embed__play-text";
     label.textContent =
       embed.getAttribute("data-embed-label") ||
       (name ? "Play " + name : "Play in your browser");
+    if (touchNote && touchOnly) {
+      var note = document.createElement("small");
+      note.className = "embed__play-note";
+      note.textContent = touchNote;
+      label.appendChild(note);
+    }
     button.appendChild(label);
     stage.appendChild(button);
     embed.classList.add("embed--ready");

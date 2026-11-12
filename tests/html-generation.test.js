@@ -193,6 +193,13 @@ describe("Blog HTML Generation", () => {
       );
     });
 
+    it("should escape URLs for XML", () => {
+      const xml = build.renderSitemap([makeArticle({ slug: "q&a" })]);
+
+      expect(xml).toContain(`<loc>${BASE_URL}/q&amp;a.html</loc>`);
+      expect(xml).not.toContain("q&a.html");
+    });
+
     it("should date listing pages by their newest article", () => {
       expect(sitemap).toContain(
         `<loc>${BASE_URL}</loc>\n    <lastmod>2025-05-05</lastmod>`
@@ -215,6 +222,15 @@ describe("Blog HTML Generation", () => {
       expect(rss).not.toContain("post-20.html");
       expect(rss).toContain(`<dc:creator>${config.site.author}</dc:creator>`);
       expect(rss).toContain("<pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>");
+    });
+
+    it("should escape item URLs", () => {
+      const rss = build.renderRSSFeed([makeArticle({ slug: "q&a" })]);
+
+      expect(rss).toContain(`<link>${BASE_URL}/q&amp;a.html</link>`);
+      expect(rss).toContain(
+        `<guid isPermaLink="true">${BASE_URL}/q&amp;a.html</guid>`
+      );
     });
 
     it("should date the feed by its newest change, not by the build", () => {

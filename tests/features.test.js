@@ -500,6 +500,37 @@ describe("Projects and pages", () => {
     expect(build.loadProjects(path.join(dir, "none.json"))).toEqual([]);
   });
 
+  it("should report a project that is not an object instead of crashing", () => {
+    const dir = tempDir();
+    const file = path.join(dir, "projects.json");
+    fs.writeFileSync(file, JSON.stringify([null]));
+
+    expect(() => build.loadProjects(file)).toThrow("Project #1 is not an object");
+  });
+
+  it("should accept project images with a leading slash", () => {
+    const dir = tempDir();
+    const file = path.join(dir, "projects.json");
+    fs.writeFileSync(
+      file,
+      JSON.stringify([
+        {
+          name: "Chuck",
+          summary: "S",
+          url: "https://g.example",
+          category: "games",
+          image: "/images/chuck/sector-09.png",
+        },
+      ])
+    );
+
+    const projects = build.loadProjects(file);
+    const page = build.generateProjectsHtml(projects);
+
+    expect(projects[0].image).toBe("images/chuck/sector-09.png");
+    expect(page).toContain('src="images/chuck/sector-09.png"');
+  });
+
   it("should group projects by category and feature some on the home page", () => {
     const projects = [
       { name: "Game", category: "games", summary: "S", url: "https://g.example", featured: true },

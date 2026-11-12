@@ -153,6 +153,7 @@ past 60 characters.
   data-embed="https://itch.io/embed-upload/20080149?color=000000"
   data-embed-ratio="800 / 582"
   data-embed-title="Chuck"
+  data-embed-touch-note="Needs a keyboard or gamepad"
 >
   <div class="embed__stage">
     <a href="https://roblib.itch.io/chuck"><img src="images/chuck/sector-09.png" alt="..." /></a>
@@ -166,7 +167,10 @@ Local images get their `width`/`height` from the file and lazy loading
 for hosts in `config.embeds.allowedHosts` (others are removed with a build
 warning). `data-embed-ratio` is the game's width / height (in itch.io's embed
 code, the height includes its 30 px bottom bar); the build gives the stage that
-shape up front and fails on a malformed ratio. Prefer WebP for screenshots
+shape up front and fails on a malformed ratio. The optional
+`data-embed-touch-note` is shown on the play button on phones and tablets
+without a mouse or trackpad: say there what a game needs that a touch screen
+lacks, or that it is a big download. Prefer WebP for screenshots
 (`cwebp -q 82 -resize 1200 0 in.png -o out.webp`).
 
 ## 📄 Pages and projects

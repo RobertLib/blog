@@ -12,11 +12,11 @@
   technology at the beginning.
 </p>
 
-<h2>Profile Page: HTML + CSS + JavaScript</h2>
+<h2>Portfolio or Company Website: HTML + CSS + JavaScript</h2>
 
 <p>
   Let's start with the simplest case. Do you need to create a personal portfolio
-  or company presentation? <strong>You don't need any framework.</strong>
+  or a simple company website? <strong>You don't need any framework.</strong>
   Plain HTML, CSS, and a bit of JavaScript for interactivity is enough.
 </p>
 
@@ -69,14 +69,14 @@
 
 <pre><code>// Example of a simple generator
 const fs = require('fs');
-const path = require('path');
 
 function generateBlog() {
   const articles = loadArticles();
   const template = loadTemplate();
 
   articles.forEach(article => {
-    const html = template.replace('{{content}}', article.content);
+    // A function, so "$&amp;" in an article isn't read as a replacement pattern
+    const html = template.replace('{{content}}', () => article.content);
     fs.writeFileSync(`dist/${article.slug}.html`, html);
   });
 }
@@ -209,7 +209,7 @@ function generateBlog() {
 
 <h3>1. Overkill for Simple Projects</h3>
 <p>
-  Using React for a static presentation is like hiring a symphony orchestra to
+  Using React for a static brochure site is like hiring a symphony orchestra to
   play "Happy Birthday". It works, but it's unnecessarily complex.
 </p>
 
@@ -232,7 +232,7 @@ function generateBlog() {
   expensive.
 </p>
 
-<h2>Conclusion: Less Often Means More</h2>
+<h2>Conclusion: Less Is Often More</h2>
 
 <p>
   Today, we often think that more complex technology automatically means a
