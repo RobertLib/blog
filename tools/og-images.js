@@ -79,15 +79,30 @@ function escapeHtml(text) {
     .replace(/"/g, "&quot;");
 }
 
+// The card's picture box (tools/og-card.html, .picture)
+const PICTURE_WIDTH = 500;
+const PICTURE_HEIGHT = 548;
+
 function cardHtml(spec, template) {
-  const image = spec.image
-    ? pathToFileURL(path.join(STATIC_DIR, spec.image)).href
-    : "";
+  const imagePath = spec.image ? path.join(STATIC_DIR, spec.image) : null;
+  const image = imagePath ? pathToFileURL(imagePath).href : "";
+  // A picture too small to fill the box without blurring (a profile photo)
+  // is shown as a round portrait at its own size
+  const size = imagePath ? imageSize(imagePath) : null;
+  const portrait =
+    size && (size.width < PICTURE_WIDTH || size.height < PICTURE_HEIGHT)
+      ? Math.min(size.width, size.height, PICTURE_WIDTH)
+      : 0;
   const values = {
     title: escapeHtml(spec.title),
     eyebrow: escapeHtml(spec.eyebrow || ""),
     "image-url": image,
-    "body-class": image ? "has-image" : "no-image",
+    "body-class": !image
+      ? "no-image"
+      : portrait
+        ? "has-image has-portrait"
+        : "has-image",
+    "portrait-size": portrait,
     "font-url": pathToFileURL(
       path.join(STATIC_DIR, "fonts", "inter-latin.woff2")
     ).href,

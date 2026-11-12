@@ -93,6 +93,24 @@
         display: none;
       }
 
+      /* A picture smaller than the box (a profile photo) is shown at its own
+         size as a round portrait, centred where the box would be, instead of
+         being blown up and blurred */
+      .has-portrait .picture {
+        top: calc(315px - var(--portrait) / 2);
+        right: calc(291px - var(--portrait) / 2);
+        bottom: auto;
+        width: var(--portrait);
+        height: var(--portrait);
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px rgba(233, 231, 226, 0.14),
+          0 0 0 12px rgba(233, 231, 226, 0.035);
+      }
+
+      .has-portrait .picture::after {
+        display: none;
+      }
+
       .frame {
         position: absolute;
         z-index: 1;
@@ -196,7 +214,7 @@
       }
     </style>
   </head>
-  <body class="{{body-class}}">
+  <body class="{{body-class}}" style="--portrait: {{portrait-size}}px">
     <div class="grid"></div>
     <div class="picture"></div>
     <div class="frame"></div>

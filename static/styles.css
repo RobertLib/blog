@@ -104,7 +104,8 @@
   /* Pushed further from the paper than --accent: hovered accent buttons and
      accent text on tinted (hovered) rows, where --accent misses AA */
   --accent-strong: #a2491a;
-  /* Light enough for accent text on it (badges, hovered tags) to pass AA */
+  /* Light enough for --accent-strong text on it (badges, hovered tags) to
+     pass AA, also inside a hovered row where it sits on top of --tint */
   --accent-wash: rgba(180, 83, 31, 0.04);
   --selection: rgba(180, 83, 31, 0.16);
 
@@ -172,6 +173,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -181,6 +183,9 @@ body {
   font-family: var(--font-serif);
   font-size: clamp(1.0625rem, 0.98rem + 0.32vw, 1.1875rem);
   line-height: 1.72;
+  /* A word longer than its line (a handle, a URL, a long name in a heading
+     at a large text size) breaks instead of widening the page */
+  overflow-wrap: break-word;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   display: flex;
@@ -336,12 +341,16 @@ html {
   border-bottom-color: var(--rule);
 }
 
+/* One row normally; with enlarged text on a narrow screen the navigation
+   wraps onto a second row instead of pushing the page sideways */
 .site-header__inner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1.25rem;
-  height: 4rem;
+  gap: 0.5rem 1.25rem;
+  min-height: 4rem;
+  padding-block: 0.5rem;
 }
 
 /* Wordmark */
@@ -385,14 +394,16 @@ html {
 /* Navigation */
 .site-header__right {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.5rem 1.25rem;
 }
 
 .site-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.25rem 1.25rem;
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 500;
@@ -1216,7 +1227,8 @@ main {
 
 .site-footer__links {
   display: flex;
-  gap: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
   font-family: var(--font-sans);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -1251,7 +1263,7 @@ main {
   padding: 0.125rem 0.4375rem;
   border-radius: 999px;
   background: var(--accent-wash);
-  color: var(--accent);
+  color: var(--accent-strong);
   font-family: var(--font-mono);
   font-size: 0.625rem;
   font-weight: 600;
@@ -1278,8 +1290,9 @@ main {
     background-color 0.15s var(--ease);
 }
 
+/* --accent-strong: the tag usually sits in a hovered (tinted) card too */
 .tag:hover {
-  color: var(--accent);
+  color: var(--accent-strong);
   border-color: var(--accent-line);
   background: var(--accent-wash);
 }
@@ -1372,6 +1385,7 @@ main {
 
 .showcase__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 1rem;
 }
@@ -1532,7 +1546,8 @@ main {
   flex: 1 1 14rem;
   min-width: 0;
   padding: 0.5625rem 0.875rem;
-  border: 1px solid var(--rule-2);
+  /* A control's edge needs 3:1 against what is around it (WCAG 1.4.11) */
+  border: 1px solid var(--ink-3);
   border-radius: var(--radius-sm);
   background: var(--paper);
   color: var(--ink);
@@ -1621,6 +1636,13 @@ main {
 .embed__stage > a {
   display: block;
   height: 100%;
+}
+
+/* The stage clips what is outside it, so the focus ring of the poster link
+   (the keyboard's way in without JavaScript) and of the game goes inside */
+.embed__stage > a:focus-visible,
+.embed__frame:focus-visible {
+  outline-offset: -4px;
 }
 
 .embed__stage img {
@@ -1732,7 +1754,7 @@ main {
 
 @media (max-width: 40rem) {
   .site-header__inner {
-    height: 3.5rem;
+    min-height: 3.5rem;
   }
 
   .site-header__right {
@@ -1794,7 +1816,7 @@ main {
 }
 
 /* The header RSS link (also in the footer) makes room on narrow screens,
-   so the header fits from 320px up and with enlarged text */
+   so the header keeps to one row from 320px up */
 @media (max-width: 28rem) {
   .site-nav__rss {
     display: none;
@@ -1811,6 +1833,30 @@ main {
     margin: -1px;
     overflow: hidden;
     clip-path: inset(50%);
+  }
+}
+
+/* Too narrow for even that row, which only happens with enlarged text (rem
+   media queries scale with the reader's font size; at the default size this
+   is narrower than any phone): the logo and theme toggle share the first
+   row and the navigation gets the second. Such a header would take a big
+   share of a small screen, so it scrolls away instead of staying. */
+@media (max-width: 18rem) {
+  .site-header {
+    position: static;
+  }
+
+  .site-header__right {
+    display: contents;
+  }
+
+  .theme-toggle {
+    margin-left: auto;
+  }
+
+  .site-nav {
+    order: 1;
+    flex-basis: 100%;
   }
 }
 
@@ -1832,16 +1878,27 @@ main {
   }
 }
 
+/* Set by site.js for a moment while the theme toggle switches palettes, so
+   everything changes colour at once instead of elements with a colour
+   transition lagging behind in the old theme's colours */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
 /* ============================================================
    PRINT
    ============================================================ */
 
 @media print {
   /* Paper is white whatever theme is on screen; with or without a chosen
-     theme, as specific as the dark palettes above and later, so it wins */
+     theme, as specific as the dark palettes above and later, so it wins.
+     A chosen theme also sets color-scheme as an inline style (site.js),
+     which only !important beats. */
   :root:not([data-theme]),
   :root[data-theme] {
-    color-scheme: light;
+    color-scheme: light !important;
     --paper: #fff;
     --sunken: #f6f6f6;
     --ink: #000;
@@ -1892,11 +1949,20 @@ main {
     color: #000;
   }
 
-  /* Paper can't scroll: long code lines wrap instead of being cut off */
+  /* Paper can't scroll: long code lines wrap and wide tables shrink their
+     text instead of being cut off */
   .prose pre {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     overflow: visible;
+  }
+
+  .prose .table-scroll {
+    overflow: visible;
+  }
+
+  .prose table {
+    font-size: 9pt;
   }
 
   .prose pre,

@@ -51,12 +51,24 @@
     syncToggleLabel();
   }
 
+  // Colour transitions are paused while the palette changes, so the whole
+  // page switches at once; they resume once the new colours are painted
+  function switchTheme(theme) {
+    root.classList.add("theme-switching");
+    applyTheme(theme);
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        root.classList.remove("theme-switching");
+      });
+    });
+  }
+
   if (toggle) {
     toggle.hidden = false;
     syncToggleLabel();
     toggle.addEventListener("click", function () {
       var next = currentTheme() === "dark" ? "light" : "dark";
-      applyTheme(next);
+      switchTheme(next);
       try {
         localStorage.setItem("theme", next);
       } catch (e) {
@@ -67,7 +79,7 @@
     // A choice made in another tab of the site applies here too
     window.addEventListener("storage", function (event) {
       if (event.key === "theme" || event.key === null) {
-        applyTheme(event.newValue);
+        switchTheme(event.newValue);
       }
     });
 

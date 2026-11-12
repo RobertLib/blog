@@ -36,7 +36,8 @@ const rgbaToken = (block, name) =>
     .split(",")
     .map(Number);
 
-// The #rrggbb a translucent color shows as over the paper color
+// The #rrggbb a translucent color shows as over an opaque #rrggbb color
+// (the paper, or translucent layers already composited onto it)
 function overPaper([r, g, b, alpha], paper) {
   return `#${[r, g, b]
     .map((channel, i) => {
@@ -82,12 +83,31 @@ describe("Color contrast (WCAG AA, 4.5:1 for body-size text)", () => {
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
-    // Badges and hovered tags: accent text on the translucent accent wash
-    it(`${theme}: --accent on --accent-wash`, () => {
+    // Dates and reading times in hovered rows
+    it(`${theme}: --ink-3 on --tint`, () => {
       const paper = token(block, "paper");
-      const wash = overPaper(rgbaToken(block, "accent-wash"), paper);
-      const ratio = contrast(token(block, "accent"), wash);
+      const tint = overPaper(rgbaToken(block, "tint"), paper);
+      const ratio = contrast(token(block, "ink-3"), tint);
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
+
+    // Badges and hovered tags: accent text on the translucent accent wash,
+    // which in a hovered card or archive row lies on top of the tint
+    it(`${theme}: --accent-strong on --accent-wash over --tint`, () => {
+      const paper = token(block, "paper");
+      const tint = overPaper(rgbaToken(block, "tint"), paper);
+      const wash = overPaper(rgbaToken(block, "accent-wash"), tint);
+      const ratio = contrast(token(block, "accent-strong"), wash);
+      expect(ratio).toBeGreaterThanOrEqual(4.5);
+    });
+
+    // The subscribe field's border against the box it sits in and its own
+    // fill (WCAG 1.4.11: 3:1 for the edge of a control)
+    for (const surface of ["sunken", "paper"]) {
+      it(`${theme}: --ink-3 border on --${surface}`, () => {
+        const ratio = contrast(token(block, "ink-3"), token(block, surface));
+        expect(ratio).toBeGreaterThanOrEqual(3);
+      });
+    }
   }
 });

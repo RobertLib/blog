@@ -421,6 +421,14 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       expect(build.countWords("<p>Add &frac12; cup &hearts;</p>")).toBe(2);
     });
 
+    // A browser shows U+FFFD; String.fromCodePoint would throw and fail the
+    // whole build
+    it("should survive numeric references to no valid character", () => {
+      expect(
+        build.stripHtml("<p>&#99999999;&#x110000;&#xD800;&#0;&#65;</p>").trim()
+      ).toBe("����A");
+    });
+
     it("should count only visible words", () => {
       expect(
         build.countWords('<p class="lead">One <strong>two</strong> three</p>')

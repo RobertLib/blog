@@ -27,7 +27,8 @@ function validateConfig(config) {
 
   for (const { path, type } of required) {
     const value = getNestedValue(config, path);
-    if (!value) {
+    // 0 is a value, not a missing one
+    if (value === undefined || value === null || value === "") {
       errors.push(`Missing required config: ${path}`);
     } else if (typeof value !== type) {
       errors.push(
@@ -922,6 +923,8 @@ function commonReplacements(root = "") {
     "base-url": BASE_URL,
     root,
     "site-title": escapeHtml(config.site.title),
+    // The site name as shown in the header, with a typographic apostrophe
+    "wordmark-text": escapeHtml(config.site.title).replace(/&#039;/g, "&rsquo;"),
     author: escapeHtml(config.site.author),
     "json-author": escapeJsonString(config.site.author),
     twitter: escapeHtml(config.site.twitter || ""),
@@ -1163,12 +1166,16 @@ function truncateText(text, maxLength) {
 function tagDescription(tag) {
   const count = tag.articles.length;
   const titles = tag.articles.map((article) => article.title).join("; ");
-  return truncateText(
-    `${postCount(count)} about ${tag.label} by ${
-      config.site.author
-    }: ${titles}`,
-    160
-  );
+  let text = `${postCount(count)} about ${tag.label} by ${
+    config.site.author
+  }: ${titles}`;
+  // One title alone makes a thin description; the post's own summary
+  // fills it out
+  const [only] = tag.articles;
+  if (count === 1 && only.description) {
+    text += `. ${only.description}`;
+  }
+  return truncateText(text, 160);
 }
 
 function generateTagHtml(tag) {
@@ -1342,8 +1349,7 @@ function featuredProjectsHtml(projects, root = "") {
 function generateProjectsHtml(projects) {
   const template = loadTemplate("projects");
   const canonicalUrl = `${BASE_URL}/projects.html`;
-  const description =
-    "Games, iPhone apps and websites by Robert Libsansky: free browser games written in C, offline iOS games without ads, and small web tools.";
+  const description = `Games, iPhone apps and websites by ${config.site.author}: free browser games written in C, offline iOS games without ads, and small web tools.`;
 
   const sections = PROJECT_CATEGORIES.map(({ key, title }) => {
     const items = projects.filter((project) => project.category === key);

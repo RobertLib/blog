@@ -83,6 +83,26 @@ describe("Tags", () => {
     expect(html).not.toMatch(/\{\{[^}]+\}\}/);
   });
 
+  it("should fill out a one-post topic's description with the post's own", () => {
+    const [single] = build.collectTags([
+      makeArticle({
+        slug: "a",
+        title: "One Post",
+        description: "What the one post is about, in a sentence.",
+        tags: tags("Society"),
+      }),
+    ]);
+    const description = build
+      .generateTagHtml(single)
+      .match(/<meta name="description" content="([^"]*)"/)[1];
+
+    expect(description).toContain("1 post about Society");
+    expect(description).toContain(
+      "One Post. What the one post is about, in a sentence."
+    );
+    expect(description.length).toBeLessThanOrEqual(160);
+  });
+
   it("should give topic links a readable name, count included", () => {
     const html = build.generateArchiveHtml([
       makeArticle({ slug: "a", filename: "a.html", tags: tags("Games") }),
