@@ -26,12 +26,29 @@
   // The browser UI colour follows the chosen theme, not the system's
   var THEME_COLORS = { light: "#fbfaf8", dark: "#111214" };
 
-  function syncThemeColor(theme) {
+  // A chosen theme ("dark" or "light"), or anything else to follow the
+  // system again, where each theme-color tag gets its media query back
+  function applyTheme(theme) {
+    var chosen = theme === "dark" || theme === "light";
+    if (chosen) {
+      root.dataset.theme = theme;
+      root.style.colorScheme = theme;
+    } else {
+      delete root.dataset.theme;
+      root.style.colorScheme = "";
+    }
     var metas = document.querySelectorAll('meta[name="theme-color"]');
     Array.prototype.forEach.call(metas, function (meta) {
-      meta.setAttribute("content", THEME_COLORS[theme]);
-      meta.removeAttribute("media");
+      var scheme = meta.getAttribute("data-scheme");
+      if (chosen || !scheme) {
+        meta.setAttribute("content", THEME_COLORS[chosen ? theme : "light"]);
+        meta.removeAttribute("media");
+      } else {
+        meta.setAttribute("content", THEME_COLORS[scheme]);
+        meta.setAttribute("media", "(prefers-color-scheme: " + scheme + ")");
+      }
     });
+    syncToggleLabel();
   }
 
   if (toggle) {
@@ -39,15 +56,19 @@
     syncToggleLabel();
     toggle.addEventListener("click", function () {
       var next = currentTheme() === "dark" ? "light" : "dark";
-      root.dataset.theme = next;
-      root.style.colorScheme = next;
-      syncThemeColor(next);
+      applyTheme(next);
       try {
         localStorage.setItem("theme", next);
       } catch (e) {
         /* storage unavailable — the choice just won't persist */
       }
-      syncToggleLabel();
+    });
+
+    // A choice made in another tab of the site applies here too
+    window.addEventListener("storage", function (event) {
+      if (event.key === "theme" || event.key === null) {
+        applyTheme(event.newValue);
+      }
     });
 
     var systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -91,6 +112,39 @@
   window.addEventListener("resize", requestScroll, { passive: true });
   onScroll();
 
+  /* ---------- Code blocks ---------- */
+  // The build makes every code block focusable, so one that scrolls sideways
+  // can be scrolled from the keyboard even without this script. Here the
+  // blocks that fit their width leave the tab order (and rejoin it when a
+  // narrower window makes them scroll).
+  var codeBlocks = document.querySelectorAll(".prose pre");
+  var codeTicking = false;
+
+  function syncCodeFocus() {
+    Array.prototype.forEach.call(codeBlocks, function (pre) {
+      if (pre.scrollWidth > pre.clientWidth) {
+        pre.setAttribute("tabindex", "0");
+      } else {
+        pre.removeAttribute("tabindex");
+      }
+    });
+    codeTicking = false;
+  }
+
+  if (codeBlocks.length > 0) {
+    syncCodeFocus();
+    window.addEventListener(
+      "resize",
+      function () {
+        if (!codeTicking) {
+          codeTicking = true;
+          window.requestAnimationFrame(syncCodeFocus);
+        }
+      },
+      { passive: true }
+    );
+  }
+
   /* ---------- Copy link ---------- */
   // Shown only where it can work (it starts hidden in the markup)
   var copyBtn = document.querySelector("[data-copy-link]");
@@ -118,20 +172,16 @@
 
   /* ---------- Click-to-play embeds ---------- */
   // <figure class="embed" data-embed="https://itch.io/embed-upload/..."
-  // data-embed-ratio="800/552"> holding a poster image and a fallback link.
-  // The game (or video) loads only when asked for, so it never slows the
-  // page down or starts making sound by itself. The build checks the URL
-  // against config.embeds.allowedHosts.
+  // data-embed-ratio="800 / 582"> holding a poster image (a link to the
+  // game's page) and a caption. The game (or video) loads only when asked
+  // for, so it never slows the page down or starts making sound by itself.
+  // The build checks the URL against config.embeds.allowedHosts and gives the
+  // stage the frame's shape from data-embed-ratio.
   var embeds = document.querySelectorAll("[data-embed]");
   Array.prototype.forEach.call(embeds, function (embed) {
     var src = embed.getAttribute("data-embed");
     var name = embed.getAttribute("data-embed-title");
     var stage = embed.querySelector(".embed__stage") || embed;
-    var ratio = embed.getAttribute("data-embed-ratio");
-
-    // The poster takes the frame's shape up front, so the page doesn't
-    // jump when the game replaces it
-    if (ratio) stage.style.aspectRatio = ratio;
 
     var button = document.createElement("button");
     button.type = "button";
@@ -146,7 +196,7 @@
     stage.appendChild(button);
     embed.classList.add("embed--ready");
 
-    button.addEventListener("click", function () {
+    function play() {
       var frame = document.createElement("iframe");
       frame.src = src;
       frame.title = name || "Embedded content";
@@ -157,6 +207,27 @@
       stage.appendChild(frame);
       embed.classList.add("embed--playing");
       frame.focus();
+    }
+
+    button.addEventListener("click", play);
+
+    // The poster's link (to the game's page) plays in place instead; the
+    // button is the keyboard's way in. Modified clicks still open the link.
+    Array.prototype.forEach.call(stage.querySelectorAll("a"), function (link) {
+      link.tabIndex = -1;
+      link.addEventListener("click", function (event) {
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        play();
+      });
     });
   });
 })();

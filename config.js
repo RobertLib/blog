@@ -35,7 +35,8 @@ module.exports = {
     recentArticlesCount: 10,
   },
   // Hosts whose pages articles may embed in an <iframe> or a click-to-play
-  // [data-embed] block (games, videos). Anything else fails the build.
+  // [data-embed] block (games, videos). Anything else is removed from the
+  // page, with a warning in the build output.
   embeds: {
     allowedHosts: [
       "itch.io",

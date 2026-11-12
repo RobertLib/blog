@@ -10,8 +10,9 @@
 //   npm run og-images -- --all
 //
 // Set CHROME_PATH when Chrome is not in a standard location. The build never
-// runs this (CI has no Chrome); it only warns when cards are out of date, and
-// those pages fall back to the default card meanwhile.
+// runs this (CI has no Chrome); it only warns when cards are missing or out
+// of date. Meanwhile a page without a card uses the default one, and an
+// outdated card keeps showing the old title or image.
 
 const { execFile } = require("child_process");
 const fs = require("fs");

@@ -83,6 +83,20 @@ describe("Tags", () => {
     expect(html).not.toMatch(/\{\{[^}]+\}\}/);
   });
 
+  it("should give topic links a readable name, count included", () => {
+    const html = build.generateArchiveHtml([
+      makeArticle({ slug: "a", filename: "a.html", tags: tags("Games") }),
+      makeArticle({ slug: "b", filename: "b.html", tags: tags("Games") }),
+    ]);
+    const link = html.match(/<a class="tag" href="tags\/games\.html">.*?<\/a>/)[0];
+    // What a screen reader announces: the visible label and the hidden count
+    const name = link
+      .replace(/<span[^>]*aria-hidden="true"[^>]*>.*?<\/span>/g, "")
+      .replace(/<[^>]+>/g, "");
+
+    expect(name).toBe("Games (2 posts)");
+  });
+
   it("should prefer articles sharing tags as related reading", () => {
     const current = makeArticle({ slug: "current", tags: tags("Games") });
     const sameTag = makeArticle({
@@ -226,6 +240,40 @@ describe("Embeds and images", () => {
     warn.mockRestore();
   });
 
+  it("should give click-to-play blocks their frame's shape at build time", () => {
+    const tag = (ratio) =>
+      `<figure class="embed" data-embed="https://itch.io/embed-upload/1"${
+        ratio === undefined ? "" : ` data-embed-ratio="${ratio}"`
+      }>`;
+
+    expect(build.enhanceEmbeds(tag("800 / 582"))).toContain(
+      'style="--embed-ratio: 800 / 582"'
+    );
+    expect(build.enhanceEmbeds(tag("1.5"))).toContain(
+      'style="--embed-ratio: 1.5"'
+    );
+    expect(() => build.enhanceEmbeds(tag("800 / 582; color: red"))).toThrow(
+      /Invalid data-embed-ratio/
+    );
+
+    // Without a ratio the stylesheet's 16:9 applies
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(build.enhanceEmbeds(tag())).toBe(tag());
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("should keep unstyled lists lists and let wide tables scroll", () => {
+    const html = build.enhanceContent(
+      '<ul class="profile-links"><li>a</li></ul><table><tr><td>1</td></tr></table>'
+    );
+
+    expect(html).toContain('<ul class="profile-links" role="list">');
+    expect(html).toContain(
+      '<div class="table-scroll" tabindex="0"><table><tr><td>1</td></tr></table></div>'
+    );
+  });
+
   it("should size local images and lazy-load all but the first", () => {
     const html = build.enhanceImages(
       '<img src="images/chuck/sector-02.png" alt="a" /><img src="images/chuck/facade.png" alt="b" width="10" height="5" /><img src="https://cdn.example/x.png" alt="c">'
@@ -290,6 +338,13 @@ describe("Embeds and images", () => {
     ).toBe(
       '<a href="https://example.com/a.html">a</a><a href="https://example.com/post.html#x">x</a><a href="https://o.example/">o</a><img src="https://example.com/images/i.png">'
     );
+  });
+
+  it("should leave markup shown in code samples as written", () => {
+    const sample = '<pre><code>&lt;a href="docs.html"&gt;Docs&lt;/a&gt;</code></pre>';
+    expect(
+      build.absolutizeUrls(sample, "https://example.com/post.html")
+    ).toBe(sample);
   });
 });
 

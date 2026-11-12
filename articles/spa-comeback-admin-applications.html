@@ -23,12 +23,12 @@
 
 <p>
   Next.js was designed to solve specific problems that SPAs struggled with,
-  primarily SEO optimization and initial loading performance. While these are
+  primarily SEO and initial loading performance. While these are
   critical concerns for public websites, they become irrelevant, and sometimes
   counterproductive, for admin applications.
 </p>
 
-<h2>Why SEO Optimization Doesn't Matter for Admin Apps</h2>
+<h2>Why SEO Doesn't Matter for Admin Apps</h2>
 
 <p>
   The primary selling point of Next.js is its ability to handle server-side
@@ -78,7 +78,7 @@
 <p>
   Next.js doesn't force static generation on you - a route that reads cookies
   or headers, as every authenticated page does, renders dynamically. But in
-  Next.js 13 and 14 the defaults leaned hard towards static rendering and
+  Next.js 13 and 14 the defaults leaned hard toward static rendering and
   caching: <code>fetch</code> results were cached unless you opted out, and
   figuring out why a page showed stale data meant learning several layers of
   caches. (Next.js 15 finally stopped caching <code>fetch</code> by default.)

@@ -5,10 +5,12 @@
 <!-- tags: Games, C, WebAssembly -->
 
 <p>
-  I'd like to introduce one of my two new games written in C -
+  I'd like to introduce
   <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener"
     >Breakup</a
-  >, a neon brick-breaker played as a roguelite. It takes one of the oldest
+  >, one of my two new games written in C (the other is
+  <a href="chuck-stealth-platformer-600-kilobytes.html">Chuck</a>): a neon
+  brick-breaker played as a roguelite. It takes one of the oldest
   ideas in arcade gaming - a paddle, a ball and a wall of bricks - and asks what happens
   when the wall stops sitting still on one screen and every game becomes a run
   with its own rules.
@@ -23,14 +25,16 @@
 
 <figure
   class="embed"
-  data-embed="https://itch.io/embed-upload/2734484?color=000000"
+  data-embed="https://itch.io/embed-upload/19462149?color=000000"
   data-embed-ratio="800 / 630"
   data-embed-title="Breakup"
 >
   <div class="embed__stage">
-    <img src="images/breakup/title.webp" alt="Breakup title screen: a glowing wireframe face above the game's pixel-font logo" />
+    <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener">
+      <img src="images/breakup/title.webp" alt="Breakup title screen: a glowing wireframe face above the game's pixel-font logo" />
+    </a>
   </div>
-  <figcaption>Play Breakup right here in your browser. Or <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener">open it on itch.io</a>.</figcaption>
+  <figcaption>Breakup runs in the browser, with nothing to install. Click the picture to play, or <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener">open it on itch.io</a>.</figcaption>
 </figure>
 
 <h2>Towers Instead of Walls</h2>
@@ -83,8 +87,8 @@
   This is where the roguelite part comes in. A run has four acts, one for each
   world, and every act is three levels and a boss. The levels are drawn from
   the world's pool in a new order every time, and from the second act on they
-  often arrive under a mutator - mirrored, armored, brittle, a gold rush or a
-  swarm of enemies.
+  often arrive under a mutator such as mirrored, armored, brittle, a gold rush
+  or a swarm of enemies.
 </p>
 
 <p>
@@ -106,7 +110,7 @@
   <li><strong>Crystal Blast</strong> - Crystals explode when they break</li>
   <li>
     <strong>Chain Reaction</strong> - Every brick an explosion breaks counts
-    towards your combo
+    toward your combo
   </li>
   <li>
     <strong>Inferno</strong> - Every explosion is wider while the fireball is
@@ -205,8 +209,8 @@
 
 <p>
   The final boss, The Sovereign, even speaks. Its voice is five sung vowels
-  synthesized at startup. Each one starts as a sawtooth wave, which contains
-  every harmonic just like a human throat does, and runs through three
+  synthesized at startup. Each one starts as a sawtooth wave, which, like the
+  buzz of human vocal folds, contains every harmonic, and runs through three
   resonators tuned to the formants of that vowel - which is all that makes an
   "ah" different from an "oo". It's sung in three voices at once, at the root,
   a fifth above and an octave below, because The Sovereign is not a person and
@@ -272,8 +276,7 @@
   buffer of recent frames all the time, so that perfect chain reaction you want
   to show somebody is already recorded by the time you reach for the key. The
   GIF encoder is written from scratch, LZW compression included. (This one only
-  works in the downloaded versions, since the browser has nowhere to put the
-  file.)
+  works in the downloaded versions, not in the browser build.)
 </p>
 
 <h2>Play Breakup</h2>

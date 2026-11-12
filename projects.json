@@ -77,8 +77,8 @@
   {
     "name": "J-Notes",
     "category": "apps",
-    "summary": "A notes app for iPhone.",
-    "platforms": "iPhone",
+    "summary": "Private notes that stay on the device: write or sketch, lock them behind Face ID, no account, no cloud and no ads.",
+    "platforms": "iPhone · iPad",
     "url": "https://apps.apple.com/us/app/j-notes/id1634043414",
     "linkLabel": "App Store"
   },
@@ -92,7 +92,7 @@
     "image": "images/old-school-games/homepage.webp"
   },
   {
-    "name": "Watch List",
+    "name": "Watch-List.me",
     "category": "web",
     "summary": "A movie and TV show tracker built with Next.js, written together with an AI agent.",
     "url": "https://www.watch-list.me/",

@@ -65,6 +65,23 @@ describe("Color contrast (WCAG AA, 4.5:1 for body-size text)", () => {
       expect(ratio).toBeGreaterThanOrEqual(4.5);
     });
 
+    // Accent buttons (Subscribe, Play): paper-colored text on the accent,
+    // also when hovered
+    for (const fill of ["accent", "accent-strong"]) {
+      it(`${theme}: --paper on --${fill}`, () => {
+        const ratio = contrast(token(block, "paper"), token(block, fill));
+        expect(ratio).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+
+    // Hovered archive, related and card rows: accent text on the tint
+    it(`${theme}: --accent-strong on --tint`, () => {
+      const paper = token(block, "paper");
+      const tint = overPaper(rgbaToken(block, "tint"), paper);
+      const ratio = contrast(token(block, "accent-strong"), tint);
+      expect(ratio).toBeGreaterThanOrEqual(4.5);
+    });
+
     // Badges and hovered tags: accent text on the translucent accent wash
     it(`${theme}: --accent on --accent-wash`, () => {
       const paper = token(block, "paper");

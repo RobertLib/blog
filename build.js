@@ -571,7 +571,7 @@ function stripHtml(html) {
   const text = html.replace(/<!--[\s\S]*?-->/g, " ").replace(/<[^>]*>/g, " ");
   // Unknown named entities would otherwise surface as words ("&frac12;")
   return decodeEntities(
-    text.replace(/&[a-z]+;/gi, (entity) =>
+    text.replace(/&[a-z][a-z0-9]*;/gi, (entity) =>
       decodeEntities(entity) === entity ? " " : entity
     )
   );
@@ -772,22 +772,76 @@ function enhanceCodeBlocks(html) {
   );
 }
 
+// "800 / 582", "16/9" or "1.5"
+const EMBED_RATIO = /^\s*\d+(?:\.\d+)?\s*(?:\/\s*\d+(?:\.\d+)?\s*)?$/;
+
+// Click-to-play blocks get the game's shape up front (the --embed-ratio
+// custom property the stage's aspect-ratio reads), so the poster already has
+// the frame's size and the page doesn't jump when the game replaces it, with
+// or without JavaScript. A malformed ratio fails the build; a missing one
+// leaves the stylesheet's 16:9.
+function enhanceEmbeds(html) {
+  return html.replace(/<[a-z][^>]*\sdata-embed\s*=[^>]*>/gi, (tag) => {
+    const ratio = getAttribute(tag, "data-embed-ratio");
+    if (ratio === null) {
+      console.warn(
+        `Embed without data-embed-ratio, shown as 16:9: ${getAttribute(tag, "data-embed")}`
+      );
+      return tag;
+    }
+    if (!EMBED_RATIO.test(ratio)) {
+      throw new Error(`Invalid data-embed-ratio "${ratio}" (use e.g. "800 / 582")`);
+    }
+    if (hasAttribute(tag, "style")) return tag;
+    return addAttribute(tag, "style", `--embed-ratio: ${ratio.trim()}`);
+  });
+}
+
+// Bullet lists are styled without list markers, which makes Safari stop
+// announcing them as lists; the role keeps them lists for screen readers
+function enhanceLists(html) {
+  return html.replace(/<ul\b[^>]*>/gi, (tag) => addAttribute(tag, "role", "list"));
+}
+
+// Tables scroll sideways inside their own box on narrow screens instead of
+// widening the page, and the box is focusable so the keyboard can scroll it
+function enhanceTables(html) {
+  return html.replace(
+    /<table\b[\s\S]*?<\/table>/gi,
+    (table) => `<div class="table-scroll" tabindex="0">${table}</div>`
+  );
+}
+
 // Article and page bodies as shown on the site
 function enhanceContent(html, staticDir = STATIC_DIR) {
-  return enhanceCodeBlocks(enhanceImages(sanitizeHtml(html), staticDir));
+  return enhanceTables(
+    enhanceLists(
+      enhanceEmbeds(
+        enhanceCodeBlocks(enhanceImages(sanitizeHtml(html), staticDir))
+      )
+    )
+  );
 }
 
 // Relative links and image sources resolved against the page URL, for
-// content shown outside the site (RSS readers)
+// content shown outside the site (RSS readers). Only attributes of real tags
+// are rewritten, so code samples showing markup ("&lt;a href=...") stay as
+// written.
 function absolutizeUrls(html, pageUrl) {
-  return html.replace(
-    /(\s(?:href|src)\s*=\s*)(["'])(.*?)\2/gi,
-    (match, prefix, quote, value) => {
-      if (!value || /^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("//")) {
-        return match;
+  return html.replace(OPENING_TAG, (tag) =>
+    tag.replace(
+      /(\s(?:href|src)\s*=\s*)(["'])(.*?)\2/gi,
+      (match, prefix, quote, value) => {
+        if (
+          !value ||
+          /^[a-z][a-z0-9+.-]*:/i.test(value) ||
+          value.startsWith("//")
+        ) {
+          return match;
+        }
+        return `${prefix}${quote}${new URL(value, pageUrl).href}${quote}`;
       }
-      return `${prefix}${quote}${new URL(value, pageUrl).href}${quote}`;
-    }
+    )
   );
 }
 
@@ -1077,14 +1131,22 @@ function topicsHtml(tags, root = "") {
       (tag) =>
         `<li><a class="tag" href="${tagUrl(tag, root)}">${escapeHtml(
           tag.label
-        )}<span class="tag__count">${tag.articles.length}</span></a></li>`
+        )}<span class="tag__count" aria-hidden="true">${
+          tag.articles.length
+        }</span><span class="visually-hidden"> (${postCount(
+          tag.articles.length
+        )})</span></a></li>`
     )
     .join("");
   return `
         <section class="topics" aria-labelledby="topics-heading">
           <h2 class="section-label" id="topics-heading">Topics</h2>
-          <ul class="tag-cloud">${items}</ul>
+          <ul class="tag-cloud" role="list">${items}</ul>
         </section>`;
+}
+
+function postCount(count) {
+  return `${count} ${count === 1 ? "post" : "posts"}`;
 }
 
 function truncateText(text, maxLength) {
@@ -1102,7 +1164,7 @@ function tagDescription(tag) {
   const count = tag.articles.length;
   const titles = tag.articles.map((article) => article.title).join("; ");
   return truncateText(
-    `${count} ${count === 1 ? "post" : "posts"} about ${tag.label} by ${
+    `${postCount(count)} about ${tag.label} by ${
       config.site.author
     }: ${titles}`,
     160
@@ -1136,7 +1198,7 @@ function generateTagHtml(tag) {
     }),
     "nav-archive-current": CURRENT_SECTION,
     "tag-label": escapeHtml(tag.label),
-    "tag-summary": `${count} ${count === 1 ? "post" : "posts"}, newest first.`,
+    "tag-summary": `${postCount(count)}, newest first.`,
     articles: tag.articles.map((article) => postCardHtml(article, root)).join(""),
   });
 }
@@ -1475,7 +1537,7 @@ function generateArchiveHtml(articles = null) {
       return `
         <section class="archive-year">
           <h2 class="section-label archive-year__label">${year}</h2>
-          <ul class="archive-list">
+          <ul class="archive-list" role="list">
             ${yearArticles}
           </ul>
         </section>
@@ -1637,7 +1699,7 @@ function generateRelatedArticlesHTML(relatedArticles) {
   return `
     <section class="related">
       <h2 class="section-label">Related reading</h2>
-      <ul class="related__list">
+      <ul class="related__list" role="list">
         ${articlesList}
       </ul>
     </section>
@@ -2526,7 +2588,7 @@ async function build() {
     );
     if (staleCards.length > 0) {
       console.warn(
-        `\n⚠️  ${staleCards.length} social cards are missing or out of date (pages fall back to the default card). Run: npm run og-images`
+        `\n⚠️  ${staleCards.length} social cards are missing or out of date (pages without a card use the default one, outdated cards still show the old title or image). Run: npm run og-images`
       );
       staleCards.forEach((spec) => console.warn(`   - ${spec.file}`));
     }
@@ -2574,6 +2636,7 @@ if (typeof module !== "undefined" && module.exports) {
     deriveDescription,
     enhanceImages,
     enhanceCodeBlocks,
+    enhanceEmbeds,
     enhanceContent,
     absolutizeUrls,
     discussionLabel,

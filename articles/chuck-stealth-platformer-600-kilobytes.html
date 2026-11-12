@@ -5,12 +5,13 @@
 <!-- tags: Games, C, WebAssembly -->
 
 <p>
-  The other of my two new games written in C is
   <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener"
     >Chuck</a
-  >, a 2D stealth platformer about one man going up the inside of a
-  forty-story tower that twelve armed men have sealed from within. His wife is
-  somewhere above him, nobody else is coming, and the clock is running.
+  > is the second of my two new games written in C (the first is
+  <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a>): a 2D
+  stealth platformer about one man going up the inside of a forty-story tower
+  that twelve armed men have sealed from within. His wife is somewhere above
+  him, nobody else is coming, and the clock is running.
 </p>
 
 <p>
@@ -21,14 +22,16 @@
 
 <figure
   class="embed"
-  data-embed="https://itch.io/embed-upload/1321096?color=000000"
+  data-embed="https://itch.io/embed-upload/20080149?color=000000"
   data-embed-ratio="800 / 582"
   data-embed-title="Chuck"
 >
   <div class="embed__stage">
-    <img src="images/chuck/sector-09.png" alt="Sector 09 of the tower: brick floors joined by yellow ladders, with armed guards on every floor" />
+    <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener">
+      <img src="images/chuck/sector-09.png" alt="Sector 09 of the tower: brick floors joined by yellow ladders, with armed guards on every floor" />
+    </a>
   </div>
-  <figcaption>Play Chuck right here, with a keyboard or a gamepad - the browser version is about 600 KB. Or <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener">open it on itch.io</a>.</figcaption>
+  <figcaption>Chuck runs in the browser with a keyboard or a gamepad, and the browser version is about 600 KB. Click the picture to play, or <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener">open it on itch.io</a>.</figcaption>
 </figure>
 
 <h2>The Night</h2>
@@ -108,7 +111,7 @@
   Against them, Chuck has a quiet way through. A knife takes a guard down in
   one stroke from behind, as long as nobody has seen you. A pocketful of bolts
   that never runs out lets you make a noise somewhere else, and calm guards
-  walk towards the noise instead of you. And a body can be dragged out of the
+  walk toward the noise instead of you. And a body can be dragged out of the
   room it fell in - slowly, with no ladders and no jumping - because where you
   leave it is a decision as real as where you fought.
 </p>
@@ -148,7 +151,7 @@
 
 <p>
   Chuck is a difficult game, but I wanted it to be one you never quit out of
-  frustration. Progress inside a floor is banked, so a death resumes at the
+  frustration. Progress inside a sector is banked, so a death resumes at the
   last key card, hack or door, not at the stairs. Running out of lives always
   offers the same sector again - the game never sends you back to the lobby.
   Even the car chase in the prologue can't block you: after a couple of failed
@@ -211,8 +214,8 @@
 <p>
   The other thing that makes Chuck special is under the hood. The whole game
   is a single binary with <strong>no asset files at all</strong>. There is no
-  sprite sheet, no tileset, no audio folder. Every pixel is drawn
-  procedurally at runtime, the levels are compiled into the executable, and
+  sprite sheet, no tileset, no audio folder. Every sprite is pixel art typed
+  into the source code as rows of characters and drawn at runtime, the levels are compiled into the executable, and
   every sound effect and every piece of music is synthesized when the game
   starts.
 </p>
@@ -246,8 +249,8 @@
 </p>
 
 <p>
-  It's a nice illustration of how cheap code is compared to content. Around
-  68,000 lines of C - guards with vision cones, a car chase, cutscenes, an
+  It's a nice illustration of how cheap code is compared to content. Nearly
+  60,000 lines of C - guards with vision cones, a car chase, cutscenes, an
   illustrated field manual and a whole procedural soundtrack - take up less
   space than a single track of Breakup's soundtrack.
 </p>
@@ -257,7 +260,7 @@
 <p>
   Chuck is completely free, and there's nothing to install if you play it in
   the browser. A full campaign takes a few hours, and the game remembers your
-  furthest floor, your best score and your fastest time in every sector, so
+  furthest sector, your best score and your fastest time in every sector, so
   you can play it in short sessions.
 </p>
 

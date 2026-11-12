@@ -101,6 +101,9 @@
   /* Accent — burnt sienna */
   --accent: #b4531f;
   --accent-line: rgba(180, 83, 31, 0.45);
+  /* Pushed further from the paper than --accent: hovered accent buttons and
+     accent text on tinted (hovered) rows, where --accent misses AA */
+  --accent-strong: #a2491a;
   /* Light enough for accent text on it (badges, hovered tags) to pass AA */
   --accent-wash: rgba(180, 83, 31, 0.04);
   --selection: rgba(180, 83, 31, 0.16);
@@ -129,6 +132,7 @@
   --rule: #272a2e;
   --rule-2: #383c42;
   --accent: #e08a50;
+  --accent-strong: #e89a66;
   --accent-line: rgba(224, 138, 80, 0.45);
   --accent-wash: rgba(224, 138, 80, 0.12);
   --selection: rgba(224, 138, 80, 0.22);
@@ -147,6 +151,7 @@
     --rule: #272a2e;
     --rule-2: #383c42;
     --accent: #e08a50;
+    --accent-strong: #e89a66;
     --accent-line: rgba(224, 138, 80, 0.45);
     --accent-wash: rgba(224, 138, 80, 0.12);
     --selection: rgba(224, 138, 80, 0.22);
@@ -181,6 +186,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* Without the toolbars counted, so short pages don't scroll on phones */
+  min-height: 100svh;
 }
 
 h1,
@@ -604,7 +611,7 @@ main {
 }
 
 .post-card:hover .post-card__title a {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .post-card__excerpt {
@@ -703,7 +710,7 @@ main {
 }
 
 .archive-item:hover a {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .archive-item time {
@@ -763,6 +770,7 @@ main {
 
 .prose {
   color: var(--ink-2);
+  overflow-wrap: break-word;
 }
 
 .prose > *:first-child {
@@ -955,6 +963,17 @@ main {
 
 /* ---------- Tables ---------- */
 
+/* Wide tables scroll sideways inside this box (added by the build) instead
+   of the whole page; focusable so the keyboard can scroll it too */
+.prose .table-scroll {
+  margin: 2em 0;
+  overflow-x: auto;
+}
+
+.prose .table-scroll > table {
+  margin: 0;
+}
+
 .prose table {
   width: 100%;
   margin: 2em 0;
@@ -1084,7 +1103,7 @@ main {
 }
 
 .related__list li:hover a {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .related__list time {
@@ -1144,7 +1163,7 @@ main {
 }
 
 .post-nav__item:hover .post-nav__title {
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 /* ============================================================
@@ -1543,10 +1562,9 @@ main {
 }
 
 .button--accent:hover {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
   color: var(--paper);
-  filter: brightness(1.08);
 }
 
 /* Discussion links share the share row's look */
@@ -1587,20 +1605,30 @@ main {
 }
 
 /* Click-to-play game or video (static/site.js) */
+/* The game's shape, set by the build from data-embed-ratio, so the page
+   doesn't jump when the game replaces the poster (with or without JS) */
 .embed__stage {
   position: relative;
+  aspect-ratio: var(--embed-ratio, 16 / 9);
   overflow: hidden;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   background: #000;
 }
 
+/* The poster links to the game's page for readers without JavaScript and
+   in feed readers; site.js turns a click on it into playing in place */
+.embed__stage > a {
+  display: block;
+  height: 100%;
+}
+
 .embed__stage img {
   display: block;
   width: 100%;
-  /* Fills the stage, which takes the game's aspect ratio (site.js) */
+  /* Shown whole (letterboxed on the black stage) whatever its shape */
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   border: 0;
   border-radius: 0;
 }
@@ -1628,11 +1656,11 @@ main {
   white-space: nowrap;
   cursor: pointer;
   transform: translate(-50%, -50%);
-  transition: transform 0.2s var(--ease), filter 0.2s var(--ease);
+  transition: transform 0.2s var(--ease), background-color 0.2s var(--ease);
 }
 
 .embed__play:hover {
-  filter: brightness(1.1);
+  background: var(--accent-strong);
   transform: translate(-50%, -50%) scale(1.04);
 }
 
@@ -1822,6 +1850,7 @@ main {
     --rule: #ddd;
     --rule-2: #ccc;
     --accent: #000;
+    --accent-strong: #000;
     --accent-line: #000;
   }
 
@@ -1861,6 +1890,13 @@ main {
     background: #f6f6f6;
     border-color: #ddd;
     color: #000;
+  }
+
+  /* Paper can't scroll: long code lines wrap instead of being cut off */
+  .prose pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: visible;
   }
 
   .prose pre,

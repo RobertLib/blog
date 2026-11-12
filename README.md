@@ -146,21 +146,27 @@ past 60 characters.
 </figure>
 
 <!-- Click-to-play: shows the image with a play button, loads the game
-     only when clicked -->
+     only when clicked. The poster links to the game's page, which is what
+     readers without JavaScript and feed readers get -->
 <figure
   class="embed"
-  data-embed="https://itch.io/embed-upload/1321096?color=000000"
+  data-embed="https://itch.io/embed-upload/20080149?color=000000"
   data-embed-ratio="800 / 582"
   data-embed-title="Chuck"
 >
-  <div class="embed__stage"><img src="images/chuck/sector-09.png" alt="..." /></div>
-  <figcaption>Play Chuck right here.</figcaption>
+  <div class="embed__stage">
+    <a href="https://roblib.itch.io/chuck"><img src="images/chuck/sector-09.png" alt="..." /></a>
+  </div>
+  <figcaption>Click the picture to play.</figcaption>
 </figure>
 ```
 
 Local images get their `width`/`height` from the file and lazy loading
 (except the first one) at build time. Embeds and `<iframe>`s are only kept
-for hosts in `config.embeds.allowedHosts`. Prefer WebP for screenshots
+for hosts in `config.embeds.allowedHosts` (others are removed with a build
+warning). `data-embed-ratio` is the game's width / height (in itch.io's embed
+code, the height includes its 30 px bottom bar); the build gives the stage that
+shape up front and fails on a malformed ratio. Prefer WebP for screenshots
 (`cwebp -q 82 -resize 1200 0 in.png -o out.webp`).
 
 ## 📄 Pages and projects
@@ -185,8 +191,9 @@ The generator renders `tools/og-card.html` with headless Chrome, Chromium
 or Edge (set `CHROME_PATH` if none is found) into `static/og/<slug>.png` and
 `static/og-image.png`, and records what each card was made from in
 `tools/og-cards.json`. The build never runs it (CI has no Chrome): it warns
-about missing or outdated cards, and those pages use the default card until
-the cards are regenerated and committed. Run it after adding an article or
+about missing or outdated cards. Until the cards are regenerated and
+committed, a page without a card uses the default one, and an outdated card
+keeps showing the old title or image. Run it after adding an article or
 changing a title, tags or cover image. It works from any directory, checks
 every screenshot before replacing a card, and a card that fails keeps its
 old image and is retried on the next run.
@@ -388,7 +395,8 @@ every build:
   analytics and newsletter, social cards, IndexNow URLs for every page type
 - `indexnow.test.js` - IndexNow configuration and changed-URL selection
 - `contrast.test.js` - WCAG AA contrast of the text colors in both themes,
-  including accent text on the translucent accent wash
+  including accent text on the translucent accent wash and on hovered rows,
+  and text on accent buttons (also when hovered)
 - `styles.test.js` - Guards against stylesheet rules lost in editing (a
   selector list running across a comment, unstyled meta separators, lede)
 

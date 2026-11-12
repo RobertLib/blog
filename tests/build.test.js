@@ -417,6 +417,10 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
         .toBe("Don’t panic & code");
     });
 
+    it("should drop unknown entities, including ones with digits", () => {
+      expect(build.countWords("<p>Add &frac12; cup &hearts;</p>")).toBe(2);
+    });
+
     it("should count only visible words", () => {
       expect(
         build.countWords('<p class="lead">One <strong>two</strong> three</p>')
