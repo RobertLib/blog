@@ -6,7 +6,7 @@
 <p>
   After spending considerable time working with Next.js and its App Router, I've
   made a deliberate decision to return to Single Page Applications (SPAs) for
-  admin interfaces. This wasn't a step backward - it was a strategic choice that
+  admin interfaces. This wasn't a step backward — it was a strategic choice that
   has significantly improved my development experience and application
   performance for a specific use case.
 </p>
@@ -25,7 +25,7 @@
   Next.js was designed to solve specific problems that SPAs struggled with,
   primarily SEO and how quickly a first-time visitor sees content. Both are
   critical for public websites. In an admin application, people log in and
-  then work in it for hours, so both matter far less there - and the machinery
+  then work in it for hours, so both matter far less there — and the machinery
   built to optimize them can even get in the way.
 </p>
 
@@ -42,26 +42,26 @@
 
 <ul>
   <li>
-    <strong>Live behind authentication</strong> - No search engines can access
+    <strong>Live behind authentication</strong> — No search engines can access
     them
   </li>
   <li>
-    <strong>Serve specific user groups</strong> - Employees, partners, or
+    <strong>Serve specific user groups</strong> — Employees, partners, or
     customers with accounts
   </li>
   <li>
-    <strong>Focus on functionality over discoverability</strong> - Users don't
+    <strong>Focus on functionality over discoverability</strong> — Users don't
     find them through search
   </li>
   <li>
-    <strong>Prioritize user experience over page rankings</strong> - Speed and
+    <strong>Prioritize user experience over page rankings</strong> — Speed and
     usability matter more than SEO
   </li>
 </ul>
 
 <p>
   Building an architecture optimized for SEO when you explicitly don't want SEO
-  is like installing a convertible roof on a submarine - technically impressive,
+  is like installing a convertible roof on a submarine — technically impressive,
   but completely missing the point.
 </p>
 
@@ -77,7 +77,7 @@
 <h3>Static Generation and Caching Overhead</h3>
 
 <p>
-  Next.js doesn't force static generation on you - a route that reads cookies
+  Next.js doesn't force static generation on you — a route that reads cookies
   or headers, as every authenticated page does, renders dynamically. But in
   Next.js 13 and 14 the defaults leaned hard toward static rendering and
   caching: <code>fetch</code> results were cached unless you opted out, and
@@ -123,18 +123,18 @@
 
 <ul>
   <li>
-    <strong>No server rendering on navigation</strong> - The UI switches
+    <strong>No server rendering on navigation</strong> — The UI switches
     client-side right away; only the data comes from the API
   </li>
   <li>
-    <strong>Shared state management</strong> - Data persists across routes
+    <strong>Shared state management</strong> — Data persists across routes
   </li>
   <li>
-    <strong>Predictive loading</strong> - Components can preload anticipated
+    <strong>Predictive loading</strong> — Components can preload anticipated
     data
   </li>
   <li>
-    <strong>Smooth transitions</strong> - No full page reloads, and loading
+    <strong>Smooth transitions</strong> — No full page reloads, and loading
     states only where data is actually missing
   </li>
 </ul>
@@ -158,25 +158,25 @@
 
 <ul>
   <li>
-    <strong>Route-based splitting</strong> - Load components only when routes
+    <strong>Route-based splitting</strong> — Load components only when routes
     are accessed
   </li>
   <li>
-    <strong>Feature-based splitting</strong> - Group related functionality into
+    <strong>Feature-based splitting</strong> — Group related functionality into
     separate bundles
   </li>
   <li>
-    <strong>Component-level splitting</strong> - Load heavy components on demand
+    <strong>Component-level splitting</strong> — Load heavy components on demand
   </li>
   <li>
-    <strong>Conditional loading</strong> - Load features based on user
+    <strong>Conditional loading</strong> — Load features based on user
     permissions
   </li>
 </ul>
 
 <p>
   Lazy loading fetches code during navigation too, but only the first time a
-  section is opened - after that, its code is cached in the browser and every
+  section is opened — after that, its code is cached in the browser and every
   visit is instant. This approach gives you the best of both worlds: fast
   initial loading and instant navigation once the user starts working with the
   application.
@@ -197,19 +197,19 @@
 
 <ul>
   <li>
-    <strong>Backend focuses on data and business logic</strong> - Clean,
+    <strong>Backend focuses on data and business logic</strong> — Clean,
     testable APIs
   </li>
   <li>
-    <strong>Frontend focuses on user experience</strong> - Interactive,
+    <strong>Frontend focuses on user experience</strong> — Interactive,
     responsive interfaces
   </li>
   <li>
-    <strong>No hybrid complexity</strong> - No confusion about where code should
+    <strong>No hybrid complexity</strong> — No confusion about where code should
     run
   </li>
   <li>
-    <strong>Independent scaling</strong> - Frontend and backend can scale
+    <strong>Independent scaling</strong> — Frontend and backend can scale
     separately
   </li>
 </ul>
@@ -258,7 +258,7 @@
 
 <p>
   My return to SPAs for admin applications wasn't a rejection of modern
-  development practices - it was a conscious choice to use the right tool for the
+  development practices — it was a conscious choice to use the right tool for the
   job. When you're building applications that prioritize user interaction speed
   over search engine visibility, SPAs remain the superior choice.
 </p>

@@ -11,7 +11,7 @@
   >, one of my two new games written in C (the other is
   <a href="chuck-stealth-platformer-600-kilobytes.html">Chuck</a>): a neon
   brick-breaker played as a roguelite. It takes one of the oldest
-  ideas in arcade gaming - a paddle, a ball and a wall of bricks - and asks what happens
+  ideas in arcade gaming — a paddle, a ball and a wall of bricks — and asks what happens
   when the wall stops sitting still on one screen and every game becomes a run
   with its own rules.
 </p>
@@ -42,7 +42,7 @@
 
 <p>
   In a classic brick-breaker, you clear the wall and move on. In Breakup, every
-  level is a tower - fifteen bricks wide and up to sixty rows tall - and the
+  level is a tower — fifteen bricks wide and up to sixty-three rows tall — and the
   camera climbs it with your ball. You are not there to clear the wall. You are
   there to find the crystals buried in it. Shatter all of them and the level
   ends, whatever else is still standing.
@@ -52,26 +52,26 @@
 
 <ul>
   <li>
-    <strong>Steel</strong> - Never breaks. It isn't an obstacle - it's the shape
+    <strong>Steel</strong> — Never breaks. It isn't an obstacle — it's the shape
     of the room, and learning to bank shots off it is half the game
   </li>
   <li>
-    <strong>Explosive bricks</strong> - Take their neighbors with them, and
+    <strong>Explosive bricks</strong> — Take their neighbors with them, and
     those take theirs. One good shot can bring down half a tower
   </li>
   <li>
-    <strong>Gold and tough bricks</strong> - Worth the extra hits if you have
+    <strong>Gold and tough bricks</strong> — Worth the extra hits if you have
     the time
   </li>
   <li>
-    <strong>Enemies</strong> - Drifters, divers, splitters and saucers. None of
+    <strong>Enemies</strong> — Drifters, divers, splitters and saucers. None of
     them can kill you, but all of them stand exactly where your ball was going
   </li>
 </ul>
 
 <p>
-  There are four worlds - Cyan Dawn, Emerald Drift, Ember Fields and Violet
-  Void - each with its own palette, sky, music and five hand-designed towers.
+  There are four worlds — Cyan Dawn, Emerald Drift, Ember Fields and Violet
+  Void — each with its own palette, sky, music and five hand-designed towers.
 </p>
 
 <figure>
@@ -108,17 +108,17 @@
 </figure>
 
 <ul>
-  <li><strong>Crystal Blast</strong> - Crystals explode when they break</li>
+  <li><strong>Crystal Blast</strong> — Crystals explode when they break</li>
   <li>
-    <strong>Chain Reaction</strong> - Every brick an explosion breaks counts
+    <strong>Chain Reaction</strong> — Every brick an explosion breaks counts
     toward your combo
   </li>
   <li>
-    <strong>Inferno</strong> - Every explosion is wider while the fireball is
+    <strong>Inferno</strong> — Every explosion is wider while the fireball is
     lit
   </li>
   <li>
-    <strong>Glass Cannon</strong> - Raises the combo cap from 5× to 8×, and
+    <strong>Glass Cannon</strong> — Raises the combo cap from 5× to 8×, and
     makes the ball faster to pay for it
   </li>
 </ul>
@@ -147,17 +147,18 @@
     src="images/breakup/sovereign.webp"
     alt="The Sovereign boss: a glowing face surrounded by orbiting white shields over a purple nebula"
   />
-  <figcaption>The Sovereign, the final boss - the one that speaks. Captured in the game's scripted screenshot mode, hence the "Act 1-1" in the corner.</figcaption>
+  <figcaption>The Sovereign, the final boss — the one that speaks. Captured in the game's scripted screenshot mode, hence the "Act 1-1" in the top bar.</figcaption>
 </figure>
 
 <h2>The Combo Is the Real Game</h2>
 
 <p>
-  Every brick you break before the ball returns to your paddle raises a
-  multiplier, up to 5×. A tower taken in one long, greedy chain pays several
+  Every brick you break before the ball returns to your paddle extends a
+  combo, and every five bricks in it raise the multiplier one step, up to 5×.
+  A tower taken in one long, greedy chain pays several
   times what the same tower pays when played safe. And there's one small
   detail that changes how it feels: each link in the chain rings a semitone higher than
-  the last one. A good combo doesn't repeat the same noise - it climbs a
+  the last one. A good combo doesn't repeat the same noise — it climbs a
   musical scale, so you can literally hear how well you're playing.
 </p>
 
@@ -172,7 +173,7 @@
 <p>
   The power-ups follow the same philosophy of decisions rather than free gifts.
   The most common capsule in the game is Shrink. It makes your paddle small
-  and hard to play with - but while it lasts, the combo multiplier is one step
+  and hard to play with — but while it lasts, the combo multiplier is one step
   higher. So every capsule drifting down at you is a choice, and you have to
   make it while it falls.
 </p>
@@ -183,7 +184,7 @@
   Breakup is written in C17 with SDL3. Just like with
   <a href="jetshot-ios-game-swift-spritekit.html">Jetshot</a>, there isn't a
   single image file in the game. All graphics are generated procedurally at
-  startup - the bricks, the neon glow, the parallax starfields, the bloom pass
+  startup — the bricks, the neon glow, the parallax starfields, the bloom pass
   over the whole field. Every sound effect is synthesized in code by a small
   built-in chiptune engine.
 </p>
@@ -204,7 +205,7 @@
     rel="noopener"
     >Music Loop Bundle</a
   >
-  - and it is the reason the game is about 20 MB instead of a few hundred
+  — and it is the reason the game is about 20 MB instead of a few hundred
   kilobytes.
 </p>
 
@@ -212,7 +213,7 @@
   The final boss, The Sovereign, even speaks. Its voice is five sung vowels
   synthesized at startup. Each one starts as a sawtooth wave, which, like the
   buzz of human vocal folds, contains every harmonic, and runs through three
-  resonators tuned to the formants of that vowel - which is all that makes an
+  resonators tuned to the formants of that vowel — which is all that makes an
   "ah" different from an "oo". It's sung in three voices at once, at the root,
   a fifth above and an octave below, because The Sovereign is not a person and
   shouldn't sound like one. One vowel per syllable, pitched from the word being
@@ -229,7 +230,7 @@
 <h2>A Daily Run Without a Server</h2>
 
 <p>
-  One feature deserves a closer look - the daily run. Once a day, everybody who
+  One feature deserves a closer look — the daily run. Once a day, everybody who
   plays gets the same run: the same towers in the same order, the same mutators
   and the same perk offers. It keeps its own best score, so you can compare
   results with friends.
@@ -241,7 +242,7 @@
   <strong>seed is the date</strong>. All randomness in a run comes from a
   deterministic pseudo-random number generator (PCG), and the same seed always
   produces the same sequence of numbers. Feed it today's date and every copy of
-  the game, anywhere in the world, builds exactly the same run - even offline.
+  the game, anywhere in the world, builds exactly the same run — even offline.
 </p>
 
 <p>
@@ -263,7 +264,7 @@
 
 <p>
   So the game takes its own photos. A single command starts it in a scripted
-  mode where it plays itself - the paddle simply follows the ball - and saves
+  mode where it plays itself — the paddle simply follows the ball — and saves
   screenshots and GIFs at given frames. In this mode, the game advances by a
   fixed time step instead of the wall clock, so a frame number is a moment in
   the game, not a moment on the machine. With a fixed seed, two runs produce
@@ -284,7 +285,7 @@
 
 <p>
   Breakup is free on Windows, macOS and Linux, and playable in the browser with
-  nothing to install. I recommend playing with the sound on - half of what the
+  nothing to install. I recommend playing with the sound on — half of what the
   game does, it does with noise: the rising scale of a combo, the crack of a
   crystal, the jingle when a tower finally comes down.
 </p>
@@ -313,7 +314,7 @@
 <p>
   It also continues the approach I took with Jetshot: generating graphics in
   code instead of drawing them by hand isn't a limitation. It's a different
-  way of thinking about game art - one that programmers can feel right at
+  way of thinking about game art — one that programmers can feel right at
   home in.
 </p>
 

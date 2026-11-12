@@ -100,15 +100,23 @@ Articles are HTML files with metadata in comments at the top of the file
 - `title` - Article title (required). Write it as a claim or a specific
   promise, not a category: "I Knew CSS Too Well to See Why Tailwind Works"
   rather than "When Experience Becomes an Obstacle"
-- `date` - Publication date in YYYY-MM-DD format (required). It can't be in
-  the future: a static site has no scheduled publishing, so the build fails
-  rather than publish a post under a date that hasn't happened yet
+- `date` - Publication date in YYYY-MM-DD format (required; other formats
+  fail the build). It can't be in the future: a static site has no scheduled
+  publishing, so the build fails rather than publish a post under a date that
+  hasn't happened yet
+- `updated` - The day of the last substantial update, YYYY-MM-DD (optional).
+  Set it when you rewrite part of an article or add an update note, not for
+  fixing typos or small errors. It is shown under the title ("Updated ...")
+  and becomes the sitemap `<lastmod>` and JSON-LD `dateModified`; without it
+  both are the publication date
 - `description` - Short description for SEO and previews (required for
   articles, optional for notes)
 - `tags` - Comma-separated topics, e.g. `Games, C, WebAssembly`. Each tag
-  gets a page at `tags/<slug>.html`; reuse existing tags (see the Topics on
-  the archive page) rather than inventing near-duplicates. The first tag is
-  also the article's section (`article:section`); untagged articles have none
+  gets a page at `tags/<slug>.html` (`C++` becomes `cpp`, `C#` `csharp`);
+  reuse existing tags (see the Topics on the archive page) rather than
+  inventing near-duplicates, since spellings with the same slug (`Next.js`,
+  `NextJS`) are one tag. The first tag is also the article's section
+  (`article:section`); untagged articles have none
 - `image` - Cover image, a path inside `static/`
   (`images/chuck/sector-09.png`). Used in the structured data and as the
   picture on the article's social card
@@ -202,17 +210,20 @@ changing a title, tags or cover image. It works from any directory, checks
 every screenshot before replacing a card, and a card that fails keeps its
 old image and is retried on the next run.
 
-Dates are calendar days and render the same in any time zone. Git history
-adds what a day can't express (author dates, so a rebase changes nothing):
+Dates are calendar days and render the same in any time zone. An article's
+modification date is its `updated` day or, without one, its publication date;
+it never comes from git, so a round of fixes across old articles doesn't
+present all of them as freshly updated. Git history (author dates, so a
+rebase changes nothing) only adds:
 
-- articles published on the same day are ordered by their first commit, and
-  a not yet committed article counts as the newest
-- the modification date (sitemap `<lastmod>`, JSON-LD `dateModified`) is the
-  article's last commit that changed more than its metadata comments (so
-  retitling or retagging doesn't count as an update), never earlier than its
-  publication date
+- the order of articles published on the same day: by their first commit,
+  with a not yet committed article counting as the newest
+- the sitemap `<lastmod>` of standalone pages and the projects page: the last
+  commit that changed `pages/<name>.html` or `projects.json` beyond its
+  metadata comments
 
-Without git history (or in a shallow clone) only the publication date is used.
+Without git history (or in a shallow clone) same-day articles are ordered by
+file name and those pages have no `<lastmod>`.
 
 ## 🛠️ Available Commands
 

@@ -7,7 +7,7 @@
   When Next.js introduced the App Router with Server Components, it seemed like a
   revolutionary solution to many SPA problems. Better SEO, faster loading times,
   and the promise of a more efficient development experience. After working with
-  this technology since its introduction, I want to share my honest experience -
+  this technology since its introduction, I want to share my honest experience —
   both the good and the frustrating parts.
 </p>
 
@@ -20,15 +20,15 @@
 
 <ul>
   <li>
-    <strong>SEO</strong> - Pages arrive rendered on the server, as they already
+    <strong>SEO</strong> — Pages arrive rendered on the server, as they already
     did with the Pages Router, ready for search engines without extra setup
   </li>
   <li>
-    <strong>Performance issues</strong> - Reduced bundle sizes and faster
+    <strong>Performance issues</strong> — Reduced bundle sizes and faster
     initial loads
   </li>
   <li>
-    <strong>Data fetching complexity</strong> - Simpler data flow with
+    <strong>Data fetching complexity</strong> — Simpler data flow with
     server-side fetching
   </li>
 </ul>
@@ -45,7 +45,7 @@
 
 <p>
   One of the first major hurdles you'll encounter is authentication. With
-  traditional SPAs, you manage session state in one place - the client. With
+  traditional SPAs, you manage session state in one place — the client. With
   Server Components, you need to handle sessions both on the server and client
   side. This duplication isn't just inconvenient; it's a source of bugs and
   inconsistencies.
@@ -69,7 +69,7 @@ function useClientSession() {
 
 <ul>
   <li>Should this be a server or client component?</li>
-  <li>Where should I fetch this data - server, client, or both?</li>
+  <li>Where should I fetch this data — server, client, or both?</li>
   <li>How will these components interact with each other?</li>
   <li>
     What happens when I need client-side interactivity in a server component?
@@ -90,13 +90,13 @@ function useClientSession() {
 </p>
 
 <ul>
-  <li><strong>Page-level loading</strong> - Too coarse-grained for good UX</li>
+  <li><strong>Page-level loading</strong> — Too coarse-grained for good UX</li>
   <li>
-    <strong>Suspense boundaries</strong> - Work for component blocks, but what
+    <strong>Suspense boundaries</strong> — Work for component blocks, but what
     about granular loading states?
   </li>
   <li>
-    <strong>Partial rendering</strong> - Showing static content while dynamic
+    <strong>Partial rendering</strong> — Showing static content while dynamic
     parts load is possible with streaming, but every dynamic part needs its own
     boundary and fallback
   </li>
@@ -133,7 +133,7 @@ function useClientSession() {
 <h2>What This Means for Developers</h2>
 
 <p>
-  I'm not saying Server Components are inherently bad - they solve real problems
+  I'm not saying Server Components are inherently bad — they solve real problems
   and can be valuable in the right context. But the gap between marketing
   promises and production reality is significant.
 </p>
@@ -166,5 +166,5 @@ function useClientSession() {
 
 <p>
   Because at the end of the day, the best technology is the one that helps you
-  build great products efficiently - not the one with the most impressive demo.
+  build great products efficiently — not the one with the most impressive demo.
 </p>

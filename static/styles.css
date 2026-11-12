@@ -587,9 +587,14 @@ main {
 
 .post-card__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.25rem 0.625rem;
   margin: 0;
+}
+
+.post-card__meta > :not(.dot) {
+  white-space: nowrap;
 }
 
 .post-card__meta .dot {
@@ -747,11 +752,18 @@ main {
   border-bottom: 1px solid var(--rule);
 }
 
+/* Parts that don't fit move to the next line whole rather than breaking
+   inside ("July 12, / 2025") */
 .post__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.625rem;
+  gap: 0.25rem 0.625rem;
   margin: 0 0 1.125rem;
+}
+
+.post__meta > :not(.dot) {
+  white-space: nowrap;
 }
 
 .post__meta .dot {
@@ -1787,6 +1799,16 @@ main {
   .site-nav {
     gap: 1rem;
     font-size: 0.8125rem;
+  }
+
+  /* The update date gets a line of its own, without a separator left
+     dangling at the end of the line above */
+  .post__updated {
+    flex-basis: 100%;
+  }
+
+  .post__meta .dot:has(+ .post__updated) {
+    display: none;
   }
 
   .prose pre {

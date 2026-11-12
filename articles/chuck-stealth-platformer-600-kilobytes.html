@@ -51,7 +51,7 @@
   door at 00:22. He goes in after them. What is happening inside is not a
   kidnapping. The crew has been working in the building for months as its night
   maintenance contractor, and the hostage demand they broadcast is pure theater
-  - it puts every unit in the city on a cordon around the building and nobody
+  — it puts every unit in the city on a cordon around the building and nobody
   at all inside it. The real target is the sub-vault, and its last lock needs
   the building's duty controller, alive and present. At 01:00 the bonds leave
   the roof.
@@ -68,8 +68,8 @@
 <h2>How It Plays</h2>
 
 <p>
-  The game opens with a short prologue - including a top-down night car chase
-  across the city - and then becomes a side-scrolling platformer. Seventeen
+  The game opens with a short prologue — including a top-down night car chase
+  across the city — and then becomes a side-scrolling platformer. Seventeen
   sectors stand between the lobby and the roof. Each one is a small
   infiltration route: find the key card or hack the security terminal that
   opens the way deeper in, and decide floor by floor when to fight, when to
@@ -88,20 +88,20 @@
 
 <ul>
   <li>
-    <strong>They see</strong> - Through a forward vision cone that walls,
+    <strong>They see</strong> — Through a forward vision cone that walls,
     floors and crates block, so they can spot you diagonally or fire straight
     down a ladder shaft
   </li>
   <li>
-    <strong>They listen</strong> - Gunfire draws the nearest of them over to
+    <strong>They listen</strong> — Gunfire draws the nearest of them over to
     investigate
   </li>
   <li>
-    <strong>They remember</strong> - The fallen stay where they drop, and a
+    <strong>They remember</strong> — The fallen stay where they drop, and a
     guard who finds a body often sprints for the alarm switch
   </li>
   <li>
-    <strong>They talk</strong> - Twelve men run this night like a shift, and
+    <strong>They talk</strong> — Twelve men run this night like a shift, and
     if you stand close enough, their radio chatter appears on screen with the
     speaker's callsign. Most of the story is told this way, without stopping
     the game
@@ -113,7 +113,7 @@
   one stroke from behind, as long as nobody has seen you. A pocketful of bolts
   that never runs out lets you make a noise somewhere else, and calm guards
   walk toward the noise instead of you. And a body can be dragged out of the
-  room it fell in - slowly, with no ladders and no jumping - because where you
+  room it fell in — slowly, with no ladders and no jumping — because where you
   leave it is a decision as real as where you fought.
 </p>
 
@@ -121,7 +121,7 @@
   When things go wrong, an alarm doesn't end the level. It changes it: red
   light, every guard moving, a sweep around where you were last seen. A flash
   charge blinds everyone nearby for a few seconds without killing anyone. It
-  doesn't solve the encounter - it buys you seconds, and the seconds are for
+  doesn't solve the encounter — it buys you seconds, and the seconds are for
   leaving.
 </p>
 
@@ -154,7 +154,7 @@
   Chuck is a difficult game, but I wanted it to be one you never quit out of
   frustration. Progress inside a sector is banked, so a death resumes at the
   last key card, hack or door, not at the stairs. Running out of lives always
-  offers the same sector again - the game never sends you back to the lobby.
+  offers the same sector again — the game never sends you back to the lobby.
   Even the car chase in the prologue can't block you: after a couple of failed
   attempts it simply lets you skip ahead, because a curtain-raiser must never
   be the wall someone quits the game on.
@@ -164,19 +164,19 @@
 
 <ul>
   <li>
-    <strong>Assists</strong> - More hearts, slower guards, or deaths that never
+    <strong>Assists</strong> — More hearts, slower guards, or deaths that never
     cost a life. Nothing is locked behind finishing the game
   </li>
   <li>
-    <strong>Veteran mode</strong> - The same lever the other way: a faster
+    <strong>Veteran mode</strong> — The same lever the other way: a faster
     crew, one life, no continues
   </li>
   <li>
-    <strong>Reduced motion</strong> - No screen shake and no strobing warning
+    <strong>Reduced motion</strong> — No screen shake and no strobing warning
     lights
   </li>
   <li>
-    <strong>Fully rebindable controls</strong> - On keyboard and gamepad. The
+    <strong>Fully rebindable controls</strong> — On keyboard and gamepad. The
     game even asks each gamepad what letters are printed on its buttons, so "A"
     is always the button marked A
   </li>
@@ -187,7 +187,7 @@
 <p>
   Here's one of my favorite details. The story says Ellen is walked into the
   building at 00:22 and the bonds leave the roof at 01:00. That's thirty-eight
-  minutes - and the game takes that number literally.
+  minutes — and the game takes that number literally.
 </p>
 
 <p>
@@ -202,11 +202,11 @@
 
 <p>
   This consistency also caught a bug that had nothing to do with code. One of
-  the outdoor climbs used to be lit by a beautiful sunrise - warm stone, birds,
+  the outdoor climbs used to be lit by a beautiful sunrise — warm stone, birds,
   the sun coming up behind the building. But that climb sits at 00:44, between
   a wall clock reading 00:42 and another reading 00:46. Players would have
   watched the sun rise and set within five minutes. The sunrise became a
-  moonrise, and the scene kept its composition - just in the middle of the
+  moonrise, and the scene kept its composition — just in the middle of the
   night, where it belongs.
 </p>
 
@@ -226,16 +226,16 @@
     src="images/chuck/sector-02.png"
     alt="A cyan-walled office floor with ladders, desks and guards, drawn in a retro computer palette"
   />
-  <figcaption>Sector 02. Everything on this screen is drawn by code at runtime - the game has no image files at all.</figcaption>
+  <figcaption>Sector 02. Everything on this screen is drawn by code at runtime — the game has no image files at all.</figcaption>
 </figure>
 
 <p>
   The audio is generated from the same kind of building blocks as old sound
-  chips - square, triangle and sawtooth oscillators and a noise generator, plus
-  a sine - all shaped by envelopes. Even
+  chips — square, triangle and sawtooth oscillators and a noise generator, plus
+  a sine — all shaped by envelopes. Even
   here there are small decisions that matter. A mathematically perfect square
   wave has an infinite series of harsh harmonics that sounds brittle and tiring
-  in a digital mixer, so Chuck's square wave is built from just three of them -
+  in a digital mixer, so Chuck's square wave is built from just three of them —
   enough to keep the retro color, without the fatiguing top end.
 </p>
 
@@ -243,7 +243,7 @@
   Chuck is written in C17 against SDL3, and the browser version is the very
   same code compiled to WebAssembly. Because there are no assets to download,
   the whole web build is about <strong>600 kilobytes</strong> and starts in
-  about a second - smaller than many of the hero images on modern websites.
+  about a second — smaller than many of the hero images on modern websites.
   For comparison, my other new game,
   <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a>, also draws
   all of its graphics in code, but ships with a recorded soundtrack, and that
@@ -252,9 +252,9 @@
 
 <p>
   It's a nice illustration of how cheap code is compared to content. Nearly
-  60,000 lines of C - guards with vision cones, a car chase, cutscenes, an
-  illustrated field manual and a whole procedural soundtrack - take up less
-  space than a single track of Breakup's soundtrack.
+  60,000 lines of C — guards with vision cones, a car chase, cutscenes, an
+  illustrated field manual and a whole procedural soundtrack — take up less
+  space than an average track of Breakup's soundtrack.
 </p>
 
 <h2>Play Chuck</h2>
@@ -271,7 +271,7 @@
   <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener"
     >gave Chuck a try on itch.io</a
   >
-  - and if you make it to the roof before 01:00, let me know. The
+  — and if you make it to the roof before 01:00, let me know. The
   <a href="https://github.com/RobertLib/chuck" target="_blank" rel="noopener"
     >source code is on GitHub</a
   >
@@ -281,7 +281,7 @@
 <h2>Final Thoughts</h2>
 
 <p>
-  Chuck started as a simple idea - one man, one building, one way up - and
+  Chuck started as a simple idea — one man, one building, one way up — and
   grew into a game with guards that see, hear and remember, a car chase,
   cutscenes and a crew that talks on the radio. A surprising amount of the
   work wasn't about code at all, but about consistency: making sure the clock
@@ -292,7 +292,7 @@
 <p>
   Building it entirely in code, without a single image or sound file, turned
   out to be the right fit. When the art is code, it can follow the same rules
-  as everything else in the game - and be tested like everything else too.
+  as everything else in the game — and be tested like everything else too.
 </p>
 
 <p>Thank you for reading, and good luck up there!</p>

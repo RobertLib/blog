@@ -1,6 +1,6 @@
 <!-- title: Chess, Mini Golf and Solitaire for iPhone, Without Ads -->
 <!-- date: 2026-10-19 -->
-<!-- description: Three new free games for iPhone and iPad: Chess Offline, Mini Golf 3D and Klondike Solitaire. No ads, no in-app purchases, no internet needed - just the game. -->
+<!-- description: Three new free games for iPhone and iPad: Chess Offline, Mini Golf 3D and Klondike Solitaire. No ads, no in-app purchases, no internet needed — just the game. -->
 <!-- image: images/ios-games/cover.webp -->
 <!-- tags: Games, iOS, Swift -->
 
@@ -20,7 +20,7 @@
 </p>
 
 <p>
-  In this article I'll introduce each of them - and share a few stories from
+  In this article I'll introduce each of them — and share a few stories from
   under the hood, because each one hides at least one problem that turned out
   to be far more interesting than it first looked.
 </p>
@@ -36,13 +36,13 @@
 </p>
 
 <ul>
-  <li><strong>No ads</strong> - Not even a banner</li>
-  <li><strong>No in-app purchases</strong> - Everything is in the free app</li>
+  <li><strong>No ads</strong> — Not even a banner</li>
+  <li><strong>No in-app purchases</strong> — Everything is in the free app</li>
   <li>
-    <strong>No account and no data collected</strong> - Nothing to sign up for
+    <strong>No account and no data collected</strong> — Nothing to sign up for
   </li>
   <li>
-    <strong>Completely offline</strong> - No connection needed, and Chess and
+    <strong>Completely offline</strong> — No connection needed, and Chess and
     Solitaire don't contain a single line of networking code
   </li>
 </ul>
@@ -52,7 +52,7 @@
   <em>Just chess. Nothing else.</em> That's the whole idea.
 </p>
 
-<h2>Chess Offline: Play and Review</h2>
+<h2>Chess Offline: Play &amp; Review</h2>
 
 <p>
   <a
@@ -62,7 +62,7 @@
     >Chess Offline</a
   >
   lets you play against the computer at five levels, from Beginner to
-  Grandmaster, or against a friend on one device - the board can rotate to
+  Grandmaster, or against a friend on one device — the board can rotate to
   face the player to move. Its best feature, though, comes after the game.
 </p>
 
@@ -85,7 +85,7 @@
 
 <p>
   For newcomers, there's also a nine-chapter guide on how to play, with 27
-  board diagrams. Fifteen of them are playable - the dots on them are real
+  board diagrams. Fifteen of them are playable — the dots on them are real
   legal moves calculated by the engine, and tapping one plays it.
 </p>
 
@@ -96,7 +96,7 @@
   pure Swift, uses the classic techniques of chess programming: alpha-beta
   search with a transposition table, quiescence search, null-move pruning and
   static exchange evaluation. That last one is what helps the review tell a
-  brilliant sacrifice from a plain blunder - both give up material on the
+  brilliant sacrifice from a plain blunder — both give up material on the
   spot, but only one of them gets something back for it.
 </p>
 
@@ -114,8 +114,8 @@
   count the leaf nodes of that move tree and compare the number with known
   reference values. From the starting position, there are 20 move sequences
   after one ply, 400 after two, 8,902 after three and 197,281 after four. If
-  your move generator gets a single rule wrong - castling through
-  check, en passant, a promotion - the number won't match. The test suite runs
+  your move generator gets a single rule wrong — castling through
+  check, en passant, a promotion — the number won't match. The test suite runs
   perft on six well-known positions, including the famous "Kiwipete", which
   packs castling, en passant, promotions and pins into a single position.
 </p>
@@ -125,7 +125,7 @@
 <p>
   Every square on the board is an accessibility element. VoiceOver reads its
   coordinate, what stands on it, whether the piece can move and where a move
-  would land - so a whole game can be played without seeing the screen. The
+  would land — so a whole game can be played without seeing the screen. The
   notation is localized too: a knight move written <code>Nf3</code> in English
   reads <code>Jf3</code> in Czech, while the engine and saved games keep using
   the English notation internally.
@@ -134,7 +134,7 @@
 <p>
   A small easter egg for chess fans: the App Store preview video isn't a staged
   game. It replays the seventeen moves of the famous
-  <strong>Opera Game</strong> - Paul Morphy against the Duke of Brunswick and
+  <strong>Opera Game</strong> — Paul Morphy against the Duke of Brunswick and
   Count Isouard, played in a box at the Paris Opera in 1858.
 </p>
 
@@ -148,8 +148,8 @@
     >Mini Golf 3D</a
   >
   is a real minigolf game in 3D, built with SwiftUI and RealityKit. It has 108
-  hand-designed holes across nine worlds - from Green Garden through Frozen
-  Fjord, Neon Nights and Volcano Forge to Orbital Station - each with its own
+  hand-designed holes across nine worlds — from Green Garden through Frozen
+  Fjord, Neon Nights and Volcano Forge to Orbital Station — each with its own
   obstacles: sand traps, ice, portals, pinball bumpers, lava, geysers,
   turntables, cannons, magnets and loops.
 </p>
@@ -165,14 +165,14 @@
   You play it like a slingshot: drag back from the ball, and the longer the
   drag, the harder the shot. A dotted aim line predicts the path, including
   bank shots off the rails, and turns gold the moment the putt is going in.
-  Each world also has a pair of local inhabitants - a hedgehog, a penguin, a
-  snowman, a crab - and they aren't just scenery. The ball bounces off them.
+  Each world also has a pair of local inhabitants — a hedgehog, a penguin, a
+  snowman, a crab — and they aren't just scenery. The ball bounces off them.
 </p>
 
 <p>
   The holes are modeled on real minigolf. The shapes follow the standard
-  lanes defined by the World Minigolfsport Federation - the pyramids, the
-  lightning, the labyrinth, the double gate - and the rules are in the same
+  lanes defined by the World Minigolfsport Federation — the pyramids, the
+  lightning, the labyrinth, the double gate — and the rules are in the same
   spirit: the stroke limit is par + 3, and water or lava costs a penalty
   stroke.
 </p>
@@ -180,7 +180,7 @@
 <h3>Measuring Difficulty with Dijkstra</h3>
 
 <p>
-  With 108 holes, the hardest design problem wasn't building them - it was
+  With 108 holes, the hardest design problem wasn't building them — it was
   making sure the difficulty grows evenly. The surface area of a hole turned
   out to be a useless measure: the labyrinth is only two square meters and
   takes four putts, while an open basin twice the size takes one.
@@ -212,7 +212,7 @@
   more gently than a sliding one, because part of its energy is stored in the
   spin. For a solid sphere, only 5/7 of gravity brakes it along the track. Hit
   the loop too softly and the ball climbs partway and rolls back; just a bit
-  short, and it loses contact near the top and drops inside the circle - exactly
+  short, and it loses contact near the top and drops inside the circle — exactly
   like a real one would.
 </p>
 
@@ -222,8 +222,8 @@
   Mini Golf also has a daily challenge: one hole a day, the same for every
   player. Just like the daily run in my brick-breaker
   <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a>, there's no
-  server behind it. The hole is derived from the date alone - the day is hashed
-  with FNV-1a and fed into a SplitMix64 random generator - so every device
+  server behind it. The hole is derived from the date alone — the day is hashed
+  with FNV-1a and fed into a SplitMix64 random generator — so every device
   picks the same hole independently.
 </p>
 
@@ -231,7 +231,7 @@
   The tricky part was a seemingly simple rule: never the same hole two days in
   a row. If today's draw matches yesterday's, it's redrawn. But yesterday might
   have been redrawn as well, so comparing against yesterday's first draw isn't
-  enough - you need to know what yesterday actually produced, which depends on
+  enough — you need to know what yesterday actually produced, which depends on
   the day before that. The game unwinds this chain four days back.
 </p>
 
@@ -272,8 +272,8 @@
   be walked back to where it went wrong. That means the full undo history is
   saved after every single move. Encoding it as JSON would take about 200 bytes
   per step, rewritten from scratch each time, so the game uses its own compact
-  binary format instead. Each card fits into one byte - suit and rank in seven
-  bits, and the eighth bit says whether it's face up - and a whole board takes
+  binary format instead. Each card fits into one byte — suit and rank in seven
+  bits, and the eighth bit says whether it's face up — and a whole board takes
   just 65 bytes.
 </p>
 
@@ -290,7 +290,7 @@
 <p>
   Yet one bug slipped through all of that: tapping anywhere on
   the empty table dealt a card, as if you'd tapped the deck. The logic was fine
-  - the problem was the size of the deck's tap area. In SwiftUI, a view placed
+  — the problem was the size of the deck's tap area. In SwiftUI, a view placed
   with <code>.position</code> claims all the space it's offered, so a tap area
   applied after it quietly covered the whole board. Unit tests ask the model to
   make a move; they never actually tap. Today, UI tests launch the app, tap
@@ -309,7 +309,7 @@
 
 <p>
   For Solitaire, this led to a fun search. I needed a screenshot of the dead-end
-  banner - a deal where the game's own move advisor plays itself into a
+  banner — a deal where the game's own move advisor plays itself into a
   position with no useful move left, with a score still on the board. Finding
   one meant playing through hundreds of thousands of deals. Only two in two
   hundred thousand fit.
@@ -319,23 +319,23 @@
 
 <p>
   All three games are written in Swift and SwiftUI, with no third-party
-  dependencies - only Apple's own frameworks. Solitaire and Chess synthesize
+  dependencies — only Apple's own frameworks. Solitaire and Chess synthesize
   their sounds at runtime, Solitaire draws its cards in code, and Mini Golf
   generates its 3D graphics and textures procedurally. As a result, the apps
   are tiny by today's standards:
 </p>
 
 <ul>
-  <li><strong>Klondike Solitaire</strong> - about 2.5 MB</li>
-  <li><strong>Chess Offline</strong> - about 9.2 MB</li>
+  <li><strong>Klondike Solitaire</strong> — about 2.5 MB</li>
+  <li><strong>Chess Offline</strong> — about 9.2 MB</li>
   <li>
-    <strong>Mini Golf 3D</strong> - about 28 MB, most of which is its
+    <strong>Mini Golf 3D</strong> — about 28 MB, most of which is its
     soundtrack of 32 music tracks
   </li>
 </ul>
 
 <p>
-  All three are also built with accessibility in mind - VoiceOver, Dynamic
+  All three are also built with accessibility in mind — VoiceOver, Dynamic
   Type and Reduce Motion are supported throughout.
 </p>
 
@@ -343,7 +343,7 @@
 
 <p>
   If you have an iPhone or iPad, I'd be really happy if you tried them out. A
-  rating or a short review on the App Store helps a lot - for a small
+  rating or a short review on the App Store helps a lot — for a small
   independent developer, it's the main way other players can find the games.
 </p>
 
@@ -377,7 +377,7 @@
 <h2>Final Thoughts</h2>
 
 <p>
-  It's easy to think that classic games like chess or solitaire are "solved" -
+  It's easy to think that classic games like chess or solitaire are "solved" —
   that there's nothing left to build. But doing them properly is full of
   interesting problems: a chess engine you can trust, a difficulty curve you
   can measure, an undo history at 65 bytes a move. And sometimes the

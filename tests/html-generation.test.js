@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import fs from "fs";
 import os from "os";
+import path from "path";
 import * as build from "../build.js";
 import config from "../config.js";
 
@@ -363,20 +365,44 @@ describe("Blog HTML Generation", () => {
       }
     });
 
-    it("should never date a modification before publication", () => {
-      const article = makeArticle({ date: "2025-06-01" });
-      const dates = (modified) =>
-        new Map([[article.filename, { created: modified, modified }]]);
+    it("should date a modification only by the updated metadata", () => {
+      expect(
+        build.getModifiedDate(makeArticle({ date: "2025-06-01" }))
+      ).toBe("2025-06-01T00:00:00.000Z");
+      expect(
+        build.getModifiedDate(
+          makeArticle({ date: "2025-06-01", updated: "2026-11-12" })
+        )
+      ).toBe("2026-11-12T00:00:00.000Z");
+    });
 
-      expect(build.getModifiedDate(article, dates("2026-01-02T00:00:00Z"))).toBe(
-        "2026-01-02T00:00:00.000Z"
+    it("should not count later commits as updates", () => {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), "blog-updated-"));
+      fs.writeFileSync(
+        path.join(dir, "post.html"),
+        "<!-- title: Post -->\n<!-- date: 2025-06-01 -->\n<!-- description: About it -->\n<p>Fixed a typo yesterday.</p>"
       );
-      expect(build.getModifiedDate(article, dates("2025-01-01T00:00:00Z"))).toBe(
-        "2025-06-01T00:00:00.000Z"
+      fs.writeFileSync(
+        path.join(dir, "updated.html"),
+        "<!-- title: Updated -->\n<!-- date: 2025-06-01 -->\n<!-- updated: 2026-11-12 -->\n<!-- description: About it -->\n<p>Rewritten since.</p>"
       );
-      expect(build.getModifiedDate(article, new Map())).toBe(
-        "2025-06-01T00:00:00.000Z"
-      );
+      try {
+        const post = build.getArticleData("post.html", dir);
+        const updated = build.getArticleData("updated.html", dir);
+        expect(post.modified).toBe("2025-06-01T00:00:00.000Z");
+        expect(updated.modified).toBe("2026-11-12T00:00:00.000Z");
+
+        const html = build.renderArticleHtml(updated, [updated, post]);
+        expect(html).toContain(
+          '<span class="post__updated">Updated <time datetime="2026-11-12">November 12, 2026</time></span>'
+        );
+        expect(html).toContain('"dateModified": "2026-11-12T00:00:00.000Z"');
+        expect(build.renderArticleHtml(post, [updated, post])).not.toContain(
+          "Updated <time"
+        );
+      } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it("should return no dates outside a git checkout", () => {

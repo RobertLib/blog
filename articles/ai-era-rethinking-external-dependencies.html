@@ -1,6 +1,6 @@
 <!-- title: With AI, You Need Fewer npm Packages Than You Think -->
 <!-- date: 2026-01-23 -->
-<!-- description: How AI shifts the build vs. buy decision for npm packages - when to use external libraries and when to write custom solutions for long-term stability. -->
+<!-- description: How AI shifts the build vs. buy decision for npm packages — when to use external libraries and when to write custom solutions for long-term stability. -->
 <!-- tags: AI, Web Development -->
 
 <p>
@@ -38,20 +38,20 @@
 
 <ul>
   <li>
-    <strong>Continued maintenance</strong> - Will the maintainers still care in
+    <strong>Continued maintenance</strong> — Will the maintainers still care in
     two years?
   </li>
   <li>
-    <strong>Stability</strong> - Will they decide to rewrite everything with
+    <strong>Stability</strong> — Will they decide to rewrite everything with
     breaking changes?
   </li>
   <li>
-    <strong>Compatibility</strong> - Will it work with the next version of Node,
+    <strong>Compatibility</strong> — Will it work with the next version of Node,
     React, or TypeScript?
   </li>
-  <li><strong>Security</strong> - Will vulnerabilities be patched promptly?</li>
+  <li><strong>Security</strong> — Will vulnerabilities be patched promptly?</li>
   <li>
-    <strong>Bundle size</strong> - Are we importing megabytes for a simple
+    <strong>Bundle size</strong> — Are we importing megabytes for a simple
     function?
   </li>
 </ul>
@@ -122,23 +122,23 @@
 
 <ul>
   <li>
-    <strong>Complexity is extremely high</strong> - Full frameworks, database
+    <strong>Complexity is extremely high</strong> — Full frameworks, database
     drivers, cryptography libraries
   </li>
   <li>
-    <strong>Standards compliance matters</strong> - OAuth implementations, HTTP
+    <strong>Standards compliance matters</strong> — OAuth implementations, HTTP
     clients, protocol handlers
   </li>
   <li>
-    <strong>The library is battle-tested</strong> - Millions of downloads, years
+    <strong>The library is battle-tested</strong> — Millions of downloads, years
     of production use
   </li>
   <li>
-    <strong>Active, professional maintenance</strong> - Corporate backing or
+    <strong>Active, professional maintenance</strong> — Corporate backing or
     established foundation support
   </li>
   <li>
-    <strong>Ecosystem integration is critical</strong> - Core dependencies that
+    <strong>Ecosystem integration is critical</strong> — Core dependencies that
     other tools rely on
   </li>
 </ul>
@@ -147,27 +147,27 @@
 
 <ul>
   <li>
-    <strong>Functionality is small to medium</strong> - Can be implemented in a
+    <strong>Functionality is small to medium</strong> — Can be implemented in a
     few hundred lines
   </li>
   <li>
-    <strong>Requirements are specific</strong> - You need exactly this behavior,
+    <strong>Requirements are specific</strong> — You need exactly this behavior,
     not 90% of it
   </li>
   <li>
-    <strong>Long-term stability matters</strong> - Enterprise apps that must run
+    <strong>Long-term stability matters</strong> — Enterprise apps that must run
     unchanged for years
   </li>
   <li>
-    <strong>The library seems abandoned</strong> - Last update was years ago,
+    <strong>The library seems abandoned</strong> — Last update was years ago,
     issues pile up
   </li>
   <li>
-    <strong>You're importing huge packages for tiny features</strong> - Using 1%
+    <strong>You're importing huge packages for tiny features</strong> — Using 1%
     of a library's functionality
   </li>
   <li>
-    <strong>The dependency tree is concerning</strong> - One package pulls in 50
+    <strong>The dependency tree is concerning</strong> — One package pulls in 50
     others
   </li>
 </ul>
@@ -222,21 +222,21 @@
 
 <ul>
   <li>
-    <strong>Full visibility</strong> - You can read and understand every line
+    <strong>Full visibility</strong> — You can read and understand every line
   </li>
   <li>
-    <strong>Easy modification</strong> - Need to change behavior? Just edit it
+    <strong>Easy modification</strong> — Need to change behavior? Just edit it
   </li>
   <li>
-    <strong>No version conflicts</strong> - It's not coupled to external update
+    <strong>No version conflicts</strong> — It's not coupled to external update
     cycles
   </li>
   <li>
-    <strong>Guaranteed stability</strong> - It only changes when you decide to
+    <strong>Guaranteed stability</strong> — It only changes when you decide to
     change it
   </li>
   <li>
-    <strong>Learning opportunity</strong> - Your team understands how it works
+    <strong>Learning opportunity</strong> — Your team understands how it works
   </li>
 </ul>
 
@@ -267,27 +267,27 @@
 
 <ol>
   <li>
-    <strong>Be selective</strong> - Don't go to the other extreme of avoiding
+    <strong>Be selective</strong> — Don't go to the other extreme of avoiding
     all dependencies. Focus on the small to medium utilities.
   </li>
   <li>
-    <strong>Document AI-generated code</strong> - Add comments explaining what
+    <strong>Document AI-generated code</strong> — Add comments explaining what
     it does and why you built it custom.
   </li>
   <li>
-    <strong>Write tests</strong> - AI can generate these too. Don't skip testing
+    <strong>Write tests</strong> — AI can generate these too. Don't skip testing
     just because it was easy to write.
   </li>
   <li>
-    <strong>Review carefully</strong> - AI makes mistakes. Have experienced
+    <strong>Review carefully</strong> — AI makes mistakes. Have experienced
     developers review before merging.
   </li>
   <li>
-    <strong>Keep it simple</strong> - If the AI-generated solution is too
+    <strong>Keep it simple</strong> — If the AI-generated solution is too
     complex, that's a signal you might need a library.
   </li>
   <li>
-    <strong>Maintain a library of custom utilities</strong> - Build up your own
+    <strong>Maintain a library of custom utilities</strong> — Build up your own
     trusted collection of functions.
   </li>
 </ol>
@@ -296,7 +296,7 @@
 
 <p>
   This represents a cultural shift in how we build software. For years, the
-  JavaScript ecosystem encouraged "install everything" - there were famous
+  JavaScript ecosystem encouraged "install everything" — there were famous
   examples of packages with just a few lines of code getting millions of
   downloads.
 </p>
@@ -323,23 +323,23 @@
 
 <ul>
   <li>
-    <strong>Fewer micro-packages</strong> - Less need for single-purpose utility
+    <strong>Fewer micro-packages</strong> — Less need for single-purpose utility
     libraries
   </li>
   <li>
-    <strong>More internal libraries</strong> - Companies building collections of
+    <strong>More internal libraries</strong> — Companies building collections of
     custom utilities
   </li>
   <li>
-    <strong>Higher bar for dependencies</strong> - External packages will need
+    <strong>Higher bar for dependencies</strong> — External packages will need
     stronger justification
   </li>
   <li>
-    <strong>Consolidation around major frameworks</strong> - The truly essential
+    <strong>Consolidation around major frameworks</strong> — The truly essential
     libraries will remain dominant
   </li>
   <li>
-    <strong>Better code ownership</strong> - Teams understanding their codebases
+    <strong>Better code ownership</strong> — Teams understanding their codebases
     more deeply
   </li>
 </ul>

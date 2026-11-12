@@ -190,12 +190,16 @@ function formatDateISO(dateString) {
 }
 
 // URL-safe form of a tag label: "Next.js" -> "nextjs", "Web Development" ->
-// "web-development"
+// "web-development". "+" and "#" are spelled out, so "C", "C++" and "C#"
+// stay three different tags ("c", "cpp", "csharp") instead of one.
 function slugify(text) {
   return String(text)
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/\+\+/g, "pp")
+    .replace(/\+/g, " plus ")
+    .replace(/#/g, "sharp")
     .replace(/[.'’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
@@ -282,6 +286,24 @@ const RESERVED_PAGES = ["index.html", "archive.html", "projects.html", "404.html
 // day starts 14 hours before it does in UTC
 const FUTURE_DATE_TOLERANCE_MS = 14 * 60 * 60 * 1000;
 
+// Article days are written as YYYY-MM-DD. Other formats would be parsed in
+// the build machine's time zone (and so shown a day off) and would end up
+// as invalid <time datetime> values.
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+// Errors of a `date` or `updated` value; empty when it is a valid past day
+function dayErrors(label, value) {
+  if (!ISO_DAY.test(value) || isNaN(parseDate(value).getTime())) {
+    return [`Invalid ${label} format: ${value} (use YYYY-MM-DD)`];
+  }
+  if (parseDate(value).getTime() - Date.now() > FUTURE_DATE_TOLERANCE_MS) {
+    // A static site has no scheduled publishing: the post would go live
+    // with the next deploy under a date that hasn't happened yet
+    return [`${label[0].toUpperCase()}${label.slice(1)} ${value} is in the future`];
+  }
+  return [];
+}
+
 function validateArticle(article) {
   const errors = [];
   const warnings = [];
@@ -298,13 +320,21 @@ function validateArticle(article) {
   if (!article.date) {
     errors.push("Missing date");
   } else {
-    const date = parseDate(article.date);
-    if (isNaN(date.getTime())) {
-      errors.push("Invalid date format");
-    } else if (date.getTime() - Date.now() > FUTURE_DATE_TOLERANCE_MS) {
-      // A static site has no scheduled publishing: the post would go live
-      // with the next deploy under a date that hasn't happened yet
-      errors.push(`Date ${article.date} is in the future`);
+    errors.push(...dayErrors("date", article.date));
+  }
+
+  if (article.updated) {
+    const updatedErrors = dayErrors("updated date", article.updated);
+    errors.push(...updatedErrors);
+    if (
+      updatedErrors.length === 0 &&
+      article.date &&
+      ISO_DAY.test(article.date) &&
+      article.updated < article.date
+    ) {
+      errors.push(
+        `Updated date ${article.updated} is before the publication date ${article.date}`
+      );
     }
   }
 
@@ -373,6 +403,7 @@ function getArticleData(
     const { errors, warnings } = validateArticle(article);
 
     article.type = article.type || "article";
+    article.modified = getModifiedDate(article);
     article.tags = parseTags(metadata.tags);
     article.discuss = parseUrlList(metadata.discuss);
     if (!article.description) {
@@ -501,10 +532,11 @@ function parseGitDates(log) {
 }
 
 // First and last commit dates of every file in a directory (or of `paths`
-// in it), from a single `git log` call. Author dates are used, so rebasing
-// doesn't make articles look edited. Empty outside a git checkout or in a
-// shallow clone (where history is cut off), so callers fall back to the
-// publication date.
+// in it), from a single `git log` call: the first commit orders articles
+// published on the same day, the last one dates standalone pages and
+// projects.json in the sitemap. Author dates are used, so rebasing changes
+// nothing. Empty outside a git checkout or in a shallow clone (where history
+// is cut off).
 function getGitDates(dir = ARTICLES_DIR, paths = ["."]) {
   const git = (args) =>
     execFileSync("git", ["-c", "core.quotePath=false", ...args], {
@@ -517,7 +549,7 @@ function getGitDates(dir = ARTICLES_DIR, paths = ["."]) {
   try {
     if (git(["rev-parse", "--is-shallow-repository"]).trim() === "true") {
       console.warn(
-        "Shallow git clone: using publication dates as modification dates"
+        "Shallow git clone: same-day articles are ordered by file name and pages get no sitemap <lastmod>"
       );
       return new Map();
     }
@@ -540,14 +572,12 @@ function getGitDates(dir = ARTICLES_DIR, paths = ["."]) {
   }
 }
 
-// Never earlier than the publication date, e.g. for an article committed
-// ahead of the date it is published under.
-function getModifiedDate(article, gitDates) {
-  const published = parseDate(article.date);
-  const committed = gitDates.has(article.filename)
-    ? new Date(gitDates.get(article.filename).modified)
-    : null;
-  return (committed > published ? committed : published).toISOString();
+// When the article last changed in substance (sitemap <lastmod>, JSON-LD
+// dateModified): its `updated` day, set by hand, or else its publication
+// date. Not taken from git, where fixing typos or facts across old articles
+// would present every one of them as freshly updated.
+function getModifiedDate(article) {
+  return formatDateISO(article.updated || article.date);
 }
 
 function escapeHtml(text) {
@@ -726,10 +756,11 @@ function sanitizeHtml(html) {
 const EAGER_IMAGE_MAX_WORDS_BEFORE = 100;
 
 // Local images get their pixel size (no layout shift while loading) and
-// lazy loading, except the first one when it sits near the top of the
-// content, where it is likely in view on load. A local image that doesn't
-// exist fails the build.
-function enhanceImages(html, staticDir = STATIC_DIR) {
+// lazy loading, except the first one (the first `eager` ones, for a grid
+// whose first row is side by side) when it sits near the top of the content,
+// where it is likely in view on load. A local image that doesn't exist fails
+// the build.
+function enhanceImages(html, staticDir = STATIC_DIR, { eager: eagerCount = 1 } = {}) {
   let index = 0;
   return html.replace(/<img\b[^>]*>/gi, (tag, offset) => {
     let result = tag;
@@ -758,7 +789,7 @@ function enhanceImages(html, staticDir = STATIC_DIR) {
 
     result = addAttribute(result, "decoding", "async");
     const eager =
-      index++ === 0 &&
+      index++ < eagerCount &&
       countWords(html.slice(0, offset)) <= EAGER_IMAGE_MAX_WORDS_BEFORE;
     if (!eager) result = addAttribute(result, "loading", "lazy");
     return result;
@@ -1058,8 +1089,9 @@ function tagLinksHtml(tags, root = "", className = "tag") {
 
 const isNote = (article) => article.type === "note";
 
-// Eyebrow line of an article in lists and on its page
-function postMetaHtml(article, { long = true } = {}) {
+// Eyebrow line of an article in lists and on its page. On its own page
+// (`updated`), an article updated since publication shows that day too.
+function postMetaHtml(article, { long = true, updated = false } = {}) {
   const parts = [];
   if (isNote(article)) parts.push('<span class="badge">Note</span>');
   parts.push(
@@ -1069,6 +1101,13 @@ function postMetaHtml(article, { long = true } = {}) {
   );
   if (!isNote(article)) {
     parts.push(`<span>${estimateReadingTime(article.content)} min read</span>`);
+  }
+  if (updated && article.updated && article.updated !== article.date) {
+    parts.push(
+      `<span class="post__updated">Updated <time datetime="${escapeHtml(article.updated)}">${formatDate(
+        article.updated
+      )}</time></span>`
+    );
   }
   return parts.join('<span class="dot" aria-hidden="true"></span>');
 }
@@ -1184,19 +1223,20 @@ function generateTagHtml(tag) {
   const canonicalUrl = `${BASE_URL}/${tagUrl(tag)}`;
   const count = tag.articles.length;
   const description = tagDescription(tag);
+  // The label alone ("C", "AI") says too little in a search result or a tab
+  const title = `Articles about ${tag.label}`;
 
   return replaceTemplate(template, {
     ...commonReplacements(root),
     ...headReplacements({
-      title: tag.label,
-      socialTitle: `Articles about ${tag.label}`,
+      title,
       description,
       canonicalUrl,
       socialKey: `tag-${tag.slug}`,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: `${tag.label} - ${config.site.title}`,
+        name: `${title} - ${config.site.title}`,
         description,
         url: canonicalUrl,
         inLanguage: "en-US",
@@ -1338,10 +1378,15 @@ function projectCardHtml(project, root = "") {
           </article>`;
 }
 
+// Cards per row of .project-grid on wide screens (styles.css): the pictures
+// of the whole first row are in view when the page opens
+const PROJECT_GRID_COLUMNS = 2;
+
 function featuredProjectsHtml(projects, root = "") {
   const featured = projects.filter((project) => project.featured);
   if (featured.length === 0) return "";
-  return enhanceImages(`
+  return enhanceImages(
+    `
         <section class="showcase" aria-labelledby="showcase-heading">
           <div class="showcase__head">
             <h2 class="section-label" id="showcase-heading">Games I made</h2>
@@ -1351,7 +1396,10 @@ function featuredProjectsHtml(projects, root = "") {
             .map((project) => projectCardHtml(project, root))
             .join("")}
           </div>
-        </section>`);
+        </section>`,
+    STATIC_DIR,
+    { eager: PROJECT_GRID_COLUMNS }
+  );
 }
 
 function generateProjectsHtml(projects) {
@@ -1391,7 +1439,9 @@ function generateProjectsHtml(projects) {
       },
     }),
     "nav-projects-current": CURRENT_PAGE,
-    projects: enhanceImages(sections),
+    projects: enhanceImages(sections, STATIC_DIR, {
+      eager: PROJECT_GRID_COLUMNS,
+    }),
   });
 }
 
@@ -1876,7 +1926,7 @@ function renderArticleHtml(article, articles) {
       }),
     }),
     title: escapeHtml(article.title || "Untitled"),
-    "post-meta": postMetaHtml(article),
+    "post-meta": postMetaHtml(article, { updated: true }),
     content: enhanceContent(article.content),
     // Notes have no separate description: it is their opening text
     lede:
@@ -2538,12 +2588,10 @@ async function build() {
       return;
     }
 
-    // "created" orders same-day articles; "modified" feeds sitemap <lastmod>
-    // and JSON-LD dateModified
+    // "created" orders articles published on the same day
     const gitDates = getGitDates();
     articles.forEach((article) => {
       article.created = gitDates.get(article.filename)?.created;
-      article.modified = getModifiedDate(article, gitDates);
     });
     articles.sort(compareNewestFirst);
 

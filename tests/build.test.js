@@ -166,6 +166,51 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       );
     });
 
+    it("should accept only YYYY-MM-DD dates", () => {
+      const withDate = (date) => ({
+        title: "Test",
+        date,
+        slug: "test",
+        content: "Content here",
+        description: "Test",
+      });
+
+      // Parsed in the local time zone, these would show a day off east of UTC
+      for (const date of ["May 30, 2025", "2025/05/30", "05/30/2025", "2025-5-30"]) {
+        expect(() => build.validateArticle(withDate(date))).toThrow(
+          /Invalid date format.*YYYY-MM-DD/
+        );
+      }
+      expect(() => build.validateArticle(withDate("2025-02-30"))).toThrow(
+        "Invalid date format"
+      );
+      expect(() => build.validateArticle(withDate("2025-05-30"))).not.toThrow();
+    });
+
+    it("should validate the updated date", () => {
+      const withUpdated = (updated) => ({
+        title: "Test",
+        date: "2025-05-30",
+        updated,
+        slug: "test",
+        content: "Content here",
+        description: "Test",
+      });
+      const nextYear = `${new Date().getUTCFullYear() + 1}-01-01`;
+
+      expect(() => build.validateArticle(withUpdated("2026-11-12"))).not.toThrow();
+      expect(() => build.validateArticle(withUpdated("2025-05-30"))).not.toThrow();
+      expect(() => build.validateArticle(withUpdated("Nov 12, 2026"))).toThrow(
+        "Invalid updated date format"
+      );
+      expect(() => build.validateArticle(withUpdated(nextYear))).toThrow(
+        /Updated date .* is in the future/
+      );
+      expect(() => build.validateArticle(withUpdated("2025-05-29"))).toThrow(
+        /before the publication date/
+      );
+    });
+
     it("should reject a date in the future", () => {
       const futureDate = new Date();
       futureDate.setFullYear(futureDate.getFullYear() + 1);

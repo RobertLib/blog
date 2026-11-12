@@ -1,6 +1,7 @@
 <!-- title: What I Learned Building Watch-List.me with an AI Agent -->
 <!-- date: 2025-08-16 -->
-<!-- description: My detailed experience building a Next.js app with Claude Sonnet 4 in agent mode - exploring benefits, pitfalls, and why human oversight still matters. -->
+<!-- updated: 2026-11-12 -->
+<!-- description: My detailed experience building a Next.js app with Claude Sonnet 4 in agent mode — exploring benefits, pitfalls, and why human oversight still matters. -->
 <!-- tags: AI, Next.js, Web Development -->
 
 <p>
@@ -12,7 +13,7 @@
   TV shows. While
   the project itself might not sound revolutionary, the development process
   highlighted something important about our current relationship with AI coding
-  tools - particularly when using Claude Sonnet 4 in agent mode for code
+  tools — particularly when using Claude Sonnet 4 in agent mode for code
   generation.
 </p>
 
@@ -31,15 +32,15 @@
 </p>
 
 <ul>
-  <li><strong>API route boilerplate</strong> - Standard CRUD operations</li>
+  <li><strong>API route boilerplate</strong> — Standard CRUD operations</li>
   <li>
-    <strong>Form components</strong> - Input validation and error handling
+    <strong>Form components</strong> — Input validation and error handling
   </li>
   <li>
-    <strong>TypeScript interfaces</strong> - Type definitions for data
+    <strong>TypeScript interfaces</strong> — Type definitions for data
     structures
   </li>
-  <li><strong>Component styling</strong> - Tailwind CSS class combinations</li>
+  <li><strong>Component styling</strong> — Tailwind CSS class combinations</li>
 </ul>
 
 <p>
@@ -67,26 +68,27 @@
 
 <ul>
   <li>
-    <strong>SEO implications</strong> - What needs to be server-rendered for
+    <strong>SEO implications</strong> — What needs to be server-rendered for
     search engines
   </li>
   <li>
-    <strong>Performance trade-offs</strong> - Bundle size vs. hydration overhead
+    <strong>Performance trade-offs</strong> — Interactivity vs. bundle size and
+    hydration cost
   </li>
   <li>
-    <strong>User experience</strong> - Interactive elements vs. static content
+    <strong>User experience</strong> — Interactive elements vs. static content
   </li>
   <li>
-    <strong>Data flow patterns</strong> - How state propagates through the
+    <strong>Data flow patterns</strong> — How state propagates through the
     component tree
   </li>
 </ul>
 
 <p>
-  I repeatedly had to intervene when Claude would suggest using client
-  components for content that should be server-rendered for SEO, or,
-  conversely, would try to add interactivity to server components without a proper
-  <code>"use client"</code> boundary.
+  I repeatedly had to intervene when Claude would suggest client components
+  that fetched their data in the browser for content that had to be in the
+  server-rendered HTML for SEO, or, conversely, would try to add interactivity
+  to server components without a proper <code>"use client"</code> boundary.
 </p>
 
 <h3>Real Examples of AI Missteps</h3>
@@ -95,44 +97,45 @@
   One particularly telling example involved the movie search functionality.
   Claude initially suggested implementing the entire search interface as a
   server component. A server component can't react to typing, so every query
-  would have meant a URL change and a full server re-render of the results -
+  would have meant a URL change and a full server re-render of the results —
   terrible UX for a search box. Later, when I asked for
-  optimization, it went to the opposite extreme, suggesting we make the entire
-  movie listing page client-side, which would have hurt SEO.
+  optimization, it went to the opposite extreme, suggesting the entire movie
+  listing page fetch its data in the browser, which would have left the movies
+  out of the HTML that search engines get.
 </p>
 
 <p>
   The correct solution required understanding that the initial movie grid should
-  be server-rendered for SEO and performance, while the search overlay needed to
-  be a client component for interactivity, with proper data fetching strategies
-  for each use case.
+  be a server component with its data fetched on the server, for SEO and
+  performance, while the search overlay needed to be a client component for
+  interactivity, with proper data fetching strategies for each use case.
 </p>
 
 <h2>The Human Factor: Code Review and Architectural Oversight</h2>
 
 <p>
   Working with AI taught me that code review has never been more important. But
-  it's not just about catching bugs - it's about ensuring architectural
+  it's not just about catching bugs — it's about ensuring architectural
   consistency and long-term maintainability.
 </p>
 
 <h3>What I Learned to Watch For</h3>
 
 <ul>
-  <li><strong>Component boundaries</strong> - Proper separation of concerns</li>
+  <li><strong>Component boundaries</strong> — Proper separation of concerns</li>
   <li>
-    <strong>Data fetching patterns</strong> - Consistent approaches across the
+    <strong>Data fetching patterns</strong> — Consistent approaches across the
     app
   </li>
   <li>
-    <strong>Error handling</strong> - Comprehensive coverage, not just happy
+    <strong>Error handling</strong> — Comprehensive coverage, not just happy
     paths
   </li>
   <li>
-    <strong>Performance implications</strong> - Bundle size and runtime
+    <strong>Performance implications</strong> — Bundle size and runtime
     efficiency
   </li>
-  <li><strong>Accessibility</strong> - Often completely overlooked by AI</li>
+  <li><strong>Accessibility</strong> — Often completely overlooked by AI</li>
 </ul>
 
 <p>
@@ -145,7 +148,7 @@
 
 <p>
   The biggest risk I see with AI-assisted development is what's now known as
-  "vibe coding" - accepting whatever the AI produces as long as it seems to
+  "vibe coding" — accepting whatever the AI produces as long as it seems to
   work, and letting it make architectural decisions based on what "feels
   right" for individual features, without considering the application as a
   whole.
@@ -168,12 +171,12 @@
 <h3>Before Starting</h3>
 <ul>
   <li>
-    <strong>Define your architecture</strong> - Decide on patterns before
+    <strong>Define your architecture</strong> — Decide on patterns before
     generating code
   </li>
-  <li><strong>Set coding standards</strong> - Be explicit about conventions</li>
+  <li><strong>Set coding standards</strong> — Be explicit about conventions</li>
   <li>
-    <strong>Plan your component hierarchy</strong> - Know what should be server
+    <strong>Plan your component hierarchy</strong> — Know what should be server
     vs client
   </li>
 </ul>
@@ -181,15 +184,15 @@
 <h3>During Development</h3>
 <ul>
   <li>
-    <strong>Review every AI suggestion</strong> - Don't blindly accept generated
+    <strong>Review every AI suggestion</strong> — Don't blindly accept generated
     code
   </li>
   <li>
-    <strong>Test architectural decisions</strong> - Verify performance and SEO
+    <strong>Test architectural decisions</strong> — Verify performance and SEO
     implications
   </li>
   <li>
-    <strong>Maintain consistency</strong> - Ensure new code follows established
+    <strong>Maintain consistency</strong> — Ensure new code follows established
     patterns
   </li>
 </ul>
@@ -197,15 +200,15 @@
 <h3>After Implementation</h3>
 <ul>
   <li>
-    <strong>Performance audit</strong> - Check bundle sizes and rendering
+    <strong>Performance audit</strong> — Check bundle sizes and rendering
     performance
   </li>
   <li>
-    <strong>SEO validation</strong> - Test that server-rendered content is
+    <strong>SEO validation</strong> — Test that server-rendered content is
     working
   </li>
   <li>
-    <strong>Accessibility review</strong> - AI rarely considers accessibility
+    <strong>Accessibility review</strong> — AI rarely considers accessibility
     properly
   </li>
 </ul>

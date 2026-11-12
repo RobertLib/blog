@@ -45,7 +45,22 @@ describe("Tags", () => {
   it("should slugify labels for URLs", () => {
     expect(build.slugify("Next.js")).toBe("nextjs");
     expect(build.slugify("Web Development")).toBe("web-development");
-    expect(build.slugify("  C++ / Žluťoučký  ")).toBe("c-zlutoucky");
+    expect(build.slugify("  C++ / Žluťoučký  ")).toBe("cpp-zlutoucky");
+  });
+
+  it("should keep C, C++ and C# apart", () => {
+    expect(["C", "C++", "C#", "F#", "Google+"].map(build.slugify)).toEqual([
+      "c",
+      "cpp",
+      "csharp",
+      "fsharp",
+      "google-plus",
+    ]);
+    expect(build.parseTags("C, C++, C#").map((tag) => tag.slug)).toEqual([
+      "c",
+      "cpp",
+      "csharp",
+    ]);
   });
 
   it("should parse a comma-separated list, dropping duplicates", () => {
@@ -80,6 +95,9 @@ describe("Tags", () => {
     expect(html).toContain('href="../a.html"');
     expect(html).toContain('href="../styles.css"');
     expect(html).toContain("<h1>Games</h1>");
+    expect(html).toContain(
+      "<title>Articles about Games - RobLib&#039;s Blog</title>"
+    );
     expect(html).not.toMatch(/\{\{[^}]+\}\}/);
   });
 
@@ -292,6 +310,23 @@ describe("Embeds and images", () => {
     expect(html).toContain(
       '<div class="table-scroll" tabindex="0"><table><tr><td>1</td></tr></table></div>'
     );
+  });
+
+  it("should load the whole first row of the project grids eagerly", () => {
+    const projects = build.loadProjects();
+    const loading = (html) =>
+      html.match(/<img[^>]*>/g).map((tag) => /loading="lazy"/.test(tag));
+
+    expect(loading(build.generateIndexHtml([], projects)).slice(0, 3)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(loading(build.generateProjectsHtml(projects)).slice(0, 3)).toEqual([
+      false,
+      false,
+      true,
+    ]);
   });
 
   it("should size local images and lazy-load all but the first", () => {

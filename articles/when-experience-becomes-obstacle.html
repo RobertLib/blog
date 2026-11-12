@@ -1,6 +1,6 @@
 <!-- title: I Knew CSS Too Well to See Why Tailwind Works -->
 <!-- date: 2025-11-28 -->
-<!-- description: How deep CSS expertise made me resist Tailwind for years - a personal story about when experience blinds us to innovation and why experts can be wrong. -->
+<!-- description: How deep CSS expertise made me resist Tailwind for years — a personal story about when experience blinds us to innovation and why experts can be wrong. -->
 <!-- tags: Web Development, Career -->
 
 <p>
@@ -22,7 +22,7 @@
   The word "cascading" in Cascading Style Sheets isn't accidental. CSS was
   designed with a specific philosophy: global rules apply across the entire
   document. When several rules target the same element, the cascade decides
-  which one wins - by origin, specificity and source order - while inheritance
+  which one wins — by origin, specificity and source order — while inheritance
   passes properties like color and font down from parent to child.
 </p>
 
@@ -78,25 +78,25 @@
 <p>
   In a world of components, the cascade that CSS was designed for becomes a
   liability, not an asset. Vue and Angular at least ship scoped component
-  styles, but in React - where I spend most of my time - you're on your own.
+  styles, but in React — where I spend most of my time — you're on your own.
   When you're building isolated components with plain stylesheets:
 </p>
 
 <ul>
   <li>
-    <strong>Global styles become dangerous</strong> - A style change in one
+    <strong>Global styles become dangerous</strong> — A style change in one
     component can unexpectedly affect another
   </li>
   <li>
-    <strong>Naming becomes a nightmare</strong> - You need increasingly complex
+    <strong>Naming becomes a nightmare</strong> — You need increasingly complex
     BEM-style names to avoid conflicts
   </li>
   <li>
-    <strong>Bundle size grows linearly</strong> - Every new component adds more
+    <strong>Bundle size grows linearly</strong> — Every new component adds more
     CSS, even if it uses similar styles
   </li>
   <li>
-    <strong>Context switching hurts productivity</strong> - Jumping between HTML
+    <strong>Context switching hurts productivity</strong> — Jumping between HTML
     and CSS files breaks flow
   </li>
 </ul>
@@ -116,19 +116,19 @@
 
 <ul>
   <li>
-    <strong>No naming decisions</strong> - I spent countless hours debating
+    <strong>No naming decisions</strong> — I spent countless hours debating
     class names. With Tailwind, you just describe what you want
   </li>
   <li>
-    <strong>Colocation</strong> - Styles live on the element itself, so
+    <strong>Colocation</strong> — Styles live on the element itself, so
     changing them can't affect other components
   </li>
   <li>
-    <strong>Bundle size levels off</strong> - The CSS stops growing with your
+    <strong>Bundle size levels off</strong> — The CSS stops growing with your
     application because you keep reusing the same utility classes
   </li>
   <li>
-    <strong>Immediate visual feedback</strong> - Change a class, see the result,
+    <strong>Immediate visual feedback</strong> — Change a class, see the result,
     no file switching
   </li>
 </ul>
@@ -228,7 +228,7 @@
 
 <p>
   Technologies like Tailwind didn't succeed with the blessing of experienced
-  developers - they often succeeded in spite of our objections. The industry
+  developers — they often succeeded in spite of our objections. The industry
   moved forward, and some
   of us grumpy veterans eventually had to admit we were wrong.
 </p>
