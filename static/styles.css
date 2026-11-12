@@ -214,6 +214,11 @@ button {
   color: inherit;
 }
 
+/* Controls that need JavaScript start hidden; site.js reveals them */
+[hidden] {
+  display: none !important;
+}
+
 ::selection {
   background: var(--selection);
 }
@@ -222,6 +227,11 @@ button {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: 3px;
+}
+
+/* Anchors and keyboard focus land below the sticky header */
+html {
+  scroll-padding-top: 5rem;
 }
 
 .shell {
@@ -289,11 +299,14 @@ button {
 .progress {
   position: fixed;
   inset: 0 auto auto 0;
-  width: 0;
+  width: 100%;
   height: 2px;
   background: var(--accent);
   z-index: 60;
-  transition: width 0.1s linear;
+  /* Scaled rather than resized, so scrolling never triggers layout */
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.1s linear;
 }
 
 /* ============================================================
@@ -304,7 +317,6 @@ button {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--paper);
   background: var(--header-bg);
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
@@ -404,11 +416,11 @@ button {
 }
 
 .site-nav a:hover::after,
-.site-nav a[aria-current="page"]::after {
+.site-nav a[aria-current]::after {
   transform: scaleX(1);
 }
 
-.site-nav a[aria-current="page"] {
+.site-nav a[aria-current] {
   color: var(--ink);
 }
 
@@ -561,14 +573,7 @@ main {
   margin: 0;
 }
 
-.post-card__meta .dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.65;
-}
-
+.post-card__meta .dot,
 .post-card__title {
   margin: 0.625rem 0 0.5rem;
   font-size: clamp(1.1875rem, 1.05rem + 0.6vw, 1.375rem);
@@ -632,10 +637,6 @@ main {
 
 .archive-year {
   margin-bottom: 3rem;
-}
-
-.archive-year:last-child {
-  margin-bottom: 0;
 }
 
 .archive-year__label {
@@ -742,14 +743,7 @@ main {
   line-height: 1.08;
 }
 
-.post__lede {
-  margin: 1.25rem 0 0;
-  max-width: 36rem;
-  color: var(--ink-2);
-  font-size: 1.125rem;
-  line-height: 1.6;
-}
-
+.post__lede,
 /* ---------- Long-form body copy ---------- */
 
 .prose {
@@ -773,14 +767,12 @@ main {
   margin: 2.4em 0 0.7em;
   font-size: clamp(1.3125rem, 1.15rem + 0.7vw, 1.5rem);
   letter-spacing: -0.023em;
-  scroll-margin-top: 5.5rem;
 }
 
 .prose h3 {
   margin: 2.2em 0 0.6em;
   font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
   letter-spacing: -0.016em;
-  scroll-margin-top: 5.5rem;
 }
 
 .prose h2 + p,
@@ -916,7 +908,7 @@ main {
   border: 1px solid var(--rule);
   border-radius: 4px;
   color: var(--ink);
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .prose pre {
@@ -931,6 +923,11 @@ main {
   line-height: 1.68;
   color: var(--ink);
   tab-size: 2;
+}
+
+/* Focusable so a block that scrolls sideways can be scrolled by keyboard */
+.prose pre:focus-visible {
+  outline-offset: 2px;
 }
 
 .prose pre code {
@@ -1481,6 +1478,15 @@ main {
   line-height: 1.6;
 }
 
+/* The accent colour is too light for text on the sunken background, so
+   links there are ink with an accent underline */
+.subscribe__text a,
+.subscribe__alt a {
+  color: var(--ink);
+  text-decoration-color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
 .subscribe__form {
   display: flex;
   flex-wrap: wrap;
@@ -1565,12 +1571,6 @@ main {
   margin-top: 0;
 }
 
-/* Pixel art keeps hard edges when scaled */
-.prose img.pixelated,
-.project__media img.pixelated {
-  image-rendering: pixelated;
-}
-
 /* Click-to-play game or video (static/site.js) */
 .embed__stage {
   position: relative;
@@ -1581,6 +1581,11 @@ main {
 }
 
 .embed__stage img {
+  display: block;
+  width: 100%;
+  /* Fills the stage, which takes the game's aspect ratio (site.js) */
+  height: 100%;
+  object-fit: cover;
   border: 0;
   border-radius: 0;
 }
@@ -1600,7 +1605,7 @@ main {
   border: 0;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--paper);
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
@@ -1745,8 +1750,17 @@ main {
   }
 }
 
+/* The header RSS link (also in the footer) makes room on narrow screens,
+   so the header fits from 320px up and with enlarged text */
+@media (max-width: 28rem) {
+  .site-nav__rss {
+    display: none;
+  }
+}
+
 /* Hidden visually only: the text stays the logo link's accessible name */
 @media (max-width: 26rem) {
+
   .wordmark__text {
     position: absolute;
     width: 1px;
@@ -1780,14 +1794,36 @@ main {
    ============================================================ */
 
 @media print {
+  /* Paper is white whatever theme is on screen; with or without a chosen
+     theme, as specific as the dark palettes above and later, so it wins */
+  :root:not([data-theme]),
+  :root[data-theme] {
+    color-scheme: light;
+    --paper: #fff;
+    --sunken: #f6f6f6;
+    --ink: #000;
+    --ink-2: #1a1a1a;
+    --ink-3: #444;
+    --rule: #ddd;
+    --rule-2: #ccc;
+    --accent: #000;
+    --accent-line: #000;
+  }
+
   .site-header,
   .site-footer,
   .share,
+  .subscribe,
   .related,
   .post-nav,
   .progress,
-  .skip-link {
+  .skip-link,
+  .embed__play {
     display: none !important;
+  }
+
+  .embed--ready .embed__stage img {
+    filter: none;
   }
 
   body {

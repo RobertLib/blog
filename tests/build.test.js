@@ -34,6 +34,24 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       expect(result.content).toBe("<h1>Just content</h1>");
     });
 
+    it("should read metadata only from the top of the file", () => {
+      const content = `<!-- title: Real Title -->
+<!-- date: 2024-01-01 -->
+
+<p>Body</p>
+<!-- title: Not metadata -->
+<!-- todo: rewrite this -->`;
+      const result = build.extractMetadata(content);
+
+      expect(result.metadata).toEqual({
+        title: "Real Title",
+        date: "2024-01-01",
+      });
+      expect(result.content).toBe(
+        "<p>Body</p>\n<!-- title: Not metadata -->\n<!-- todo: rewrite this -->"
+      );
+    });
+
     it("should handle mixed case metadata keys", () => {
       const content = "<!-- Title: Test --> <!-- DATE: 2024-01-01 -->";
       const result = build.extractMetadata(content);
@@ -131,7 +149,7 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       );
     });
 
-    it("should warn about future date", () => {
+    it("should reject a date in the future", () => {
       const futureDate = new Date();
       futureDate.setFullYear(futureDate.getFullYear() + 1);
 
@@ -144,8 +162,22 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
         description: "Test",
       };
 
-      const result = build.validateArticle(article);
-      expect(result.warnings).toContain("Future date detected");
+      expect(() => build.validateArticle(article)).toThrow(/in the future/);
+    });
+
+    it("should accept today's date in any time zone", () => {
+      // Tomorrow in UTC is already today east of UTC+10
+      const soon = new Date(Date.now() + 10 * 60 * 60 * 1000);
+      const article = {
+        title: "Test",
+        date: soon.toISOString().split("T")[0],
+        slug: "test",
+        content:
+          "This is a test article with enough content to pass validation and avoid short content warning.",
+        description: "Test",
+      };
+
+      expect(() => build.validateArticle(article)).not.toThrow();
     });
 
     it("should reject missing description", () => {
@@ -307,6 +339,30 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       expect(build.sanitizeHtml(input)).toBe(input);
     });
 
+    it("should keep URLs that merely contain javascript:", () => {
+      const input =
+        '<a href="https://example.com/javascript:the-good-parts" title="JavaScript: The Good Parts">Book</a>';
+
+      expect(build.sanitizeHtml(input)).toBe(input);
+    });
+
+    it("should remove script URLs hidden with entities or whitespace", () => {
+      for (const href of [
+        "jav&#x09;ascript:alert(1)",
+        "javascript&colon;alert(1)",
+        " JavaScript:alert(1)",
+        "vbscript:msgbox(1)",
+      ]) {
+        expect(build.sanitizeHtml(`<a href="${href}">x</a>`)).toBe("<a >x</a>");
+      }
+    });
+
+    it("should not end a tag at a > inside a quoted value", () => {
+      const input = '<a title="a > b" onclick="alert(1)" href="/x">x</a>';
+
+      expect(build.sanitizeHtml(input)).toBe('<a title="a > b"  href="/x">x</a>');
+    });
+
     it("should remove unquoted event handlers", () => {
       const input = "<img src=x.png onerror=alert(1)>";
 
@@ -378,14 +434,14 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
   });
 
   describe("getAllArticles", () => {
-    const dir = path.join(os.tmpdir(), "blog-articles-test");
+    let dir;
     const valid = `<!-- title: Valid -->
 <!-- date: 2024-01-01 -->
 <!-- description: Valid description -->
 <p>${"Enough content to avoid the short content warning. ".repeat(3)}</p>`;
 
     beforeEach(() => {
-      fs.mkdirSync(dir, { recursive: true });
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), "blog-articles-"));
     });
 
     afterEach(() => {

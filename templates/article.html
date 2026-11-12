@@ -32,6 +32,7 @@
               href="https://twitter.com/intent/tweet?url={{share-url}}&amp;text={{share-title}}{{share-via}}"
               target="_blank"
               rel="noopener"
+              aria-label="Share on X"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path
@@ -46,6 +47,7 @@
               href="https://www.linkedin.com/sharing/share-offsite/?url={{share-url}}"
               target="_blank"
               rel="noopener"
+              aria-label="Share on LinkedIn"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path
@@ -59,6 +61,7 @@
               type="button"
               class="share__btn"
               data-copy-link="{{canonical-url}}"
+              hidden
             >
               <svg
                 viewBox="0 0 24 24"
@@ -73,7 +76,7 @@
                 <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" />
                 <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
               </svg>
-              <span data-copy-label>Copy link</span>
+              <span data-copy-label aria-live="polite">Copy link</span>
             </button>
           </div>
 

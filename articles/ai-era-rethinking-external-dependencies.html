@@ -105,8 +105,8 @@
 
 <blockquote>
   <p>
-    "When the cost of building goes down, the value proposition of buying
-    changes fundamentally."
+    When the cost of building goes down, the value proposition of buying
+    changes fundamentally.
   </p>
 </blockquote>
 
@@ -181,12 +181,13 @@
 </p>
 
 <pre><code>npm install validator
-import { isEmail } from 'validator'
+import isEmail from 'validator/lib/isEmail'
 </code></pre>
 
 <p>
-  But this package has dozens of functions we don't need, adds to our bundle
-  size, and introduces a dependency we have to maintain and update. Is someone
+  But this package has dozens of functions we don't need, and even though we
+  import only one of them, it's still a dependency we have to maintain and
+  update. Is someone
   going to maintain this package in 5 years? Will it work with Node 25?
 </p>
 
@@ -261,8 +262,8 @@ import { isEmail } from 'validator'
 
 <ol>
   <li>
-    <strong>Be selective</strong> - Don't go crazy and avoid all dependencies.
-    Focus on the small to medium utilities.
+    <strong>Be selective</strong> - Don't go to the other extreme of avoiding
+    all dependencies. Focus on the small to medium utilities.
   </li>
   <li>
     <strong>Document AI-generated code</strong> - Add comments explaining what

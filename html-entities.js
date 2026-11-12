@@ -14,6 +14,10 @@ const NAMED_ENTITIES = {
   ndash: "–",
   mdash: "—",
   hellip: "…",
+  // Characters that can hide a URL scheme ("javascript&colon;")
+  colon: ":",
+  tab: "\t",
+  newline: "\n",
 };
 
 // Decodes numeric and common named entities; unknown ones are left as-is.

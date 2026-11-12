@@ -1,3 +1,4 @@
+    <meta name="color-scheme" content="light dark" />
     <meta
       name="theme-color"
       content="#fbfaf8"
@@ -8,6 +9,28 @@
       content="#111214"
       media="(prefers-color-scheme: dark)"
     />
+    <script>
+      // Applied before first paint (ahead of the stylesheet, which it would
+      // otherwise wait for) so the chosen theme never flashes. The browser
+      // UI colour follows the chosen theme rather than the system's.
+      (function () {
+        try {
+          var t = localStorage.getItem("theme");
+          if (t === "dark" || t === "light") {
+            document.documentElement.dataset.theme = t;
+            document.documentElement.style.colorScheme = t;
+            var c =document.querySelectorAll('meta[name="theme-color"]');
+            for (var i = 0; i < c.length; i++) {
+              c[i].setAttribute(
+                "content",
+                t === "dark" ? "#111214" : "#fbfaf8"
+              );
+              c[i].removeAttribute("media");
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
     <link
       rel="preload"
       href="{{root}}fonts/inter-latin.woff2"
@@ -32,15 +55,5 @@
       title="RSS Feed"
       href="{{root}}feed.xml"
     />
-    <script>
-      // Applied before first paint so the chosen theme never flashes.
-      (function () {
-        try {
-          var t = localStorage.getItem("theme");
-          if (t === "dark" || t === "light")
-            document.documentElement.dataset.theme = t;
-        } catch (e) {}
-      })();
-    </script>
     <script src="{{root}}site.js" defer></script>
     {{analytics}}

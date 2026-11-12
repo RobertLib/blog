@@ -23,11 +23,25 @@
     toggle.setAttribute("title", "Switch to " + next + " theme");
   }
 
+  // The browser UI colour follows the chosen theme, not the system's
+  var THEME_COLORS = { light: "#fbfaf8", dark: "#111214" };
+
+  function syncThemeColor(theme) {
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    Array.prototype.forEach.call(metas, function (meta) {
+      meta.setAttribute("content", THEME_COLORS[theme]);
+      meta.removeAttribute("media");
+    });
+  }
+
   if (toggle) {
+    toggle.hidden = false;
     syncToggleLabel();
     toggle.addEventListener("click", function () {
       var next = currentTheme() === "dark" ? "light" : "dark";
       root.dataset.theme = next;
+      root.style.colorScheme = next;
+      syncThemeColor(next);
       try {
         localStorage.setItem("theme", next);
       } catch (e) {
@@ -36,9 +50,13 @@
       syncToggleLabel();
     });
 
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", syncToggleLabel);
+    var systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+    if (systemDark.addEventListener) {
+      systemDark.addEventListener("change", syncToggleLabel);
+    } else if (systemDark.addListener) {
+      // Safari before 14
+      systemDark.addListener(syncToggleLabel);
+    }
   }
 
   /* ---------- Header + reading progress ---------- */
@@ -55,7 +73,8 @@
       var span =
         document.documentElement.scrollHeight - window.innerHeight;
       var value = span > 0 ? window.scrollY / span : 0;
-      progress.style.width = Math.min(Math.max(value, 0), 1) * 100 + "%";
+      progress.style.transform =
+        "scaleX(" + Math.min(Math.max(value, 0), 1) + ")";
     }
 
     ticking = false;
@@ -73,18 +92,22 @@
   onScroll();
 
   /* ---------- Copy link ---------- */
+  // Shown only where it can work (it starts hidden in the markup)
   var copyBtn = document.querySelector("[data-copy-link]");
   if (copyBtn && navigator.clipboard) {
+    var copyLabel = copyBtn.querySelector("[data-copy-label]");
+    var copyText = copyLabel ? copyLabel.textContent : "";
+    var copyTimer = null;
+    copyBtn.hidden = false;
     copyBtn.addEventListener("click", function () {
-      var label = copyBtn.querySelector("[data-copy-label]");
       navigator.clipboard
         .writeText(copyBtn.getAttribute("data-copy-link"))
         .then(function () {
-          if (!label) return;
-          var original = label.textContent;
-          label.textContent = "Copied";
-          setTimeout(function () {
-            label.textContent = original;
+          if (!copyLabel) return;
+          copyLabel.textContent = "Copied";
+          clearTimeout(copyTimer);
+          copyTimer = setTimeout(function () {
+            copyLabel.textContent = copyText;
           }, 2000);
         })
         .catch(function () {
@@ -102,8 +125,13 @@
   var embeds = document.querySelectorAll("[data-embed]");
   Array.prototype.forEach.call(embeds, function (embed) {
     var src = embed.getAttribute("data-embed");
-    var title = embed.getAttribute("data-embed-title") || "Embedded content";
+    var name = embed.getAttribute("data-embed-title");
     var stage = embed.querySelector(".embed__stage") || embed;
+    var ratio = embed.getAttribute("data-embed-ratio");
+
+    // The poster takes the frame's shape up front, so the page doesn't
+    // jump when the game replaces it
+    if (ratio) stage.style.aspectRatio = ratio;
 
     var button = document.createElement("button");
     button.type = "button";
@@ -112,20 +140,19 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>';
     var label = document.createElement("span");
     label.textContent =
-      embed.getAttribute("data-embed-label") || "Play in your browser";
+      embed.getAttribute("data-embed-label") ||
+      (name ? "Play " + name : "Play in your browser");
     button.appendChild(label);
     stage.appendChild(button);
     embed.classList.add("embed--ready");
 
     button.addEventListener("click", function () {
-      var ratio = embed.getAttribute("data-embed-ratio");
       var frame = document.createElement("iframe");
       frame.src = src;
-      frame.title = title;
+      frame.title = name || "Embedded content";
       frame.className = "embed__frame";
       frame.setAttribute("allow", "autoplay; fullscreen; gamepad");
       frame.setAttribute("allowfullscreen", "");
-      if (ratio) stage.style.aspectRatio = ratio;
       stage.innerHTML = "";
       stage.appendChild(frame);
       embed.classList.add("embed--playing");

@@ -1,14 +1,14 @@
 <!-- title: How I Choose a Tech Stack, from Plain HTML to Next.js -->
 <!-- date: 2025-07-15 -->
-<!-- description: How to choose the right tech stack for each project - when to use HTML, static generators, frameworks, or separated backends with practical guidance and tips. -->
+<!-- description: How to choose the right tech stack for each project: when plain HTML is enough, and when to use a static generator, Next.js or a separate backend. -->
 <!-- tags: Web Development, Next.js -->
 
 <p>
   In today's world of web technologies, we face a paradox of choice. We have
   countless frameworks, libraries, and tools at our disposal, but this can be
   our biggest problem. I often see projects where developers used Next.js for a
-  simple landing page or plain React for a complex application with
-  authentication. The key to success is spending enough time choosing the right
+  simple landing page, or a client-side React app for a public e-commerce site
+  that needs SEO. The key to success is spending enough time choosing the right
   technology at the beginning.
 </p>
 
@@ -42,15 +42,15 @@
 
 <p>
   For a blog like this one, you have two reasonable options: server-side
-  rendering or static generator.
-  <strong>Static generator is almost always the better choice.</strong>
+  rendering or a static generator.
+  <strong>A static generator is almost always the better choice.</strong>
 </p>
 
-<p>Why static generator wins:</p>
+<p>Why a static generator wins:</p>
 
 <ul>
   <li>
-    <strong>Performance</strong> - HTML files are served directly from CDN
+    <strong>Performance</strong> - HTML files are served directly from a CDN
   </li>
   <li><strong>Security</strong> - no database, no security vulnerabilities</li>
   <li><strong>Cost</strong> - hosting static files is almost free</li>
@@ -101,12 +101,12 @@ function generateBlog() {
 
 <p>
   For the backend, you can use Node.js with Express, Python with Django/FastAPI,
-  or any other stack. The frontend as a Single Page Application in React handles
+  or any other stack. The frontend, a Single Page Application in React, handles
   the user interface. This solution is ideal for internal tools, dashboards, and
   content management.
 </p>
 
-<h2>Hybrid Applications: Next.js as the Golden Middle Path</h2>
+<h2>Hybrid Applications: Next.js as the Middle Ground</h2>
 
 <p>
   Choose Next.js when you
@@ -137,8 +137,8 @@ function generateBlog() {
 
 <blockquote>
   <p>
-    "Next.js is like a Swiss Army knife - it can do a lot, but it's not the best
-    at any specific area. Sometimes that's exactly what you need."
+    Next.js is like a Swiss Army knife - it can do a lot, but it's not the best
+    at any specific area. Sometimes that's exactly what you need.
   </p>
 </blockquote>
 
@@ -148,8 +148,8 @@ function generateBlog() {
   For large applications with complex logic, hybrid solutions become
   problematic.
   <strong
-    >For enterprise applications, choose clearly separated backend and React SPA
-    built into static files.</strong
+    >For enterprise applications, choose a clearly separated backend and a React
+    SPA built into static files.</strong
   >
 </p>
 
@@ -166,10 +166,10 @@ function generateBlog() {
 </ul>
 
 <p>
-  React SPA built into static files can be hosted on CDN, which is fast and
+  A React SPA built into static files can be hosted on a CDN, which is fast and
   cheap. If the application is behind authentication, you don't need to worry
-  about SEO, so server-side rendering is unnecessary. The backend handles API,
-  authentication, and business logic.
+  about SEO, so server-side rendering is unnecessary. The backend handles the
+  API, authentication, and business logic.
 </p>
 
 <h2>Decision Tree: What to Choose?</h2>
@@ -178,19 +178,19 @@ function generateBlog() {
 
 <ol>
   <li>
-    <strong>Do you have less than 10 pages without complex logic?</strong><br />
+    <strong>Do you have fewer than 10 pages without complex logic?</strong><br />
     → HTML + CSS + JavaScript
   </li>
   <li>
     <strong>Do you need a blog or documentation?</strong><br />
-    → Static generator (Gatsby, Next.js static export, custom)
+    → Static generator (Astro, Next.js static export, custom)
   </li>
   <li>
     <strong>Are you building an admin interface or CMS?</strong><br />
     → API backend + React SPA
   </li>
   <li>
-    <strong>Do you need SEO + interactivity + protect API keys?</strong><br />
+    <strong>Do you need SEO, interactivity and protected API keys?</strong><br />
     → Next.js (hybrid solution)
   </li>
   <li>

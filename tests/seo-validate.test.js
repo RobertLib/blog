@@ -1,23 +1,19 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { validateSEO } from "../seo-validate.js";
 import fs from "fs";
+import os from "os";
 import path from "path";
 
 describe("SEO Validation Tests", () => {
-  const testDir = "test-dist";
+  // A fresh directory outside the repository for every test
+  let testDir;
 
   beforeEach(() => {
-    // Create test directory
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir);
-    }
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), "blog-seo-"));
   });
 
   afterEach(() => {
-    // Clean up test directory
-    if (fs.existsSync(testDir)) {
-      fs.rmSync(testDir, { recursive: true });
-    }
+    fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   it("should return false for non-existent directory", () => {

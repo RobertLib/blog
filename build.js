@@ -111,21 +111,22 @@ function expandPartials(template) {
   );
 }
 
+const METADATA_COMMENT = /^<!--\s*([\w-]+):\s*(.+?)\s*-->$/;
+
+// Metadata is the "<!-- key: value -->" comments at the top of the file,
+// before any content. Comments further down are left in the content as they
+// are, so a note like "<!-- todo: ... -->" in the middle of an article can
+// never change its title or date.
 function extractMetadata(content) {
   const metadata = {};
-  const metaRegex = /<!--\s*([\w-]+):\s*(.+?)\s*-->/g;
-  let match;
-
-  while ((match = metaRegex.exec(content)) !== null) {
-    const key = match[1].toLowerCase();
-    const value = match[2].trim();
-    metadata[key] = value;
-  }
-
-  const cleanContent = content
-    .replace(/<!--\s*[\w-]+:\s*.+?\s*-->/g, "")
-    .trim();
-  return { metadata, content: cleanContent };
+  const header = content.match(/^(?:\s*<!--[\s\S]*?-->)*/)[0];
+  const rest = header.replace(/<!--[\s\S]*?-->/g, (comment) => {
+    const match = comment.match(METADATA_COMMENT);
+    if (!match) return comment;
+    metadata[match[1].toLowerCase()] = match[2].trim();
+    return "";
+  });
+  return { metadata, content: (rest + content.slice(header.length)).trim() };
 }
 
 // Article dates are calendar days, so date-only strings are pinned to UTC
@@ -272,6 +273,10 @@ function deriveDescription(html, maxLength = 160) {
 
 const ARTICLE_TYPES = ["article", "note"];
 
+// Dates are UTC midnight, and somewhere on Earth (UTC+14) the next calendar
+// day starts 14 hours before it does in UTC
+const FUTURE_DATE_TOLERANCE_MS = 14 * 60 * 60 * 1000;
+
 function validateArticle(article) {
   const errors = [];
   const warnings = [];
@@ -291,8 +296,10 @@ function validateArticle(article) {
     const date = parseDate(article.date);
     if (isNaN(date.getTime())) {
       errors.push("Invalid date format");
-    } else if (date > new Date()) {
-      warnings.push("Future date detected");
+    } else if (date.getTime() - Date.now() > FUTURE_DATE_TOLERANCE_MS) {
+      // A static site has no scheduled publishing: the post would go live
+      // with the next deploy under a date that hasn't happened yet
+      errors.push(`Date ${article.date} is in the future`);
     }
   }
 
@@ -424,34 +431,78 @@ function compareNewestFirst(a, b) {
   );
 }
 
-// Parses `git log --format=%x00%aI --name-only` output (newest first) into a
-// map of file -> { created, modified }: its first and last commit dates.
+// A changed line that is only a metadata comment ("<!-- tags: Games -->") or
+// blank: retitling or retagging an article doesn't change what it says
+const isMetadataLine = (line) =>
+  line.trim() === "" || METADATA_COMMENT.test(line.trim());
+
+// Files of one commit's patch, each with whether the change went beyond
+// metadata lines
+function parsePatchFiles(patch) {
+  const files = [];
+  for (const section of patch.split(/^diff --git /m).slice(1)) {
+    const lines = section.split("\n");
+    const target =
+      lines.find((line) => line.startsWith("+++ b/")) ||
+      lines.find((line) => line.startsWith("--- a/"));
+    // Header-only sections (mode changes, binary files) have no hunks
+    const name = target
+      ? target.slice(6)
+      : (section.match(/^a\/(.+?) b\//) || [])[1];
+    if (!name) continue;
+    const firstHunk = lines.findIndex((line) => line.startsWith("@@"));
+    const changed =
+      firstHunk === -1
+        ? []
+        : lines
+            .slice(firstHunk)
+            .filter((line) => /^[+-]/.test(line))
+            .map((line) => line.slice(1));
+    files.push({
+      name,
+      contentChanged:
+        firstHunk === -1 ? true : !changed.every(isMetadataLine),
+    });
+  }
+  return files;
+}
+
+// Parses `git log --format=%x00%aI -p --unified=0` output (newest first)
+// into a map of file -> { created, modified }: its first commit, and the
+// last commit that changed more than its metadata comments.
 function parseGitDates(log) {
   const dates = new Map();
   for (const block of log.split("\0")) {
-    const [date, ...files] = block
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+    const newline = block.indexOf("\n");
+    const date = (newline === -1 ? block : block.slice(0, newline)).trim();
     if (!date) continue;
-    for (const file of files) {
-      if (dates.has(file)) dates.get(file).created = date;
-      else dates.set(file, { created: date, modified: date });
+    for (const { name, contentChanged } of parsePatchFiles(
+      block.slice(newline + 1)
+    )) {
+      if (!dates.has(name)) dates.set(name, { created: date, modified: null });
+      const entry = dates.get(name);
+      entry.created = date;
+      if (contentChanged && !entry.modified) entry.modified = date;
     }
+  }
+  for (const entry of dates.values()) {
+    if (!entry.modified) entry.modified = entry.created;
   }
   return dates;
 }
 
-// First and last commit dates of every article, from a single `git log`
-// call. Author dates are used, so rebasing doesn't make articles look edited.
-// Empty outside a git checkout or in a shallow clone (where history is cut
-// off), so callers fall back to the publication date.
-function getGitDates(articlesDir = ARTICLES_DIR) {
+// First and last commit dates of every file in a directory (or of `paths`
+// in it), from a single `git log` call. Author dates are used, so rebasing
+// doesn't make articles look edited. Empty outside a git checkout or in a
+// shallow clone (where history is cut off), so callers fall back to the
+// publication date.
+function getGitDates(dir = ARTICLES_DIR, paths = ["."]) {
   const git = (args) =>
     execFileSync("git", ["-c", "core.quotePath=false", ...args], {
-      cwd: articlesDir,
+      cwd: dir,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
+      maxBuffer: 256 * 1024 * 1024,
     });
 
   try {
@@ -462,7 +513,18 @@ function getGitDates(articlesDir = ARTICLES_DIR) {
       return new Map();
     }
     return parseGitDates(
-      git(["log", "--format=%x00%aI", "--name-only", "--relative", "--", "."])
+      git([
+        "log",
+        "--format=%x00%aI",
+        "-p",
+        "--unified=0",
+        "--no-color",
+        "--no-ext-diff",
+        "--no-renames",
+        "--relative",
+        "--",
+        ...paths,
+      ])
     );
   } catch (error) {
     return new Map();
@@ -590,36 +652,77 @@ function sanitizeEmbedBlocks(html) {
   });
 }
 
+// An opening tag. Quoted attribute values may contain ">", so they are
+// skipped whole rather than ending the tag early.
+const OPENING_TAG = /<[a-z][^\s/>]*(?:"[^"]*"|'[^']*'|[^"'>])*>/gi;
+// One attribute of a tag: the whitespace before it, its name and its value
+const TAG_ATTRIBUTE =
+  /(\s+)([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'<>`]+)))?/g;
+// Attributes a browser loads or navigates to
+const URL_ATTRIBUTES = new Set([
+  "href",
+  "src",
+  "action",
+  "formaction",
+  "xlink:href",
+  "poster",
+  "data",
+  "background",
+  "cite",
+]);
+
+// Browsers ignore entities, whitespace and control characters when they
+// look for the scheme ("jav&#x09;ascript:")
+function isScriptUrl(value) {
+  return /^(?:javascript|vbscript):/i.test(
+    decodeEntities(value).replace(/[\u0000- ]+/g, "")
+  );
+}
+
+// Drops event handlers (onclick, onerror ...) and javascript:/vbscript:
+// URLs from one opening tag; everything else is left as written, so a link
+// whose path merely contains "javascript:" keeps working.
+function sanitizeTag(tag) {
+  const nameEnd = tag.match(/^<[^\s/>]*/)[0].length;
+  const attributes = tag
+    .slice(nameEnd)
+    .replace(TAG_ATTRIBUTE, (match, space, name, dq, sq, uq) => {
+      const attribute = name.toLowerCase();
+      const value = dq ?? sq ?? uq;
+      if (/^on./.test(attribute)) return space;
+      if (
+        value !== undefined &&
+        URL_ATTRIBUTES.has(attribute) &&
+        isScriptUrl(value)
+      ) {
+        return space;
+      }
+      return match;
+    });
+  return tag.slice(0, nameEnd) + attributes;
+}
+
 function sanitizeHtml(html) {
-  let result = html
+  const result = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gis, "")
     .replace(
       /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gis,
       sanitizeIframe
     );
-  result = sanitizeEmbedBlocks(result);
-
-  // One attribute per tag per pass, so repeat until nothing changes
-  let previous;
-  do {
-    previous = result;
-    result = result
-      .replace(
-        /(<[a-z][^>]*?\s)on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
-        "$1"
-      )
-      .replace(/(<[a-z][^>]*?)(?:javascript|vbscript)\s*:/gi, "$1");
-  } while (result !== previous);
-
-  return result;
+  return sanitizeEmbedBlocks(result).replace(OPENING_TAG, sanitizeTag);
 }
 
-// Local images get their pixel size (no layout shift while loading) and,
-// except the first one, which is likely in view on load, lazy loading.
-// A local image that doesn't exist fails the build.
+// Words of text above an image beyond which it is unlikely to be in view
+// when the page loads
+const EAGER_IMAGE_MAX_WORDS_BEFORE = 100;
+
+// Local images get their pixel size (no layout shift while loading) and
+// lazy loading, except the first one when it sits near the top of the
+// content, where it is likely in view on load. A local image that doesn't
+// exist fails the build.
 function enhanceImages(html, staticDir = STATIC_DIR) {
   let index = 0;
-  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+  return html.replace(/<img\b[^>]*>/gi, (tag, offset) => {
     let result = tag;
     const src = getAttribute(tag, "src");
 
@@ -645,9 +748,25 @@ function enhanceImages(html, staticDir = STATIC_DIR) {
     }
 
     result = addAttribute(result, "decoding", "async");
-    if (index++ > 0) result = addAttribute(result, "loading", "lazy");
+    const eager =
+      index++ === 0 &&
+      countWords(html.slice(0, offset)) <= EAGER_IMAGE_MAX_WORDS_BEFORE;
+    if (!eager) result = addAttribute(result, "loading", "lazy");
     return result;
   });
+}
+
+// Code blocks that scroll sideways must be reachable from the keyboard
+// (browsers before Chrome 130 don't make them focusable on their own)
+function enhanceCodeBlocks(html) {
+  return html.replace(/<pre\b[^>]*>/gi, (tag) =>
+    addAttribute(tag, "tabindex", "0")
+  );
+}
+
+// Article and page bodies as shown on the site
+function enhanceContent(html, staticDir = STATIC_DIR) {
+  return enhanceCodeBlocks(enhanceImages(sanitizeHtml(html), staticDir));
 }
 
 // Relative links and image sources resolved against the page URL, for
@@ -740,12 +859,14 @@ function commonReplacements(root = "") {
   return {
     "base-url": BASE_URL,
     root,
+    "site-title": escapeHtml(config.site.title),
     author: escapeHtml(config.site.author),
     "json-author": escapeJsonString(config.site.author),
     twitter: escapeHtml(config.site.twitter || ""),
     year: new Date().getFullYear(),
     analytics: analyticsHtml(),
     subscribe: subscribeHtml(root),
+    "footer-profiles": footerProfilesHtml(),
     // Marks the current page in the header navigation
     "nav-archive-current": "",
     "nav-projects-current": "",
@@ -753,7 +874,18 @@ function commonReplacements(root = "") {
   };
 }
 
+// The author's profiles marked `footer: true` in config.site.profiles
+function footerProfilesHtml(profiles = config.site.profiles || []) {
+  return profiles
+    .filter((profile) => profile.footer)
+    .map((profile) => externalLink(profile.url, escapeHtml(profile.name)))
+    .join("\n          ");
+}
+
 const CURRENT_PAGE = ' aria-current="page"';
+// A page inside a section (a tag page in the archive) rather than the
+// section's own page
+const CURRENT_SECTION = ' aria-current="true"';
 
 // The suffix is dropped when the full title would be cut off in search
 // results
@@ -876,16 +1008,18 @@ function postMetaHtml(article, { long = true } = {}) {
   return parts.join('<span class="dot" aria-hidden="true"></span>');
 }
 
-function postCardHtml(article, root = "") {
+// `heading` is the level of the card's title: h2 directly under the page's
+// h1, h3 inside a titled section
+function postCardHtml(article, root = "", heading = "h2") {
   const tags = article.tags || [];
   return `
         <article class="post-card${isNote(article) ? " post-card--note" : ""}">
           <p class="eyebrow post-card__meta">${postMetaHtml(article)}</p>
-          <h2 class="post-card__title">
+          <${heading} class="post-card__title">
             <a href="${root}${escapeHtml(article.filename)}">${escapeHtml(
     article.title
   )}</a>
-          </h2>
+          </${heading}>
           ${
             article.description
               ? `<p class="post-card__excerpt">${escapeHtml(
@@ -992,7 +1126,7 @@ function generateTagHtml(tag) {
         author: authorSchema(),
       },
     }),
-    "nav-archive-current": CURRENT_PAGE,
+    "nav-archive-current": CURRENT_SECTION,
     "tag-label": escapeHtml(tag.label),
     "tag-summary": `${count} ${count === 1 ? "post" : "posts"}, newest first.`,
     articles: tag.articles.map((article) => postCardHtml(article, root)).join(""),
@@ -1247,7 +1381,7 @@ function generatePageHtml(page) {
     ...(navKey in commonReplacements() ? { [navKey]: CURRENT_PAGE } : {}),
     title: escapeHtml(page.title),
     lede: page.lede ? `<p class="page-head__lede">${escapeHtml(page.lede)}</p>` : "",
-    content: enhanceImages(sanitizeHtml(page.content)),
+    content: enhanceContent(page.content),
   });
 }
 
@@ -1263,7 +1397,7 @@ function generateIndexHtml(articles = null, projects = null) {
 
   const recentArticles = allArticles.slice(0, RECENT_ARTICLES_COUNT);
   const articlesList = recentArticles
-    .map((article) => postCardHtml(article))
+    .map((article) => postCardHtml(article, "", "h3"))
     .join("");
 
   let archiveLink = "";
@@ -1654,7 +1788,7 @@ function renderArticleHtml(article, articles) {
     }),
     title: escapeHtml(article.title || "Untitled"),
     "post-meta": postMetaHtml(article),
-    content: enhanceImages(sanitizeHtml(article.content)),
+    content: enhanceContent(article.content),
     // Notes have no separate description: it is their opening text
     lede:
       article.description && !isNote(article)
@@ -2012,9 +2146,12 @@ function staleSocialCards(
 }
 
 // Last commit day of files in a directory, for sitemap <lastmod>
-function getFileDates(dir) {
+function getFileDates(dir, paths = ["."]) {
   return new Map(
-    [...getGitDates(dir)].map(([file, dates]) => [file, day(dates.modified)])
+    [...getGitDates(dir, paths)].map(([file, dates]) => [
+      file,
+      day(dates.modified),
+    ])
   );
 }
 
@@ -2346,10 +2483,10 @@ async function build() {
 
     // Last commit days of the pages and projects.json, for <lastmod>
     const pageDates = new Map([
-      ...getFileDates(PAGES_DIR),
-      ...[...getFileDates(path.dirname(PROJECTS_FILE))].filter(
-        ([file]) => file === path.basename(PROJECTS_FILE)
-      ),
+      ...(fs.existsSync(PAGES_DIR) ? getFileDates(PAGES_DIR) : []),
+      ...getFileDates(path.dirname(PROJECTS_FILE), [
+        path.basename(PROJECTS_FILE),
+      ]),
     ]);
     generateSitemap(articles, { pages, projects, pageDates });
     console.log("Generated sitemap.xml");
@@ -2411,11 +2548,14 @@ if (typeof module !== "undefined" && module.exports) {
     isAllowedEmbedUrl,
     deriveDescription,
     enhanceImages,
+    enhanceCodeBlocks,
+    enhanceContent,
     absolutizeUrls,
     discussionLabel,
     pageTitle,
     analyticsHtml,
     subscribeHtml,
+    footerProfilesHtml,
     getRelatedArticles,
     generateTagHtml,
     generatePageHtml,

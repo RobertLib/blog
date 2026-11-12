@@ -1,15 +1,17 @@
 <!-- title: What I Learned Building Watch-List.me with an AI Agent -->
 <!-- date: 2025-08-16 -->
-<!-- description: My detailed experience building a Next.js app with Claude Sonnet 4's agent mode - exploring benefits, pitfalls, and why human oversight still matters. -->
+<!-- description: My detailed experience building a Next.js app with Claude Sonnet 4 in agent mode - exploring benefits, pitfalls, and why human oversight still matters. -->
 <!-- tags: AI, Next.js, Web Development -->
 
 <p>
   Recently, I built
-  <a href="https://www.watch-list.me/" target="_blank">Watch-List.me</a>, a
+  <a href="https://www.watch-list.me/" target="_blank" rel="noopener"
+    >Watch-List.me</a
+  >, a
   Next.js application deployed on Vercel for tracking movies and TV shows. While
   the project itself might not sound revolutionary, the development process
   highlighted something important about our current relationship with AI coding
-  tools - particularly when using Claude Sonnet 4's agent mode for code
+  tools - particularly when using Claude Sonnet 4 in agent mode for code
   generation.
 </p>
 
@@ -23,15 +25,11 @@
 <h2>Where AI Excels: The Grunt Work</h2>
 
 <p>
-  Claude's agent mode proved invaluable for generating the mundane, repetitive
+  Claude in agent mode proved invaluable for generating the mundane, repetitive
   code that every web application needs:
 </p>
 
 <ul>
-  <li>
-    <strong>Database schemas and migrations</strong> - Prisma models and SQL
-    setup
-  </li>
   <li><strong>API route boilerplate</strong> - Standard CRUD operations</li>
   <li>
     <strong>Form components</strong> - Input validation and error handling
@@ -95,10 +93,10 @@
 <p>
   One particularly telling example involved the movie search functionality.
   Claude initially suggested implementing the entire search interface as a
-  server component, which would have resulted in full page reloads for every
-  search query - terrible UX. Later, when I asked for optimization, it went to
-  the opposite extreme, suggesting we make the entire movie listing page
-  client-side, which would have hurt SEO.
+  server component, which would have meant a round trip to the server for
+  every search query - terrible UX for a search box. Later, when I asked for
+  optimization, it went to the opposite extreme, suggesting we make the entire
+  movie listing page client-side, which would have hurt SEO.
 </p>
 
 <p>
@@ -144,8 +142,9 @@
 <h2>The Anti-Pattern: "Vibe Coding"</h2>
 
 <p>
-  The biggest risk I see with AI-assisted development is what I call "vibe
-  coding" - letting the AI make architectural decisions based on what "feels
+  The biggest risk I see with AI-assisted development is what's now known as
+  "vibe coding" - accepting whatever the AI produces as long as it seems to
+  work, and letting it make architectural decisions based on what "feels
   right" for individual features, without considering the application as a
   whole.
 </p>
@@ -246,4 +245,11 @@
   maintaining rigorous standards for code quality and architectural consistency.
   The future belongs to human-AI collaboration, but only when the human remains
   firmly in the driver's seat.
+</p>
+
+<p>
+  <em>Update, November 2026:</em> Watch List has grown a lot since this post
+  and is now a static site: every page is a client component that talks to
+  TMDb from the browser, and the watchlist lives in browser storage. The
+  server/client split described above belongs to its first version.
 </p>

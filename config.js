@@ -8,12 +8,13 @@ module.exports = {
     authorJobTitle: "Full Stack Developer",
     authorImage: "images/robert-libsansky.jpg",
     twitter: "@RobertLibsansky",
-    // The author's other profiles (schema.org sameAs, About page)
+    // The author's other profiles (schema.org sameAs); `footer: true` also
+    // links them in the footer of every page
     profiles: [
       { name: "roblib.dev", url: "https://roblib.dev/" },
-      { name: "GitHub", url: "https://github.com/RobertLib" },
-      { name: "X", url: "https://x.com/RobertLibsansky" },
-      { name: "itch.io", url: "https://roblib.itch.io/" },
+      { name: "X", url: "https://x.com/RobertLibsansky", footer: true },
+      { name: "GitHub", url: "https://github.com/RobertLib", footer: true },
+      { name: "itch.io", url: "https://roblib.itch.io/", footer: true },
       {
         name: "App Store",
         url: "https://apps.apple.com/us/developer/robert-libsansky/id1634043416",

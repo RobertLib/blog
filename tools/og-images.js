@@ -18,28 +18,54 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { pathToFileURL } = require("url");
+
+// build.js resolves articles/, pages/ and projects.json against the working
+// directory. Run from anywhere else it would find no pages at all, and every
+// card would look unused and be deleted.
+const ROOT = path.join(__dirname, "..");
+process.chdir(ROOT);
+
 const config = require("../config");
 const build = require("../build");
+const { imageSize } = require("../image-size");
 
-const ROOT = path.join(__dirname, "..");
 const STATIC_DIR = path.join(ROOT, config.build.staticDir);
 const TEMPLATE = path.join(ROOT, build.SOCIAL_CARD_TEMPLATE);
 const MANIFEST = path.join(ROOT, build.SOCIAL_CARD_MANIFEST);
 const CONCURRENCY = 4;
+const CARD_WIDTH = 1200;
+const CARD_HEIGHT = 630;
 
 function findChrome() {
+  const windows = [
+    process.env.PROGRAMFILES,
+    process.env["PROGRAMFILES(X86)"],
+    process.env.LOCALAPPDATA,
+  ]
+    .filter(Boolean)
+    .flatMap((dir) => [
+      path.join(dir, "Google", "Chrome", "Application", "chrome.exe"),
+      path.join(dir, "Microsoft", "Edge", "Application", "msedge.exe"),
+    ]);
   const candidates = [
     process.env.CHROME_PATH,
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
     "/usr/bin/google-chrome",
     "/usr/bin/google-chrome-stable",
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
+    "/snap/bin/chromium",
+    "/usr/bin/microsoft-edge",
+    ...windows,
   ].filter(Boolean);
   const found = candidates.find((candidate) => fs.existsSync(candidate));
   if (!found) {
-    throw new Error("Chrome not found. Set CHROME_PATH to its executable.");
+    throw new Error(
+      "Chrome not found. Set CHROME_PATH to a Chrome, Chromium or Edge executable."
+    );
   }
   return found;
 }
@@ -70,11 +96,15 @@ function cardHtml(spec, template) {
   );
 }
 
+// Chrome can exit successfully without having written the screenshot, so
+// the result is checked before it is used
 function screenshot(chrome, htmlFile, outFile, profileDir) {
   return new Promise((resolve, reject) => {
     execFile(
       chrome,
       [
+        // Chrome refuses to run as root (containers) with its sandbox on
+        ...(process.getuid && process.getuid() === 0 ? ["--no-sandbox"] : []),
         "--headless=new",
         "--disable-gpu",
         "--hide-scrollbars",
@@ -82,35 +112,60 @@ function screenshot(chrome, htmlFile, outFile, profileDir) {
         "--no-default-browser-check",
         "--allow-file-access-from-files",
         "--force-device-scale-factor=1",
-        "--window-size=1200,630",
+        `--window-size=${CARD_WIDTH},${CARD_HEIGHT}`,
         "--virtual-time-budget=3000",
         `--user-data-dir=${profileDir}`,
         `--screenshot=${outFile}`,
         pathToFileURL(htmlFile).href,
       ],
       { timeout: 60000 },
-      (error) => (error ? reject(error) : resolve())
+      (error) => {
+        if (error) return reject(error);
+        const size = fs.existsSync(outFile) ? imageSize(outFile) : null;
+        if (!size || size.width !== CARD_WIDTH || size.height !== CARD_HEIGHT) {
+          return reject(
+            new Error(
+              size
+                ? `screenshot is ${size.width}x${size.height}, not ${CARD_WIDTH}x${CARD_HEIGHT}`
+                : "Chrome wrote no screenshot"
+            )
+          );
+        }
+        resolve();
+      }
     );
   });
 }
 
+// Runs every item even when some fail; resolves to the failures
 async function runPool(items, worker) {
   let next = 0;
+  const failures = [];
   const runners = Array.from(
     { length: Math.min(CONCURRENCY, items.length) },
     async () => {
       while (next < items.length) {
         const index = next++;
-        await worker(items[index], index);
+        try {
+          await worker(items[index], index);
+        } catch (error) {
+          failures.push({ item: items[index], error });
+        }
       }
     }
   );
   await Promise.all(runners);
+  return failures;
 }
 
 async function main() {
   const all = process.argv.includes("--all");
   const articles = build.getAllArticles();
+  if (articles.length === 0) {
+    throw new Error(
+      `No articles found in ${path.resolve(config.build.articlesDir)}; refusing to treat every card as unused.`
+    );
+  }
   const pages = build.getAllPages();
   const projects = build.loadProjects();
   const specs = build.socialCardSpecs(articles, pages, projects);
@@ -131,6 +186,7 @@ async function main() {
     }
   }
 
+  let failures = [];
   if (todo.length === 0) {
     console.log("All social cards are up to date.");
   } else {
@@ -141,29 +197,47 @@ async function main() {
 
     console.log(`Generating ${todo.length} social cards...`);
     try {
-      await runPool(todo, async (spec, index) => {
+      failures = await runPool(todo, async (spec, index) => {
         const htmlFile = path.join(tmp, `card-${index}.html`);
+        const pngFile = path.join(tmp, `card-${index}.png`);
         fs.writeFileSync(htmlFile, cardHtml(spec, template));
         await screenshot(
           chrome,
           htmlFile,
-          path.join(STATIC_DIR, spec.file),
+          pngFile,
           path.join(tmp, `profile-${index}`)
         );
+        // Replaces the old card only once the new one is known to be good
+        fs.copyFileSync(pngFile, path.join(STATIC_DIR, spec.file));
         console.log(`  ${spec.file}`);
       });
     } finally {
+      // Every Chrome process has exited by now: the pool waits for all
       fs.rmSync(tmp, { recursive: true, force: true });
     }
   }
 
+  // A card that failed keeps its old manifest entry, so it stays out of
+  // date and is tried again next time
+  const failed = new Set(failures.map(({ item }) => item.file));
   const updated = {};
   for (const spec of specs) {
-    if (fs.existsSync(path.join(STATIC_DIR, spec.file))) {
-      updated[spec.file] = build.socialCardHash(spec, STATIC_DIR);
-    }
+    if (!fs.existsSync(path.join(STATIC_DIR, spec.file))) continue;
+    const hash = failed.has(spec.file)
+      ? manifest[spec.file]
+      : build.socialCardHash(spec, STATIC_DIR);
+    if (hash) updated[spec.file] = hash;
   }
   fs.writeFileSync(MANIFEST, `${JSON.stringify(updated, null, 2)}\n`);
+
+  if (failures.length > 0) {
+    throw new Error(
+      `${failures.length} of ${todo.length} social cards failed:\n` +
+        failures
+          .map(({ item, error }) => `  ${item.file}: ${error.message}`)
+          .join("\n")
+    );
+  }
 }
 
 main().catch((error) => {

@@ -240,6 +240,23 @@ describe("Embeds and images", () => {
     expect(tags[2]).not.toContain("width=");
   });
 
+  it("should load the first image eagerly only near the top", () => {
+    const img = '<img src="images/chuck/sector-02.png" alt="a" />';
+    const words = (n) => `<p>${"word ".repeat(n)}</p>`;
+
+    expect(build.enhanceImages(words(40) + img)).not.toContain("loading=");
+    expect(build.enhanceImages(words(300) + img)).toContain('loading="lazy"');
+  });
+
+  it("should make code blocks keyboard-focusable", () => {
+    expect(build.enhanceCodeBlocks('<pre><code>x</code></pre>')).toBe(
+      '<pre tabindex="0"><code>x</code></pre>'
+    );
+    expect(build.enhanceContent('<pre class="a">x</pre>')).toBe(
+      '<pre class="a" tabindex="0">x</pre>'
+    );
+  });
+
   it("should fail on a local image that does not exist", () => {
     expect(() =>
       build.enhanceImages('<img src="images/nope.png" alt="" />')

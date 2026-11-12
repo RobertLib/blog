@@ -249,18 +249,33 @@ describe("Blog HTML Generation", () => {
   });
 
   describe("git dates", () => {
+    // `git log --format=%x00%aI -p --unified=0` output, newest first
+    const patch = (file, lines, { created = false } = {}) =>
+      [
+        `diff --git a/${file} b/${file}`,
+        ...(created ? ["new file mode 100644"] : []),
+        "index 1111111..2222222 100644",
+        created ? "--- /dev/null" : `--- a/${file}`,
+        `+++ b/${file}`,
+        "@@ -1 +1 @@",
+        ...lines,
+      ].join("\n");
+    const commit = (date, ...patches) =>
+      `\0${date}\n\n${patches.join("\n")}\n`;
+
     it("should parse git log output into first and last dates per file", () => {
       const log = [
-        "\0" + "2026-07-30T10:00:00+02:00",
-        "",
-        "a.html",
-        "b.html",
-        "\0" + "2025-01-01T09:00:00+01:00",
-        "",
-        "a.html",
-        "c.html",
-        "",
-      ].join("\n");
+        commit(
+          "2026-07-30T10:00:00+02:00",
+          patch("a.html", ["-<p>Old</p>", "+<p>New</p>"]),
+          patch("b.html", ["+<p>B</p>"], { created: true })
+        ),
+        commit(
+          "2025-01-01T09:00:00+01:00",
+          patch("a.html", ["+<p>Old</p>"], { created: true }),
+          patch("c.html", ["+<p>C</p>"], { created: true })
+        ),
+      ].join("");
 
       expect(Object.fromEntries(build.parseGitDates(log))).toEqual({
         "a.html": {
@@ -276,6 +291,44 @@ describe("Blog HTML Generation", () => {
           modified: "2025-01-01T09:00:00+01:00",
         },
       });
+    });
+
+    it("should not count metadata-only commits as modifications", () => {
+      const log = [
+        commit(
+          "2026-11-12T15:00:00+01:00",
+          patch("a.html", [
+            "-<!-- title: Old Title -->",
+            "+<!-- title: New Title -->",
+            "+<!-- tags: Games, C -->",
+          ])
+        ),
+        commit(
+          "2026-01-01T09:00:00+01:00",
+          patch("a.html", ["-<p>Typo</p>", "+<p>Fixed</p>"])
+        ),
+        commit(
+          "2025-01-01T09:00:00+01:00",
+          patch("a.html", ["+<!-- title: Old Title -->", "+<p>Typo</p>"], {
+            created: true,
+          })
+        ),
+      ].join("");
+
+      expect(build.parseGitDates(log).get("a.html")).toEqual({
+        created: "2025-01-01T09:00:00+01:00",
+        modified: "2026-01-01T09:00:00+01:00",
+      });
+    });
+
+    it("should read dates from the real git history", () => {
+      const dates = build.getGitDates("articles");
+      // Skipped outside a full git checkout (e.g. a source archive)
+      if (dates.size === 0) return;
+      for (const { created, modified } of dates.values()) {
+        expect(Date.parse(created)).not.toBeNaN();
+        expect(Date.parse(modified)).toBeGreaterThanOrEqual(Date.parse(created));
+      }
     });
 
     it("should never date a modification before publication", () => {
@@ -372,6 +425,45 @@ describe("Template partials", () => {
       '<a href="about.html" aria-current="page">',
     ]);
     expect(current(build.generateNotFoundHtml())).toEqual([]);
+
+    // A tag page sits inside the archive section; it isn't the archive page
+    const tagPage = build.generateTagHtml({
+      label: "Games",
+      slug: "games",
+      articles: [makeArticle()],
+    });
+    expect(current(tagPage)).toEqual([]);
+    expect(tagPage).toContain(
+      '<a href="../archive.html" aria-current="true">'
+    );
+  });
+
+  it("should nest home page post titles under the Latest heading", () => {
+    const home = build.generateIndexHtml([makeArticle()], []);
+    const tagPage = build.generateTagHtml({
+      label: "Games",
+      slug: "games",
+      articles: [makeArticle()],
+    });
+
+    expect(home).toContain('<h3 class="post-card__title">');
+    expect(home).not.toContain('<h2 class="post-card__title">');
+    // Directly under the tag page's h1
+    expect(tagPage).toContain('<h2 class="post-card__title">');
+  });
+
+  it("should take the footer profiles and site name from the config", () => {
+    const html = build.generateArchiveHtml([makeArticle()]);
+    const footer = html.slice(html.indexOf('<footer class="site-footer">'));
+
+    for (const profile of config.site.profiles.filter((p) => p.footer)) {
+      expect(footer).toContain(`href="${profile.url}"`);
+    }
+    expect(html).toContain(
+      `<meta property="og:site_name" content="${build.escapeHtml(
+        config.site.title
+      )}" />`
+    );
   });
 
   it("should keep relative asset links outside the 404 page", () => {

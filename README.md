@@ -81,7 +81,8 @@ Requires Node.js 22.12 or newer (CI runs on Node.js 24).
 
 ## 📝 Article Format
 
-Articles are HTML files with metadata in comments:
+Articles are HTML files with metadata in comments at the top of the file
+(comments further down are ordinary HTML comments, never metadata):
 
 ```html
 <!-- title: Article Title -->
@@ -99,7 +100,9 @@ Articles are HTML files with metadata in comments:
 - `title` - Article title (required). Write it as a claim or a specific
   promise, not a category: "I Knew CSS Too Well to See Why Tailwind Works"
   rather than "When Experience Becomes an Obstacle"
-- `date` - Publication date in YYYY-MM-DD format (required)
+- `date` - Publication date in YYYY-MM-DD format (required). It can't be in
+  the future: a static site has no scheduled publishing, so the build fails
+  rather than publish a post under a date that hasn't happened yet
 - `description` - Short description for SEO and previews (required for
   articles, optional for notes)
 - `tags` - Comma-separated topics, e.g. `Games, C, WebAssembly`. Each tag
@@ -176,13 +179,15 @@ npm run og-images          # generate missing or outdated cards
 npm run og-images -- --all # regenerate every card
 ```
 
-The generator renders `tools/og-card.html` with headless Chrome (set
-`CHROME_PATH` if it isn't found) into `static/og/<slug>.png` and
+The generator renders `tools/og-card.html` with headless Chrome, Chromium
+or Edge (set `CHROME_PATH` if none is found) into `static/og/<slug>.png` and
 `static/og-image.png`, and records what each card was made from in
 `tools/og-cards.json`. The build never runs it (CI has no Chrome): it warns
 about missing or outdated cards, and those pages use the default card until
 the cards are regenerated and committed. Run it after adding an article or
-changing a title, tags or cover image.
+changing a title, tags or cover image. It works from any directory, checks
+every screenshot before replacing a card, and a card that fails keeps its
+old image and is retried on the next run.
 
 Dates are calendar days and render the same in any time zone. Git history
 adds what a day can't express (author dates, so a rebase changes nothing):
@@ -190,7 +195,9 @@ adds what a day can't express (author dates, so a rebase changes nothing):
 - articles published on the same day are ordered by their first commit, and
   a not yet committed article counts as the newest
 - the modification date (sitemap `<lastmod>`, JSON-LD `dateModified`) is the
-  article's last commit, never earlier than its publication date
+  article's last commit that changed more than its metadata comments (so
+  retitling or retagging doesn't count as an update), never earlier than its
+  publication date
 
 Without git history (or in a shallow clone) only the publication date is used.
 
@@ -266,7 +273,8 @@ Both are off until configured in `config.js`:
 ## ⚙️ Configuration
 
 Edit `config.js` to customize (abridged; `site` also holds the author's
-profiles, X handle and photo used in structured data):
+profiles, X handle and photo used in structured data; profiles with
+`footer: true` are also linked in the footer):
 
 ```javascript
 module.exports = {
@@ -328,8 +336,8 @@ IndexNow is an open protocol that allows websites to instantly inform search eng
     article's tag pages
   - changed pages from `pages/`; the homepage and projects page when
     `projects.json` changes
-  - every page when `templates/`, `build.js`, `config.js` or
-    `html-entities.js` changed
+  - every page when `templates/`, `build.js`, `config.js`,
+    `html-entities.js` or `image-size.js` changed
   - nothing when only static assets or docs changed
 - If every IndexNow endpoint fails (or times out after 15 s), the job fails,
   so the next run submits the same pages again

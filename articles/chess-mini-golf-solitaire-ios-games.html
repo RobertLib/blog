@@ -1,6 +1,6 @@
 <!-- title: Chess, Mini Golf and Solitaire for iPhone, Without Ads -->
 <!-- date: 2026-10-19 -->
-<!-- description: Three new free games for iPhone and iPad: Chess Offline, Mini Golf 3D and Solitaire Klondike. No ads, no in-app purchases, no internet - just the game. -->
+<!-- description: Three new free games for iPhone and iPad: Chess Offline, Mini Golf 3D and Klondike Solitaire. No ads, no in-app purchases, no internet - just the game. -->
 <!-- image: images/ios-games/cover.webp -->
 <!-- tags: Games, iOS, Swift -->
 
@@ -14,7 +14,7 @@
     rel="noopener"
     >App Store</a
   >: <strong>Chess Offline</strong>, <strong>Mini Golf 3D</strong> and
-  <strong>Solitaire Klondike</strong>. All three are classics everyone knows,
+  <strong>Klondike Solitaire</strong>. All three are classics everyone knows,
   all three are free, and all three run on iPhone and iPad in English and
   Czech.
 </p>
@@ -108,11 +108,12 @@
 
 <p>
   How do you know a chess engine plays by the rules? Chess programmers use a
-  technique called <strong>perft</strong> (performance test): you count every
-  possible position reachable from a given position in N moves and compare the
-  number with known reference values. From the starting position, there are 20
-  positions after one move, 400 after two, 8,902 after three and 197,281 after
-  four. If your move generator gets a single rule wrong - castling through
+  technique called <strong>perft</strong> (performance test): you play out every
+  legal move sequence from a given position to a depth of N plies (half-moves),
+  count the leaf nodes of that move tree and compare the number with known
+  reference values. From the starting position, there are 20 move sequences
+  after one ply, 400 after two, 8,902 after three and 197,281 after four. If
+  your move generator gets a single rule wrong - castling through
   check, en passant, a promotion - the number won't match. The test suite runs
   perft on six well-known positions, including the famous "Kiwipete", which
   packs castling, en passant, promotions and pins into a single position.
@@ -133,7 +134,7 @@
   A small easter egg for chess fans: the App Store preview video isn't a staged
   game. It replays the seventeen moves of the famous
   <strong>Opera Game</strong> - Paul Morphy against the Duke of Brunswick and
-  Count Isouard, played in a box at the Paris opera in 1858.
+  Count Isouard, played in a box at the Paris Opera in 1858.
 </p>
 
 <h2>Mini Golf 3D: 108 Holes</h2>
@@ -168,8 +169,8 @@
 </p>
 
 <p>
-  The holes are modelled on real minigolf. The shapes follow the standard
-  lanes defined by the World Minigolf Sport Federation - the pyramids, the
+  The holes are modeled on real minigolf. The shapes follow the standard
+  lanes defined by the World Minigolfsport Federation - the pyramids, the
   lightning, the labyrinth, the double gate - and the game uses real rules:
   the stroke limit is par + 3, and water or lava costs a penalty stroke.
 </p>
@@ -179,7 +180,7 @@
 <p>
   With 108 holes, the hardest design problem wasn't building them - it was
   making sure the difficulty grows evenly. The surface area of a hole turned
-  out to be a useless measure: the labyrinth is only two square metres and
+  out to be a useless measure: the labyrinth is only two square meters and
   takes four putts, while an open basin twice the size takes one.
 </p>
 
@@ -188,7 +189,7 @@
   the ball has to roll from the tee to the cup, around every rail and over the
   ramps and portals. A small offline tool computes it with Dijkstra's algorithm
   over a grid of 3 cm cells and checks a few rules across all 108 holes. Every
-  hole has between 0.95 and 1.55 metres of travel per par stroke, a world's
+  hole has between 0.95 and 1.55 meters of travel per par stroke, a world's
   final hole is always its longest, and the median travel grows from world to
   world. A second tool walks every hole in 2 cm steps and proves the ball can
   actually reach both the cup and the hidden bonus star.
@@ -232,14 +233,14 @@
   the day before that. The game unwinds this chain four days back.
 </p>
 
-<h2>Solitaire Klondike: Offline</h2>
+<h2>Klondike Solitaire: No Ads</h2>
 
 <p>
   <a
-    href="https://apps.apple.com/us/app/solitaire-klondike-offline/id6806802031"
+    href="https://apps.apple.com/us/app/klondike-solitaire-no-ads/id6806802031"
     target="_blank"
     rel="noopener"
-    >Solitaire Klondike</a
+    >Klondike Solitaire</a
   >
   is the classic solitaire, done properly. It has draw one or draw three, and
   the scoring you remember from the Windows desktop, worked out in full: +10
@@ -323,8 +324,8 @@
 </p>
 
 <ul>
-  <li><strong>Solitaire Klondike</strong> - about 2.4 MB</li>
-  <li><strong>Chess Offline</strong> - about 5.6 MB</li>
+  <li><strong>Klondike Solitaire</strong> - about 2.5 MB</li>
+  <li><strong>Chess Offline</strong> - about 9.2 MB</li>
   <li>
     <strong>Mini Golf 3D</strong> - about 28 MB, most of which is its
     soundtrack of 32 music tracks
@@ -333,18 +334,7 @@
 
 <p>
   All three are also built with accessibility in mind - VoiceOver, Dynamic
-  Type and Reduce Motion are supported throughout. And all three are open
-  source on GitHub under the MIT license:
-  <a href="https://github.com/RobertLib/chess" target="_blank" rel="noopener"
-    >chess</a
-  >,
-  <a href="https://github.com/RobertLib/minigolf" target="_blank" rel="noopener"
-    >minigolf</a
-  >
-  and
-  <a href="https://github.com/RobertLib/solitaire" target="_blank" rel="noopener"
-    >solitaire</a
-  >.
+  Type and Reduce Motion are supported throughout.
 </p>
 
 <h2>Give Them a Try</h2>
@@ -374,10 +364,10 @@
   </li>
   <li>
     <a
-      href="https://apps.apple.com/us/app/solitaire-klondike-offline/id6806802031"
+      href="https://apps.apple.com/us/app/klondike-solitaire-no-ads/id6806802031"
       target="_blank"
       rel="noopener"
-      >Solitaire Klondike: Offline</a
+      >Klondike Solitaire: No Ads</a
     >
   </li>
 </ul>

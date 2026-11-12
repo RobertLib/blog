@@ -1,6 +1,6 @@
 <!-- title: Jetshot: A Sprite-Free Arcade Shooter in Swift and SpriteKit -->
 <!-- date: 2026-01-31 -->
-<!-- description: Creating a 2D arcade shooter for iOS using Swift and SpriteKit. Exploring native development, procedurally generated levels, and vector-based graphics. -->
+<!-- description: Creating a 2D arcade shooter for iOS using Swift and SpriteKit. Exploring native development, data-driven level design, and vector-based graphics. -->
 <!-- image: images/jetshot/cover.webp -->
 <!-- tags: Games, iOS, Swift -->
 
@@ -106,7 +106,8 @@
 <h2>The Unfortunate Fate of Great Technology</h2>
 
 <p>
-  Sadly, SpriteKit is no longer actively developed by Apple. This situation
+  Sadly, Apple has put little new work into SpriteKit in recent years. This
+  situation
   reminds me of Microsoft's XNA framework - another excellent game development
   technology that was eventually abandoned. XNA found new life through the
   open-source community as MonoGame, but SpriteKit likely won't have the same
@@ -117,10 +118,10 @@
   It's a real shame because SpriteKit is genuinely superb technology, especially
   for mobile 2D games. The framework strikes an excellent balance between power
   and ease of use, making it possible to create polished 2D games efficiently.
-  Its eventual obsolescence feels like a waste of great engineering.
+  Its possible obsolescence feels like a waste of great engineering.
 </p>
 
-<h2>A Sprite-less Game in SpriteKit</h2>
+<h2>A Sprite-Free Game in SpriteKit</h2>
 
 <p>
   Here's an interesting paradox: despite its name suggesting sprite-based
@@ -157,13 +158,12 @@
   screens.
 </p>
 
-<h2>Procedural Level Generation</h2>
+<h2>Data-Driven Level Design</h2>
 
 <p>
-  Another key aspect of Jetshot is its procedurally generated levels. Rather
-  than hand-crafting each level or using a visual editor, I define levels
-  through data configurations. As a programmer, this approach feels natural and
-  powerful:
+  Another key aspect of Jetshot is its data-driven level design. Rather than
+  building levels in a visual editor, I write each one by hand as a data
+  configuration. As a programmer, this approach feels natural and powerful:
 </p>
 
 <ul>
@@ -180,8 +180,8 @@
     adjusting data
   </li>
   <li>
-    <strong>Consistency</strong> - Algorithmic generation ensures consistent
-    difficulty curves
+    <strong>Consistency</strong> - With every level's parameters side by side,
+    it's easy to keep the difficulty curve even
   </li>
 </ul>
 
