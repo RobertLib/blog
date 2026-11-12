@@ -20,7 +20,8 @@
 
 <ul>
   <li>
-    <strong>SEO challenges</strong> - Server-side rendering out of the box
+    <strong>SEO and bundle size</strong> - Components that render only on the
+    server and ship no JavaScript
   </li>
   <li>
     <strong>Performance issues</strong> - Reduced bundle sizes and faster
@@ -95,8 +96,9 @@ function useClientSession() {
     about granular loading states?
   </li>
   <li>
-    <strong>Partial rendering</strong> - How do you show static content while
-    loading dynamic parts?
+    <strong>Partial rendering</strong> - Showing static content while dynamic
+    parts load is possible with streaming, but every dynamic part needs its own
+    boundary and fallback
   </li>
 </ul>
 

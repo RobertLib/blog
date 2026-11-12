@@ -217,6 +217,22 @@ describe("Blog HTML Generation", () => {
       expect(rss).toContain("<pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>");
     });
 
+    it("should date the feed by its newest change, not by the build", () => {
+      const articles = [
+        makeArticle({ slug: "new", date: "2024-03-01" }),
+        makeArticle({
+          slug: "edited",
+          date: "2024-01-01",
+          modified: "2024-04-02T10:00:00.000Z",
+        }),
+      ];
+
+      expect(build.renderRSSFeed(articles)).toContain(
+        "<lastBuildDate>Tue, 02 Apr 2024 10:00:00 GMT</lastBuildDate>"
+      );
+      expect(build.renderRSSFeed(articles)).toBe(build.renderRSSFeed(articles));
+    });
+
     it("should carry full content with absolute links and tag categories", () => {
       const rss = build.renderRSSFeed([
         makeArticle({

@@ -20,9 +20,10 @@
 
 <p>
   The word "cascading" in Cascading Style Sheets isn't accidental. CSS was
-  designed with a specific philosophy: styles flow from top to bottom, from
-  parent to child, creating elegant inheritance patterns across entire HTML
-  documents.
+  designed with a specific philosophy: global rules apply across the entire
+  document. When several rules target the same element, the cascade decides
+  which one wins - by origin, specificity and source order - while inheritance
+  passes properties like color and font down from parent to child.
 </p>
 
 <p>
@@ -75,8 +76,10 @@
 </p>
 
 <p>
-  In a world of React, Vue, and Angular, the cascade that CSS was designed for
-  becomes a liability, not an asset. When you're building isolated components:
+  In a world of components, the cascade that CSS was designed for becomes a
+  liability, not an asset. Vue and Angular at least ship scoped component
+  styles, but in React - where I spend most of my time - you're on your own.
+  When you're building isolated components with plain stylesheets:
 </p>
 
 <ul>
@@ -117,12 +120,12 @@
     class names. With Tailwind, you just describe what you want
   </li>
   <li>
-    <strong>True encapsulation</strong> - Styles are right there with the
-    component, impossible to leak
+    <strong>Colocation</strong> - Styles live on the element itself, so
+    changing them can't affect other components
   </li>
   <li>
-    <strong>Constant bundle size</strong> - The CSS doesn't grow with your
-    application because you're reusing utility classes
+    <strong>Bundle size levels off</strong> - The CSS stops growing with your
+    application because you keep reusing the same utility classes
   </li>
   <li>
     <strong>Immediate visual feedback</strong> - Change a class, see the result,
@@ -132,7 +135,9 @@
 
 <p>
   Don't like the long class strings? Use the <code>cn()</code> function pattern
-  to organize them across multiple lines. The structure is entirely up to you:
+  to organize them across multiple lines. It isn't part of Tailwind itself, just
+  a small helper built on clsx and tailwind-merge that shadcn/ui made popular.
+  The structure is entirely up to you:
 </p>
 
 <pre><code>className={cn(

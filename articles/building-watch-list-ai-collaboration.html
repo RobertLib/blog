@@ -8,7 +8,8 @@
   <a href="https://www.watch-list.me/" target="_blank" rel="noopener"
     >Watch-List.me</a
   >, a
-  Next.js application deployed on Vercel for tracking movies and TV shows. While
+  Next.js application (deployed on Vercel at the time) for tracking movies and
+  TV shows. While
   the project itself might not sound revolutionary, the development process
   highlighted something important about our current relationship with AI coding
   tools - particularly when using Claude Sonnet 4 in agent mode for code
@@ -84,8 +85,8 @@
 <p>
   I repeatedly had to intervene when Claude would suggest using client
   components for content that should be server-rendered for SEO, or conversely,
-  trying to add interactivity to server components without proper hydration
-  boundaries.
+  trying to add interactivity to server components without a proper
+  <code>"use client"</code> boundary.
 </p>
 
 <h3>Real Examples of AI Missteps</h3>
@@ -93,8 +94,9 @@
 <p>
   One particularly telling example involved the movie search functionality.
   Claude initially suggested implementing the entire search interface as a
-  server component, which would have meant a round trip to the server for
-  every search query - terrible UX for a search box. Later, when I asked for
+  server component. A server component can't react to typing, so every query
+  would have meant a URL change and a full server re-render of the results -
+  terrible UX for a search box. Later, when I asked for
   optimization, it went to the opposite extreme, suggesting we make the entire
   movie listing page client-side, which would have hurt SEO.
 </p>
@@ -248,8 +250,9 @@
 </p>
 
 <p>
-  <em>Update, November 2026:</em> Watch List has grown a lot since this post
-  and is now a static site: every page is a client component that talks to
-  TMDb from the browser, and the watchlist lives in browser storage. The
-  server/client split described above belongs to its first version.
+  <em>Update, November 2026:</em> Watch-List.me has grown a lot since this post
+  and is now a static site hosted on GitHub Pages instead of Vercel: every page
+  is a client component that talks to TMDb from the browser, and the watchlist
+  lives in browser storage. The server/client split described above belongs to
+  its first version.
 </p>

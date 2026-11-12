@@ -5,7 +5,7 @@ module.exports = {
       "Notes on building small, self-contained software: games that fit in kilobytes, offline iPhone apps, pragmatic web development and honest notes on AI.",
     author: "Robert Libsansky",
     // Shown in social cards and the author's structured data
-    authorJobTitle: "Full Stack Developer",
+    authorJobTitle: "Full-Stack Developer",
     authorImage: "images/robert-libsansky.jpg",
     twitter: "@RobertLibsansky",
     // The author's other profiles (schema.org sameAs); `footer: true` also

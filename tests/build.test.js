@@ -114,6 +114,23 @@ describe("Blog Build Functions - Pure Unit Tests", () => {
       expect(result.warnings).toEqual([]);
     });
 
+    it.each(["index", "archive", "projects", "404"])(
+      "should reject an article named %s.html, a page the build generates",
+      (slug) => {
+        const article = {
+          title: "Test Article",
+          date: "2024-01-01",
+          slug,
+          content: "<p>Content</p>",
+          description: "A test article",
+        };
+
+        expect(() => build.validateArticle(article)).toThrow(
+          `File name ${slug}.html is taken`
+        );
+      }
+    );
+
     it("should report missing title error", () => {
       const article = {
         date: "2024-01-01",

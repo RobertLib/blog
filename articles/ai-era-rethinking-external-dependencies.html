@@ -181,22 +181,27 @@
 </p>
 
 <pre><code>npm install validator
-import isEmail from 'validator/lib/isEmail'
+</code></pre>
+
+<pre><code>import isEmail from 'validator/lib/isEmail'
 </code></pre>
 
 <p>
-  But this package has dozens of functions we don't need, and even though we
-  import only one of them, it's still a dependency we have to maintain and
-  update. Is someone
-  going to maintain this package in 5 years? Will it work with Node 25?
+  To be fair, <code>validator</code> is about as good as dependencies get: it's
+  mature, widely used and has no dependencies of its own. By my own rules above,
+  it's a perfectly reasonable choice. But we needed one function out of dozens,
+  and even though we import only that one, the whole package is still a
+  dependency we have to keep updating. Is someone going to maintain it in 5
+  years? Will it work with future Node versions?
 </p>
 
 <p>
   Instead, I asked an AI assistant to write a custom email validator with our
-  specific requirements. Two minutes later, I had a well-tested, documented
-  function that does exactly what we need, nothing more, nothing less. It's
-  <strong>ours</strong>. We control it. It won't break in a major version
-  update. It won't be abandoned.
+  specific requirements. A few minutes later, after reviewing it and adding
+  tests, I had a function that does exactly what we need, nothing more, nothing
+  less. It's <strong>ours</strong>. We control it. It won't break in a major
+  version update. It won't be abandoned. That's the trade-off: we gave up the
+  library's years of edge-case fixes in exchange for code we fully understand.
 </p>
 
 <h2>The Ownership Advantage</h2>

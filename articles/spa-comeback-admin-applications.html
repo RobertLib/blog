@@ -5,7 +5,7 @@
 
 <p>
   After spending considerable time working with Next.js and its App Router, I've
-  made a deliberate decision to return to Single Page Applications (SPA) for
+  made a deliberate decision to return to Single Page Applications (SPAs) for
   admin interfaces. This wasn't a step backward - it was a strategic choice that
   has significantly improved my development experience and application
   performance for a specific use case.
@@ -73,11 +73,17 @@
   slowed down both development and runtime performance.
 </p>
 
-<h3>Static Generation Overhead</h3>
+<h3>Static Generation and Caching Overhead</h3>
 
 <p>
-  Static generation and pre-rendering add unnecessary complexity when your
-  content is inherently dynamic. Admin applications typically display:
+  Next.js doesn't force static generation on you - a route that reads cookies
+  or headers, as every authenticated page does, renders dynamically. But in
+  Next.js 13 and 14 the defaults leaned hard towards static rendering and
+  caching: <code>fetch</code> results were cached unless you opted out, and
+  figuring out why a page showed stale data meant learning several layers of
+  caches. (Next.js 15 finally stopped caching <code>fetch</code> by default.)
+  All of that is complexity you don't need when your content is inherently
+  dynamic. Admin applications typically display:
 </p>
 
 <ul>
@@ -88,8 +94,8 @@
 </ul>
 
 <p>
-  Attempting to statically generate pages that are fundamentally dynamic creates
-  a mismatch between the tool and the task.
+  Fighting static rendering and caching defaults on pages that are
+  fundamentally dynamic creates a mismatch between the tool and the task.
 </p>
 
 <h3>Bundle Size vs. User Experience</h3>
@@ -97,8 +103,9 @@
 <p>
   While Next.js aims to reduce bundle sizes through code splitting and server
   components, this approach can actually make admin applications feel slower.
-  The constant need to fetch additional code and components during navigation
-  creates micro-delays that accumulate into a sluggish user experience.
+  Each navigation requests a fresh server-rendered payload, and those round
+  trips add up to a sluggish feel in an app where users click through dozens
+  of screens an hour.
 </p>
 
 <h2>The SPA Advantage: Instant User Feedback</h2>
@@ -115,8 +122,8 @@
 
 <ul>
   <li>
-    <strong>No server round trips for navigation</strong> - Everything happens
-    client-side
+    <strong>No server rendering on navigation</strong> - The UI switches
+    client-side right away; only the data comes from the API
   </li>
   <li>
     <strong>Shared state management</strong> - Data persists across routes
@@ -126,7 +133,8 @@
     data
   </li>
   <li>
-    <strong>Smooth transitions</strong> - No page refreshes or loading states
+    <strong>Smooth transitions</strong> - No full page reloads, and loading
+    states only where data is actually missing
   </li>
 </ul>
 
@@ -166,8 +174,11 @@
 </ul>
 
 <p>
-  This approach gives you the best of both worlds: fast initial loading and
-  instant navigation once the user starts working with the application.
+  Lazy loading fetches code during navigation too, but only the first time a
+  section is opened - after that, its code is cached in the browser and every
+  visit is instant. This approach gives you the best of both worlds: fast
+  initial loading and instant navigation once the user starts working with the
+  application.
 </p>
 
 <h2>Development Velocity: Simplicity Wins</h2>

@@ -27,7 +27,7 @@
     "name": "Jetshot",
     "category": "games",
     "featured": true,
-    "summary": "An arcade space shooter for iPhone, written in Swift and SpriteKit with vector graphics drawn in code and no sprites at all.",
+    "summary": "An arcade space shooter for iPhone and iPad, written in Swift and SpriteKit with vector graphics drawn in code and no sprites at all.",
     "platforms": "iPhone · iPad",
     "url": "https://apps.apple.com/us/app/jetshot/id6754814450",
     "linkLabel": "App Store",
@@ -56,7 +56,7 @@
     "image": "images/ios-games/minigolf-cover.webp"
   },
   {
-    "name": "Klondike Solitaire",
+    "name": "Klondike Solitaire: No Ads",
     "category": "games",
     "summary": "Classic Klondike solitaire that tells you when a deal is dead. Draw one or draw three, standard or Vegas scoring, and nothing else.",
     "platforms": "iPhone · iPad",
@@ -111,7 +111,7 @@
   {
     "name": "Quizzy",
     "category": "web",
-    "summary": "A quiz website that went from idea to production in two hours with AI agents.",
+    "summary": "A quiz website that went from idea to production in two hours with an AI agent.",
     "url": "https://quizzy-eight-khaki.vercel.app/",
     "linkLabel": "Open Quizzy",
     "source": "https://github.com/RobertLib/quizzy",

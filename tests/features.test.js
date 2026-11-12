@@ -316,6 +316,14 @@ describe("Article page", () => {
     expect(html).toContain('<meta name="twitter:creator" content="@RobertLibsansky" />');
   });
 
+  it("should leave out article:section for an untagged article", () => {
+    const article = makeArticle({ tags: [] });
+    const html = build.renderArticleHtml(article, [article]);
+
+    expect(html).not.toContain('property="article:section"');
+    expect(jsonLd(html).articleSection).toBeUndefined();
+  });
+
   it("should render notes without a lede or reading time", () => {
     const note = makeArticle({
       type: "note",
@@ -541,5 +549,52 @@ describe("IndexNow URLs for new page types", () => {
       "https://example.com",
       "https://example.com/projects.html",
     ]);
+  });
+
+  it("should submit the tag pages a deleted or retagged article left", () => {
+    const before = { ...site, previousTagsByArticle: { "gone.html": ["c"], "a.html": ["ios"] } };
+    expect(urlsForChangedFiles(["articles/gone.html"], before)).toContain(
+      "https://example.com/tags/c.html"
+    );
+    expect(urlsForChangedFiles(["articles/a.html"], before)).toEqual([
+      "https://example.com",
+      "https://example.com/archive.html",
+      "https://example.com/a.html",
+      "https://example.com/tags/games.html",
+      "https://example.com/tags/ios.html",
+    ]);
+    // Also when a site-wide change submits every current page
+    expect(
+      urlsForChangedFiles(["build.js", "articles/gone.html"], before)
+    ).toContain("https://example.com/tags/c.html");
+  });
+
+  it("should read the tags an article had at an earlier commit", () => {
+    const { tagsAtCommit } = require("../index-now.js");
+    const { execFileSync } = require("child_process");
+    const os = require("os");
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), "indexnow-tags-"));
+    const git = (...args) =>
+      execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", ...args], {
+        cwd: repo,
+        stdio: "ignore",
+      });
+    try {
+      git("init", "-q");
+      fs.mkdirSync(path.join(repo, "articles"));
+      fs.writeFileSync(
+        path.join(repo, "articles", "a.html"),
+        "<!-- title: A -->\n<!-- tags: Games, Next.js -->\n<p>Text</p>\n"
+      );
+      git("add", ".");
+      git("commit", "-q", "-m", "a");
+      fs.rmSync(path.join(repo, "articles", "a.html"));
+
+      expect(
+        tagsAtCommit("HEAD", ["articles/a.html", "articles/new.html"], repo)
+      ).toEqual({ "a.html": ["games", "nextjs"] });
+    } finally {
+      fs.rmSync(repo, { recursive: true, force: true });
+    }
   });
 });

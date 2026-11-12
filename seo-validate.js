@@ -119,23 +119,29 @@ function validatePage(content, distDir) {
     error("Missing og:image");
   } else {
     // An image on this site must have been generated into the output
-    let localPath = null;
+    let url = null;
     try {
-      const url = new URL(decodeEntities(ogImage));
-      const canonical = content.match(
-        /<link\s+rel="canonical"\s+href="([^"]*)"/
-      );
-      const site = canonical
-        ? new URL(decodeEntities(canonical[1])).origin
-        : null;
-      if (url.origin === site) localPath = decodeURIComponent(url.pathname);
+      url = new URL(decodeEntities(ogImage));
     } catch (e) {
       error(`og:image is not an absolute URL: ${ogImage}`);
     }
-    if (localPath && !fs.existsSync(path.join(distDir, localPath))) {
-      error(`og:image file not found: ${localPath}`);
-    } else {
-      results.push({ level: "ok", message: `OG Image: ${ogImage}` });
+    if (url) {
+      const canonical = content.match(
+        /<link\s+rel="canonical"\s+href="([^"]*)"/
+      );
+      let site = null;
+      try {
+        site = canonical ? new URL(decodeEntities(canonical[1])).origin : null;
+      } catch (e) {
+        // An invalid canonical URL is not the og:image's problem
+      }
+      const localPath =
+        url.origin === site ? decodeURIComponent(url.pathname) : null;
+      if (localPath && !fs.existsSync(path.join(distDir, localPath))) {
+        error(`og:image file not found: ${localPath}`);
+      } else {
+        results.push({ level: "ok", message: `OG Image: ${ogImage}` });
+      }
     }
   }
 

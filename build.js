@@ -273,6 +273,10 @@ function deriveDescription(html, maxLength = 160) {
 
 const ARTICLE_TYPES = ["article", "note"];
 
+// Pages the build generates itself; an article or standalone page of the
+// same name would be silently overwritten by them
+const RESERVED_PAGES = ["index.html", "archive.html", "projects.html", "404.html"];
+
 // Dates are UTC midnight, and somewhere on Earth (UTC+14) the next calendar
 // day starts 14 hours before it does in UTC
 const FUTURE_DATE_TOLERANCE_MS = 14 * 60 * 60 * 1000;
@@ -305,6 +309,10 @@ function validateArticle(article) {
 
   if (!article.slug || article.slug.trim().length === 0) {
     errors.push("Missing or invalid slug");
+  } else if (RESERVED_PAGES.includes(`${article.slug}.html`)) {
+    errors.push(
+      `File name ${article.slug}.html is taken by a page the build generates`
+    );
   }
 
   if (!article.content || article.content.trim().length === 0) {
@@ -1753,13 +1761,18 @@ function renderArticleHtml(article, articles) {
   const modified = article.modified || published;
   const socialImage = socialImageFile(article.slug);
 
+  // An untagged article has no section rather than a made-up one
   const extraMeta = [
     `<meta property="article:author" content="${BASE_URL}/about.html" />`,
     `<meta property="article:published_time" content="${published}" />`,
     `<meta property="article:modified_time" content="${modified}" />`,
-    `<meta property="article:section" content="${escapeHtml(
-      tags[0] ? tags[0].label : "Programming"
-    )}" />`,
+    ...(tags[0]
+      ? [
+          `<meta property="article:section" content="${escapeHtml(
+            tags[0].label
+          )}" />`,
+        ]
+      : []),
     ...tags.map(
       (tag) =>
         `<meta property="article:tag" content="${escapeHtml(tag.label)}" />`
@@ -1852,9 +1865,11 @@ function buildTags(articles) {
 
 function buildPages(pages, articles) {
   const articleFiles = new Set(articles.map((article) => article.filename));
-  const reserved = new Set(["index.html", "archive.html", "projects.html", "404.html"]);
   for (const page of pages) {
-    if (articleFiles.has(page.filename) || reserved.has(page.filename)) {
+    if (
+      articleFiles.has(page.filename) ||
+      RESERVED_PAGES.includes(page.filename)
+    ) {
       throw new Error(
         `Page ${page.filename} would overwrite another page of the site`
       );
@@ -2007,6 +2022,16 @@ function feedContent(article) {
   return absolutizeUrls(html, url);
 }
 
+// When the feed's content last changed: the newest publication or
+// modification of any post, so rebuilding unchanged content leaves the feed
+// byte-for-byte the same
+function feedUpdated(articles) {
+  const times = articles.map((article) =>
+    Date.parse(article.modified || formatDateISO(article.date))
+  );
+  return times.length > 0 ? new Date(Math.max(...times)) : new Date();
+}
+
 function renderRSSFeed(articles) {
   const recentArticles = articles.slice(0, RSS_ITEMS);
 
@@ -2017,7 +2042,7 @@ function renderRSSFeed(articles) {
     <link>${BASE_URL}</link>
     <description>${escapeXml(config.site.description)}</description>
     <language>en-us</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <lastBuildDate>${feedUpdated(articles).toUTCString()}</lastBuildDate>
     <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml" />
     ${recentArticles
       .map(

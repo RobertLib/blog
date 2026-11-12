@@ -185,6 +185,23 @@ describe("SEO Validation Tests", () => {
     expect(validateSEO(testDir)).toBe(true);
   });
 
+  it("should report a relative og:image as an error only", () => {
+    const { validatePage } = require("../seo-validate.js");
+    const results = validatePage(
+      page({
+        title: "A fine title",
+        description: okDescription,
+        ogImage: "og/page.png",
+      }),
+      testDir
+    );
+    const ogResults = results.filter((r) => /og:image|OG Image/.test(r.message));
+
+    expect(ogResults).toEqual([
+      { level: "error", message: "og:image is not an absolute URL: og/page.png" },
+    ]);
+  });
+
   it("should validate pages in subdirectories", () => {
     fs.mkdirSync(path.join(testDir, "tags"));
     fs.writeFileSync(path.join(testDir, "tags", "games.html"), shortHtml);

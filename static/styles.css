@@ -101,7 +101,8 @@
   /* Accent — burnt sienna */
   --accent: #b4531f;
   --accent-line: rgba(180, 83, 31, 0.45);
-  --accent-wash: rgba(180, 83, 31, 0.09);
+  /* Light enough for accent text on it (badges, hovered tags) to pass AA */
+  --accent-wash: rgba(180, 83, 31, 0.04);
   --selection: rgba(180, 83, 31, 0.16);
 
   --header-bg: rgba(251, 250, 248, 0.82);
@@ -573,7 +574,14 @@ main {
   margin: 0;
 }
 
-.post-card__meta .dot,
+.post-card__meta .dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.65;
+}
+
 .post-card__title {
   margin: 0.625rem 0 0.5rem;
   font-size: clamp(1.1875rem, 1.05rem + 0.6vw, 1.375rem);
@@ -743,7 +751,14 @@ main {
   line-height: 1.08;
 }
 
-.post__lede,
+.post__lede {
+  margin: 1.25rem 0 0;
+  max-width: 36rem;
+  color: var(--ink-2);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
 /* ---------- Long-form body copy ---------- */
 
 .prose {

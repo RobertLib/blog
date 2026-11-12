@@ -51,8 +51,10 @@ function allSiteUrls({
 // Maps files changed by a push to the public URLs whose content changed.
 // Deleted articles are included as well, so search engines learn about
 // removals. Changes to static assets alone don't change any page content.
+// `previousTagsByArticle` holds the tags changed articles had before the
+// push, so the tag pages a deleted or retagged article left are included.
 function urlsForChangedFiles(changedFiles, site) {
-  const { baseUrl, tagsByArticle = {} } = site;
+  const { baseUrl, tagsByArticle = {}, previousTagsByArticle = {} } = site;
   const articlePrefix = `${config.build.articlesDir}/`;
   const pagePrefix = `${config.build.pagesDir}/`;
 
@@ -63,11 +65,13 @@ function urlsForChangedFiles(changedFiles, site) {
     articleUrl(baseUrl, file)
   );
   // Tag pages list their articles' titles and descriptions
-  const changedTagUrls = changedArticles.flatMap((file) =>
-    (tagsByArticle[path.basename(file)] || []).map((slug) =>
-      tagPageUrl(baseUrl, slug)
-    )
-  );
+  const changedTagUrls = changedArticles.flatMap((file) => {
+    const name = path.basename(file);
+    return [
+      ...(tagsByArticle[name] || []),
+      ...(previousTagsByArticle[name] || []),
+    ].map((slug) => tagPageUrl(baseUrl, slug));
+  });
   const changedPageUrls = changedFiles
     .filter((file) => file.startsWith(pagePrefix) && file.endsWith(".html"))
     .map((file) => `${baseUrl}/${path.basename(file)}`);
@@ -81,7 +85,9 @@ function urlsForChangedFiles(changedFiles, site) {
   );
 
   if (siteWide) {
-    return [...new Set([...allSiteUrls(site), ...changedArticleUrls])];
+    return [
+      ...new Set([...allSiteUrls(site), ...changedArticleUrls, ...changedTagUrls]),
+    ];
   }
 
   const urls = [];
@@ -143,6 +149,28 @@ function getChangedFiles(baseRef) {
     .filter(Boolean);
 }
 
+// Tag slugs each of `files` (repository paths) had at commit `ref`; files
+// that didn't exist then are left out
+function tagsAtCommit(ref, files, cwd = process.cwd()) {
+  const tags = {};
+  for (const file of files) {
+    let content;
+    try {
+      content = execFileSync("git", ["show", `${ref}:${file}`], {
+        cwd,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+    } catch (error) {
+      continue; // Added since ref
+    }
+    tags[path.basename(file)] = build
+      .parseTags(build.extractMetadata(content).metadata.tags)
+      .map((tag) => tag.slug);
+  }
+  return tags;
+}
+
 function getChangedUrls(baseRef) {
   const site = currentSite(config.site.baseUrl);
   const changedFiles = getChangedFiles(baseRef);
@@ -152,6 +180,13 @@ function getChangedUrls(baseRef) {
     return allSiteUrls(site);
   }
 
+  const articlePrefix = `${config.build.articlesDir}/`;
+  site.previousTagsByArticle = tagsAtCommit(
+    baseRef,
+    changedFiles.filter(
+      (file) => file.startsWith(articlePrefix) && file.endsWith(".html")
+    )
+  );
   return urlsForChangedFiles(changedFiles, site);
 }
 
@@ -222,5 +257,6 @@ module.exports = {
   allSiteUrls,
   currentSite,
   getChangedUrls,
+  tagsAtCommit,
   SITE_WIDE_FILES,
 };

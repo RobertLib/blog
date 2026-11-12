@@ -1,6 +1,6 @@
 <!-- title: Chess, Mini Golf and Solitaire for iPhone, Without Ads -->
 <!-- date: 2026-10-19 -->
-<!-- description: Three new free games for iPhone and iPad: Chess Offline, Mini Golf 3D and Klondike Solitaire. No ads, no in-app purchases, no internet - just the game. -->
+<!-- description: Three new free games for iPhone and iPad: Chess Offline, Mini Golf 3D and Klondike Solitaire. No ads, no in-app purchases, no internet needed - just the game. -->
 <!-- image: images/ios-games/cover.webp -->
 <!-- tags: Games, iOS, Swift -->
 
@@ -31,7 +31,7 @@
   Classic games are everywhere on the App Store, and they are often some of
   the most cluttered apps there. A game of solitaire interrupted by a video ad, a
   chess app that asks you to subscribe before it shows you where you went
-  wrong, a mini golf game that wants you to buy coins. I wanted the opposite,
+  wrong, a minigolf game that wants you to buy coins. I wanted the opposite,
   so all three games follow the same rules:
 </p>
 
@@ -42,8 +42,8 @@
     <strong>No account and no data collected</strong> - Nothing to sign up for
   </li>
   <li>
-    <strong>Completely offline</strong> - Chess and Solitaire don't contain a
-    single line of networking code
+    <strong>Completely offline</strong> - No connection needed, and Chess and
+    Solitaire don't contain a single line of networking code
   </li>
 </ul>
 
@@ -62,8 +62,8 @@
     >Chess Offline</a
   >
   lets you play against the computer at five levels, from Beginner to
-  Grandmaster, or against a friend on one device - the board can turn towards
-  whoever is on the move. Its best feature, though, comes after the game.
+  Grandmaster, or against a friend on one device - the board can rotate to
+  face the player to move. Its best feature, though, comes after the game.
 </p>
 
 <p>
@@ -101,9 +101,10 @@
 </p>
 
 <p>
-  The two strongest levels open out of a book of 90 named opening lines, so
-  they never replay the same game. The weaker levels vary their openings by
-  picking a little at random among the moves they searched.
+  The two strongest levels play their openings from a book of 90 named lines,
+  so they rarely play the same game twice. The weaker levels vary their
+  openings by adding a little randomness when choosing among the moves they
+  searched.
 </p>
 
 <p>
@@ -156,7 +157,7 @@
 <figure class="gallery">
   <img src="images/ios-games/minigolf-aim.webp" alt="Mini Golf 3D: aiming a shot with the dotted aim line on a green garden hole" />
   <img src="images/ios-games/minigolf-neon.webp" alt="A Neon Nights hole with glowing cyan rails on a dark grid" />
-  <img src="images/ios-games/minigolf-volcano.webp" alt="A hole with lava strips across the fairway" />
+  <img src="images/ios-games/minigolf-volcano.webp" alt="A hole with two lava strips running along both sides of a narrow path to the cup" />
   <figcaption>Mini Golf 3D: three of the 108 holes.</figcaption>
 </figure>
 
@@ -171,8 +172,9 @@
 <p>
   The holes are modeled on real minigolf. The shapes follow the standard
   lanes defined by the World Minigolfsport Federation - the pyramids, the
-  lightning, the labyrinth, the double gate - and the game uses real rules:
-  the stroke limit is par + 3, and water or lava costs a penalty stroke.
+  lightning, the labyrinth, the double gate - and the rules are in the same
+  spirit: the stroke limit is par + 3, and water or lava costs a penalty
+  stroke.
 </p>
 
 <h3>Measuring Difficulty with Dijkstra</h3>
@@ -209,7 +211,7 @@
   There's a lovely bit of physics in that: a rolling ball slows down on a slope
   more gently than a sliding one, because part of its energy is stored in the
   spin. For a solid sphere, only 5/7 of gravity brakes it along the track. Hit
-  the loop too softly and the ball climbs part way and rolls back; just a bit
+  the loop too softly and the ball climbs partway and rolls back; just a bit
   short, and it loses contact near the top and drops inside the circle - exactly
   like a real one would.
 </p>
@@ -252,7 +254,7 @@
 <p>
   Its goal is that you're never stuck and never guessing. Undo reaches back
   through the whole game, hints cycle through every move worth making, and
-  when a deal genuinely runs out of legal moves, the board tells you so. Once
+  when a deal genuinely runs out of useful moves, the board tells you so. Once
   the win is certain, a magic wand plays the rest of the game for you.
 </p>
 
@@ -308,7 +310,7 @@
 <p>
   For Solitaire, this led to a fun search. I needed a screenshot of the dead-end
   banner - a deal where the game's own move advisor plays itself into a
-  position with no legal move left, with a score still on the board. Finding
+  position with no useful move left, with a score still on the board. Finding
   one meant playing through hundreds of thousands of deals. Only two in two
   hundred thousand fit.
 </p>
@@ -378,7 +380,7 @@
   It's easy to think that classic games like chess or solitaire are "solved" -
   that there's nothing left to build. But doing them properly is full of
   interesting problems: a chess engine you can trust, a difficulty curve you
-  can measure, an undo history that fits in a few bytes. And sometimes the
+  can measure, an undo history at 65 bytes a move. And sometimes the
   most valuable feature is simply what the app leaves out.
 </p>
 

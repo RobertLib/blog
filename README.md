@@ -107,7 +107,8 @@ Articles are HTML files with metadata in comments at the top of the file
   articles, optional for notes)
 - `tags` - Comma-separated topics, e.g. `Games, C, WebAssembly`. Each tag
   gets a page at `tags/<slug>.html`; reuse existing tags (see the Topics on
-  the archive page) rather than inventing near-duplicates
+  the archive page) rather than inventing near-duplicates. The first tag is
+  also the article's section (`article:section`); untagged articles have none
 - `image` - Cover image, a path inside `static/`
   (`images/chuck/sector-09.png`). Used in the structured data and as the
   picture on the article's social card
@@ -120,7 +121,8 @@ Articles are HTML files with metadata in comments at the top of the file
 
 An article with missing or invalid metadata, or pointing at an image that
 doesn't exist, fails the build, so it can never silently disappear from the
-site.
+site. So does an article named like a page the build generates itself
+(`index.html`, `archive.html`, `projects.html`, `404.html`).
 
 The SEO check fails on titles over 70 characters (cut off in search results)
 and descriptions under 50 or over 200, and warns outside 60 and 110–160. The
@@ -333,7 +335,8 @@ IndexNow is an open protocol that allows websites to instantly inform search eng
   completed every job (`node index-now.js --changed-since <that commit>`), so
   changes from a push whose run was cancelled or failed are not lost:
   - changed, added or deleted articles, plus the homepage, archive and the
-    article's tag pages
+    article's tag pages, including tags it had before the change (so a
+    deleted or retagged article's old tag pages are resubmitted too)
   - changed pages from `pages/`; the homepage and projects page when
     `projects.json` changes
   - every page when `templates/`, `build.js`, `config.js`,
@@ -360,7 +363,12 @@ npm run indexnow -- --changed-since HEAD~1
 
 ### API Key
 
-The API key is automatically generated and stored as a static file that must be accessible on your domain for verification.
+The key is set in `config.indexNow.apiKey`, and search engines verify it by
+fetching `https://<your-domain>/<key>.txt`, so the same key must be in a file
+of that name in `static/` (here
+`static/f57799dcfb29699bee2683154c12d7fb6f1842a04cf57bcf75fe3153eaeb1fb7.txt`,
+containing just the key). To use a new key, generate any 8–128 character
+hexadecimal string and change both.
 
 ## 🧪 Testing
 
@@ -379,7 +387,10 @@ every build:
 - `features.test.js` - Tags, notes, images and embeds, projects and pages,
   analytics and newsletter, social cards, IndexNow URLs for every page type
 - `indexnow.test.js` - IndexNow configuration and changed-URL selection
-- `contrast.test.js` - WCAG AA contrast of the text colors in both themes
+- `contrast.test.js` - WCAG AA contrast of the text colors in both themes,
+  including accent text on the translucent accent wash
+- `styles.test.js` - Guards against stylesheet rules lost in editing (a
+  selector list running across a comment, unstyled meta separators, lede)
 
 ## 📄 License
 
