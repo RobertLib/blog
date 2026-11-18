@@ -1,5 +1,16 @@
 [
   {
+    "name": "Sands of Saqqara",
+    "category": "games",
+    "featured": true,
+    "summary": "A flip-screen platform adventure through a lost Egyptian tomb, built on a real ghost story from a Ptolemaic papyrus. 49 chambers of hand-placed pixel art, written in C.",
+    "platforms": "Browser · Windows · macOS · Linux",
+    "url": "https://roblib.itch.io/sands-of-saqqara",
+    "linkLabel": "Play free on itch.io",
+    "article": "sands-of-saqqara-egyptian-ghost-story-platformer.html",
+    "image": "images/sands-of-saqqara/crossroads-of-ptah.webp"
+  },
+  {
     "name": "Chuck",
     "category": "games",
     "featured": true,

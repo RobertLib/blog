@@ -1,0 +1,262 @@
+<!-- title: Sands of Saqqara: A Platformer Built on a Real Egyptian Tale -->
+<!-- date: 2026-11-18 -->
+<!-- description: Sands of Saqqara is a free flip-screen platformer in C, set in a lost Egyptian tomb. Most of the time making it went into archaeology and Egyptian history. -->
+<!-- image: images/sands-of-saqqara/crossroads-of-ptah.webp -->
+<!-- tags: Games, C, WebAssembly -->
+
+<p>
+  My new game is out:
+  <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener"
+    >Sands of Saqqara</a
+  >, a flip-screen platform adventure through a lost Egyptian tomb, in the
+  spirit of the 8-bit classics. Like
+  <a href="chuck-stealth-platformer-600-kilobytes.html">Chuck</a> and
+  <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a>, it is
+  written in C with SDL3 — but this time, most of the work on it wasn't code
+  at all.
+</p>
+
+<p>
+  Sands of Saqqara is free and playable right in your browser on itch.io. It
+  also runs on Windows, macOS and Linux, with a keyboard or any gamepad.
+</p>
+
+<figure
+  class="embed"
+  data-embed="https://itch.io/embed-upload/20539793?color=000000"
+  data-embed-ratio="960 / 630"
+  data-embed-title="Sands of Saqqara"
+  data-embed-touch-note="Needs a keyboard or gamepad"
+>
+  <div class="embed__stage">
+    <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener">
+      <img src="images/sands-of-saqqara/crossroads-of-ptah.webp" alt="Dr. Emil Novak in a pith helmet stands in a sandstone hall between two columns, next to a statue of Ptah, while his dialogue box talks about the amulets of Ptah" />
+    </a>
+  </div>
+  <figcaption>Sands of Saqqara runs in the browser with a keyboard or a gamepad. Click the picture to play, then click the game once so that it hears the keys — or <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener">open it on itch.io</a>.</figcaption>
+</figure>
+
+<h2>Saqqara, Spring 1926</h2>
+
+<p>
+  Dr. Emil Novak, an archaeologist from Prague, has spent his last savings on
+  a hunch. He believes an old Egyptian ghost story is really a map. The tale
+  tells of a prince who stole the Book of Thoth, was ruined by it, and in the
+  end carried it back into the tomb of the dead man it belonged to. Scholars
+  call it a fairy tale. Emil has noticed that every landmark in it stands at
+  Saqqara, the great necropolis of ancient Memphis.
+</p>
+
+<p>
+  The game begins on the morning his workmen strike dressed stone. From there
+  it's just you, a pith helmet, and no idea what is behind the next wall.
+</p>
+
+<h2>One Big Map of Named Chambers</h2>
+
+<p>
+  "Flip-screen" means the camera never scrolls. Each screen is one room, and
+  when you walk off its edge, the next one takes its place — just like in the
+  8-bit adventures the game is a tribute to. Sands of Saqqara has 49 of these
+  chambers, every one with its own name, and they join edge to edge into one
+  big map: the desert above, a sealed mastaba, the catacombs of the sacred
+  ibises, the Serapeum of the Apis bulls, flooded halls, the night road of the
+  sun, and finally a tomb nobody has found.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/map.webp"
+    alt="The map screen titled The Necropolis of Saqqara: 49 small chamber thumbnails in sand, grey, teal and purple, with 49 of 49 chambers found and 48 of 48 scarabs"
+  />
+  <figcaption>The map of the necropolis, with every chamber found. Each colour is a different part of Saqqara.</figcaption>
+</figure>
+
+<p>
+  The journey is split into eight chapters, and each of them adds its own
+  rules:
+</p>
+
+<ul>
+  <li>The khamsin wind and quicksand</li>
+  <li>Rolling stones and sand clocks</li>
+  <li>Darkness, and a lamp to see by</li>
+  <li>A bull you cannot fight, only outwit</li>
+  <li>Tides, crocodiles and a breath you have to hold</li>
+  <li>A feather that lets you glide on warm air</li>
+  <li>Scales that weigh you</li>
+  <li>A serpent that will not stay dead</li>
+</ul>
+
+<p>And after all of that, the way out.</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/apis-awakens.webp"
+    alt="A grey granite hall with a hieroglyphic frieze: a black Apis bull leaps across the chamber while the explorer waits by a ladder on the right"
+  />
+  <figcaption>Apis Awakens. The bull can't be fought, only outwitted.</figcaption>
+</figure>
+
+<p>
+  Along the way you find tools that open up parts of the map you couldn't
+  reach before: the Undying Lamp, a tomb robber's pickaxe, the Feather of
+  Maat and the three amulets of Ptah. Off the safe path lie 48 golden scarabs for those who want to find everything. And it is a
+  complete game, with an intro, a story told in dialogue, two boss chambers,
+  an ending and, at the very end, a rank from the Antiquities Service.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/crocodile-pool.webp"
+    alt="A teal flooded hall: the explorer jumps over a pool with two crocodiles, under the hint Ride the back, not the jaws"
+  />
+  <figcaption>The Crocodile Pool. Ride the back, not the jaws.</figcaption>
+</figure>
+
+<p>
+  There are two ways to play. In <strong>Explorer</strong> mode you have
+  unlimited tries. In <strong>Classic</strong> mode you have five lives, and
+  losing all of them sends you back to the start of the chapter. Either way, the game saves by itself at every safe foothold and
+  at the ankh shrines.
+</p>
+
+<h2>Most of the Time Went Into Egyptology</h2>
+
+<p>
+  Here is the fun fact about this game: the thing I spent the most time on
+  wasn't code, pixel art or music. It was research — reading about
+  archaeological finds and Egyptian history. And the deeper I went, the more
+  of the game turned out to be true.
+</p>
+
+<p>
+  <strong>The story is real.</strong> The ghost story Emil chases exists. It
+  is called <em>Setne Khamwas and Naneferkaptah</em>, it was written in
+  demotic Egyptian in the Ptolemaic age, more than two thousand years ago, and
+  its best copy is Papyrus Cairo 30646. In it, Prince Naneferkaptah wins the
+  Book of Thoth from a serpent that cannot die, loses his wife Ahwere and his
+  son Merib to the god's anger, and is buried with the book. Generations later,
+  Prince Setne steals it from the tomb by playing draughts against the ghost,
+  comes to grief, and carries the book back with a forked stick in his hand
+  and a lighted brazier on his head.
+</p>
+
+<p>
+  <strong>Setne was a real man, too.</strong> He is a memory of Khaemwaset,
+  the fourth son of Ramesses II and high priest of Ptah at Memphis. Khaemwaset
+  restored the pyramids of his ancestors and labelled them with inscriptions
+  naming their owners, which is why he is often called the first
+  Egyptologist. There's a nice symmetry in that: a game about an archaeologist from 1926
+  follows a story whose hero was, in a way, an archaeologist himself, more
+  than three thousand years earlier.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/shrine-of-thoth.webp"
+    alt="A dark shrine lit by braziers: an ibis-headed portrait of Thoth speaks the words I am Thoth, lord of the divine words, who reckons the years and measures the earth"
+  />
+  <figcaption>The Shrine of Thoth, god of writing and wisdom.</figcaption>
+</figure>
+
+<p>
+  <strong>The places are real, and you can visit them.</strong> The Step
+  Pyramid of Djoser stands above the necropolis. The Serapeum, where the
+  sacred Apis bulls were buried in granite coffins weighing some seventy tons,
+  is open to visitors. And the galleries under Saqqara hold millions of
+  mummified ibises, the birds of Thoth — the same Thoth whose book everyone in
+  the story wants.
+</p>
+
+<p>
+  Egyptian beliefs about the afterlife shaped the later chapters as well. The
+  feather and the scales come from the weighing of the heart, where the heart
+  of the dead was weighed against the feather of Maat. And the night road of
+  the sun is the route the sun god's boat takes through the underworld every
+  night, with the serpent Apep waiting along the way to swallow it.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/coils-of-apep.webp"
+    alt="A purple chamber over pools of lava: huge red serpent coils made of glowing segments wind across a starry sky, below a small sun boat"
+  />
+  <figcaption>The Coils of Apep, on the night road of the sun.</figcaption>
+</figure>
+
+<p>
+  I didn't want all that reading to stay hidden behind the levels, so it went
+  into the game. There are 26 field notes of real Egyptology written on the
+  stelae throughout the tomb, and you can read every one of them. You don't
+  have to — but my first piece of advice to anyone who plays is: read the
+  stelae.
+</p>
+
+<p>
+  So how much of the game is true? The tomb of Naneferkaptah has never been
+  found. Everything else is invented. Probably.
+</p>
+
+<h2>320 × 200 Pixels and 64 Colours</h2>
+
+<p>
+  Technically, Sands of Saqqara goes back to the era it pays tribute to. It
+  runs at 320 × 200 pixels, the classic resolution of DOS-era games, with a
+  palette of 64 colours. Every pixel of the art was placed by hand, and the
+  music and sound effects are computed by a small chip synthesiser instead of
+  being recorded.
+</p>
+
+<p>
+  Just like Chuck, the whole game is one small program with no data files at
+  all: the chambers, the pixel art and the music all live inside it. The
+  downloads for Windows, macOS and Linux are around 2 MB each, and the
+  browser version — the same C code compiled to WebAssembly — is about 1.4 MB.
+  Your progress is kept in the browser, so you can close the tab and come back
+  later.
+</p>
+
+<h2>Play Sands of Saqqara</h2>
+
+<p>
+  The game is free. In the browser, there's nothing to install: start it,
+  click it once so it hears the keys, and play with a keyboard or a gamepad.
+  The downloadable versions for Windows, macOS and Linux are name your own
+  price on itch.io, so they can be free as well. The game is in English, and
+  the whole adventure takes a few hours.
+</p>
+
+<p>
+  A few words of advice, without spoiling anything: read the stelae; when the
+  wind howls, crouch; the lamp is in the mastaba, and you will want it before
+  the galleries; and remember that nobody ever outran a bull in a straight
+  line.
+</p>
+
+<p>
+  I'd be really happy if you
+  <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener"
+    >gave Sands of Saqqara a try on itch.io</a
+  >
+  — and if you find all 48 scarabs, let me know what rank the Antiquities
+  Service gave you.
+</p>
+
+<h2>Final Thoughts</h2>
+
+<p>
+  Sands of Saqqara started as a platformer in the spirit of the 8-bit
+  classics, and ended up being just as much a project about archaeology. Most
+  of my time went into reading about excavations, papyri, Apis bulls and ibis
+  catacombs, and a good part of it made its way into the game: into its
+  chambers, its chapters and the notes on its stelae.
+</p>
+
+<p>
+  The best stories for a game, it turns out, don't always have to be
+  invented. Sometimes they have been sitting in a museum in Cairo for more
+  than a century — you only have to read them.
+</p>
+
+<p>Thank you for reading, and mind the bull!</p>
