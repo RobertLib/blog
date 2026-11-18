@@ -1,0 +1,257 @@
+<!-- title: Sands of Saqqara: plošinovka podle skutečné egyptské pověsti -->
+<!-- date: 2026-11-18 -->
+<!-- description: Sands of Saqqara je bezplatná plošinovka v C s přepínáním obrazovek, zasazená do ztracené egyptské hrobky. Nejvíc času mi zabrala archeologie a egyptské dějiny. -->
+<!-- image: images/sands-of-saqqara/crossroads-of-ptah.webp -->
+<!-- tags: Games, C, WebAssembly -->
+
+<p>
+  Vyšla moje nová hra:
+  <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener"
+    >Sands of Saqqara</a
+  >, plošinovkové dobrodružství s přepínáním obrazovek ve ztracené egyptské
+  hrobce, v duchu osmibitových klasik. Stejně jako
+  <a href="chuck-stealth-platformer-600-kilobytes.html">Chuck</a> a
+  <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a> je
+  napsaná v C se SDL3 – tentokrát ale většina práce na ní vůbec nebyla
+  o kódu.
+</p>
+
+<p>
+  Sands of Saqqara je zdarma a dá se hrát přímo v prohlížeči na itch.io. Běží
+  také na Windows, macOS a Linuxu, s klávesnicí nebo libovolným gamepadem.
+</p>
+
+<figure
+  class="embed"
+  data-embed="https://itch.io/embed-upload/20539793?color=000000"
+  data-embed-ratio="960 / 630"
+  data-embed-title="Sands of Saqqara"
+  data-embed-touch-note="Vyžaduje klávesnici nebo gamepad"
+>
+  <div class="embed__stage">
+    <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener">
+      <img src="images/sands-of-saqqara/crossroads-of-ptah.webp" alt="Dr. Emil Novak v tropické helmě stojí v pískovcové síni mezi dvěma sloupy vedle sochy Ptaha a v dialogovém okně mluví o Ptahových amuletech" />
+    </a>
+  </div>
+  <figcaption>Sands of Saqqara se hraje v prohlížeči na klávesnici nebo gamepadu. Klikněte na obrázek a hra se spustí, pak do ní ještě jednou klikněte, aby reagovala na klávesy – nebo ji <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener">otevřete na itch.io</a>.</figcaption>
+</figure>
+
+<h2>Sakkára, jaro 1926</h2>
+
+<p>
+  Dr. Emil Novak, archeolog z Prahy, vsadil poslední úspory na jedno tušení.
+  Věří, že stará egyptská povídka o duchovi je ve skutečnosti mapa. Vypráví
+  o princi, který ukradl Thovtovu knihu, přivedl se tím do zkázy a nakonec ji
+  odnesl zpátky do hrobky mrtvého, kterému patřila. Badatelé ji mají za
+  pohádku. Emil si ale všiml, že všechna místa, o kterých se v ní mluví, leží
+  v Sakkáře, na velké nekropoli starověké Memfidy.
+</p>
+
+<p>
+  Hra začíná ráno, kdy jeho dělníci narazí na opracovaný kámen. Od té chvíle
+  jste tu jen vy, tropická helma a žádná představa o tom, co je za další zdí.
+</p>
+
+<h2>Jedna velká mapa pojmenovaných komnat</h2>
+
+<p>
+  „Flip-screen“ znamená, že se kamera nikdy neposouvá. Každá obrazovka je jedna
+  místnost, a když vyjdete za její okraj, nahradí ji další – přesně jako
+  v osmibitových adventurách, kterým hra vzdává hold. Sands of Saqqara má 49
+  takových komnat, každá z nich má vlastní jméno a všechny na sebe hranami
+  navazují v jednu velkou mapu: poušť nahoře, zapečetěná mastaba, katakomby posvátných ibisů,
+  Serapeum býků Apis, zatopené síně, noční cesta slunce a nakonec hrobka,
+  kterou nikdo nenašel.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/map.webp"
+    alt="Obrazovka mapy s nadpisem Nekropole Sakkáry: 49 malých náhledů komnat v písečné, šedé, modrozelené a fialové barvě, nalezeno 49 ze 49 komnat a 48 ze 48 skarabeů"
+  />
+  <figcaption>Mapa nekropole se všemi nalezenými komnatami. Každá barva představuje jinou část Sakkáry.</figcaption>
+</figure>
+
+<p>
+  Cesta je rozdělená do osmi kapitol a každá z nich přidává vlastní
+  pravidla:
+</p>
+
+<ul>
+  <li>Vítr chamsín a pohyblivé písky</li>
+  <li>Valící se kameny a přesýpací hodiny</li>
+  <li>Tma a lampa, která vám posvítí</li>
+  <li>Býk, se kterým nelze bojovat, jen ho přelstít</li>
+  <li>Příliv, krokodýli a dech, který musíte zadržet</li>
+  <li>Pero, které vám dovolí plachtit na teplém vzduchu</li>
+  <li>Váhy, které vás zváží</li>
+  <li>Had, který nechce zůstat mrtvý</li>
+</ul>
+
+<p>A po tom všem cesta ven.</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/apis-awakens.webp"
+    alt="Šedá žulová síň s hieroglyfickým vlysem: černý býk Apis skáče přes komnatu, zatímco průzkumník čeká vpravo u žebříku"
+  />
+  <figcaption>Apis Awakens. S býkem se bojovat nedá, dá se jen přelstít.</figcaption>
+</figure>
+
+<p>
+  Cestou nacházíte nástroje, které otevírají části mapy, kam jste se předtím
+  nedostali: Undying Lamp, krumpáč vykradače hrobek, Feather of
+  Maat a tři Ptahovy amulety. Mimo bezpečnou cestu leží 48 zlatých skarabeů pro ty, kdo chtějí najít úplně všechno. A je to
+  kompletní hra s úvodem, příběhem vyprávěným v dialozích, dvěma komnatami
+  s bossy, závěrem a úplně na konci hodnocením od Památkové služby.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/crocodile-pool.webp"
+    alt="Zatopená modrozelená síň: průzkumník skáče přes jezírko se dvěma krokodýly pod nápovědou Jezděte na hřbetě, ne na čelistech"
+  />
+  <figcaption>The Crocodile Pool. Jezděte na hřbetě, ne na čelistech.</figcaption>
+</figure>
+
+<p>
+  Hrát se dá dvěma způsoby. V režimu <strong>Explorer</strong> máte
+  neomezený počet pokusů. V režimu <strong>Classic</strong> máte pět životů,
+  a když o všechny přijdete, vrátíte se na začátek kapitoly. Ať tak či onak, hra se sama ukládá na každém bezpečném místě
+  a u svatyní s anchem.
+</p>
+
+<h2>Nejvíc času padlo na egyptologii</h2>
+
+<p>
+  Na téhle hře je zajímavé jedno: nejvíc času mi nezabral kód, pixel art ani
+  hudba, ale výzkum – čtení o archeologických nálezech a egyptských
+  dějinách. A čím hlouběji jsem se dostával, tím víc z toho, co
+  je ve hře, se ukázalo jako pravda.
+</p>
+
+<p>
+  <strong>Příběh je skutečný.</strong> Strašidelná povídka, po jejíž stopě
+  Emil jde, opravdu existuje. Jmenuje se <em>Setne Chamuas a Naneferkaptah</em>,
+  byla sepsána démotickou egyptštinou v ptolemaiovské době, před více než dvěma
+  tisíci lety, a jejím nejlepším opisem je papyrus Cairo 30646. Princ
+  Naneferkaptah v ní získá Thovtovu knihu od hada, který nemůže zemřít, kvůli
+  hněvu boha přijde o manželku Ahwere a syna Meriba a je pohřben i s knihou.
+  O generace později ji princ Setne z hrobky ukradne tak, že s duchem hraje
+  dámu, dopadne zle a knihu odnese zpátky s rozsochatou holí v ruce a pánví
+  žhavého uhlí na hlavě.
+</p>
+
+<p>
+  <strong>I Setne byl skutečný člověk.</strong> Jeho postava je vzpomínkou na
+  Chamuaseta, čtvrtého syna Ramesse II. a Ptahova velekněze v Memfidě.
+  Chamuaset obnovoval pyramidy svých předků a opatřoval je nápisy se jmény
+  jejich majitelů, a proto se mu často říká první
+  egyptolog. Je v tom pěkná symetrie: hra o archeologovi z roku 1926
+  sleduje příběh, jehož hrdina byl svým způsobem sám archeologem, a to o víc
+  než tři tisíce let dřív.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/shrine-of-thoth.webp"
+    alt="Temná svatyně osvětlená ohňovými mísami: portrét Thovta s hlavou ibise pronáší slova Já jsem Thovt, pán božských slov, který počítá roky a měří zemi"
+  />
+  <figcaption>The Shrine of Thoth, svatyně Thovta, boha písma a moudrosti.</figcaption>
+</figure>
+
+<p>
+  <strong>Místa jsou skutečná a můžete je navštívit.</strong> Nad nekropolí se
+  tyčí Džoserova stupňovitá pyramida. Serapeum, kde byli posvátní býci Apis
+  pohřbíváni v žulových sarkofázích vážících kolem sedmdesáti tun, je
+  přístupné návštěvníkům. A v podzemních chodbách pod Sakkárou leží miliony
+  mumifikovaných ibisů, Thovtových ptáků – téhož Thovta, jehož knihu chce
+  v příběhu každý.
+</p>
+
+<p>
+  Egyptské představy o posmrtném životě ovlivnily i pozdější kapitoly. Pero
+  a váhy pocházejí z vážení srdce, při kterém se srdce zemřelého vážilo proti
+  peru Maat. A noční cesta slunce je trasa, kterou bárka boha slunce každou noc
+  proplouvá podsvětím, zatímco na ni cestou číhá had Apop, aby ji pozřel.
+</p>
+
+<figure>
+  <img
+    src="images/sands-of-saqqara/coils-of-apep.webp"
+    alt="Fialová komnata nad jezírky lávy: obrovské rudé hadí závity ze zářících článků se vinou hvězdnou oblohou pod malou sluneční bárkou"
+  />
+  <figcaption>The Coils of Apep, na noční cestě slunce.</figcaption>
+</figure>
+
+<p>
+  Nechtěl jsem, aby všechno to čtení zůstalo schované za levely, a tak se
+  dostalo do hry. Na stélách po celé hrobce je napsáno 26 terénních poznámek
+  ze skutečné egyptologie a každou z nich si můžete přečíst. Nemusíte – ale
+  moje první rada každému, kdo hraje, zní: čtěte stély.
+</p>
+
+<p>
+  Kolik ze hry je tedy pravda? Hrobka Naneferkaptaha se nikdy nenašla.
+  Všechno ostatní je vymyšlené. Nejspíš.
+</p>
+
+<h2>320 × 200 pixelů a 64 barev</h2>
+
+<p>
+  Technicky se Sands of Saqqara vrací do doby, které vzdává hold. Běží
+  v rozlišení 320 × 200 pixelů, klasickém rozlišení her z éry DOSu, s paletou
+  64 barev. Každý pixel grafiky je umístěný ručně a hudbu i zvukové efekty
+  místo nahrávání počítá malý čipový syntezátor.
+</p>
+
+<p>
+  Stejně jako Chuck je celá hra jeden malý program úplně bez datových souborů:
+  komnaty, pixel art i hudba jsou přímo v něm. Verze ke stažení pro Windows,
+  macOS a Linux mají každá kolem 2 MB a verze pro prohlížeč – stejný kód v C
+  zkompilovaný do WebAssembly – asi 1,4 MB. Postup se ukládá v prohlížeči,
+  takže můžete zavřít záložku a vrátit se později.
+</p>
+
+<h2>Zahrajte si Sands of Saqqara</h2>
+
+<p>
+  Hra je zdarma. V prohlížeči není potřeba nic instalovat: spusťte ji, jednou
+  do ní klikněte, aby reagovala na klávesy, a hrajte na klávesnici nebo
+  gamepadu. Verze ke stažení pro Windows, macOS a Linux mají na itch.io cenu,
+  kterou si určíte sami, takže můžou být také zdarma. Hra je v angličtině
+  a celé dobrodružství zabere několik hodin.
+</p>
+
+<p>
+  Pár rad, aniž bych cokoli prozrazoval: čtěte stély; když kvílí vítr,
+  přikrčte se; lampa je v mastabě a budete ji chtít mít dřív, než se pustíte
+  do chodeb; a pamatujte, že v přímém směru ještě nikdo býkovi
+  neutekl.
+</p>
+
+<p>
+  Budu moc rád, když si
+  <a href="https://roblib.itch.io/sands-of-saqqara" target="_blank" rel="noopener"
+    >Sands of Saqqara vyzkoušíte na itch.io</a
+  >
+  – a pokud najdete všech 48 skarabeů, dejte mi vědět, jaké hodnocení vám
+  udělila Památková služba.
+</p>
+
+<h2>Závěrem</h2>
+
+<p>
+  Sands of Saqqara začala jako plošinovka v duchu osmibitových klasik a nakonec
+  se z ní stal stejnou měrou i projekt o archeologii. Většinu času jsem strávil
+  čtením o vykopávkách, papyrech, býcích Apis a katakombách ibisů a velká část
+  z toho se dostala do hry: do jejích komnat, kapitol i poznámek na
+  stélách.
+</p>
+
+<p>
+  Ukazuje se, že nejlepší příběhy pro hru se nemusí vždycky vymýšlet. Někdy už
+  přes sto let leží v muzeu v Káhiře – stačí si je přečíst.
+</p>
+
+<p>Díky za přečtení a pozor na býka!</p>

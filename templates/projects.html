@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{lang}}">
   <head>
     {{> head-meta}}
     {{> head-assets}}
@@ -11,10 +11,9 @@
     <main id="main-content">
       <div class="shell">
         <div class="page-head">
-          <h1>Projects</h1>
+          <h1>{{t.projects-title}}</h1>
           <p>
-            Games, apps and websites I have built and released, with links to
-            play them, the source code and the stories behind them.
+            {{t.projects-intro}}
           </p>
         </div>
         {{projects}}

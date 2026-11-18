@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{lang}}">
   <head>
     {{> head-meta}}
     {{> head-assets}}
@@ -12,25 +12,21 @@
       <div class="shell">
         <section class="hero">
           <p class="eyebrow hero__eyebrow">{{author}}</p>
-          <h1 class="hero__title">Small software, games and the web</h1>
+          <h1 class="hero__title">{{t.hero-title}}</h1>
           <p class="hero__text">
-            I build things that fit in kilobytes: games that draw every pixel
-            in code, iPhone apps that work offline without ads, and web apps
-            with as few dependencies as possible. This is where I write down
-            how they are made and what I learn on the way &mdash; including
-            where AI helps and where it doesn&rsquo;t.
+            {{t.hero-text}}
           </p>
           <p class="hero__links">
-            <a href="{{root}}about.html">About me</a>
-            <a href="{{root}}projects.html">Projects</a>
-            <a href="{{root}}feed.xml">RSS</a>
+            <a href="{{home}}about.html">{{t.hero-about}}</a>
+            <a href="{{home}}projects.html">{{t.hero-projects}}</a>
+            <a href="{{home}}feed.xml">RSS</a>
           </p>
         </section>
 
         {{showcase}}
 
         <section aria-labelledby="latest-heading">
-          <h2 class="section-label" id="latest-heading">Latest</h2>
+          <h2 class="section-label" id="latest-heading">{{t.latest}}</h2>
           <div class="post-list">{{articles}}</div>
           {{archive}}
         </section>

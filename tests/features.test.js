@@ -739,3 +739,226 @@ describe("IndexNow URLs for new page types", () => {
     }
   });
 });
+
+describe("Languages", () => {
+  const cs = (overrides = {}) => makeArticle({ lang: "cs", ...overrides });
+  const translations = (entries) => new Map(Object.entries(entries));
+
+  it("should put other languages in their directory, the default at the root", () => {
+    expect(build.langPath("archive.html", "en")).toBe("archive.html");
+    expect(build.langPath("archive.html", "cs")).toBe("cs/archive.html");
+    expect(build.pageUrl("", "en")).toBe(BASE_URL);
+    expect(build.pageUrl("", "cs")).toBe(`${BASE_URL}/cs/`);
+    expect(build.pageUrl("tags/ai.html", "cs")).toBe(`${BASE_URL}/cs/tags/ai.html`);
+    expect(build.contentDir("articles", "cs")).toBe(path.join("articles", "cs"));
+  });
+
+  it("should translate tag labels and keep their slugs", () => {
+    const tags = build.parseTags("Games, Hry, AI, Web Development");
+    expect(build.localizeTags(tags, "cs")).toEqual([
+      { label: "Hry", slug: "games" },
+      { label: "AI", slug: "ai" },
+      { label: "Vývoj webu", slug: "web-development" },
+    ]);
+    expect(build.localizeTags(tags.slice(0, 1), "en")).toEqual([
+      { label: "Games", slug: "games" },
+    ]);
+  });
+
+  it("should load translations from the language's directory", () => {
+    const dir = tempDir();
+    fs.mkdirSync(path.join(dir, "cs"));
+    fs.writeFileSync(
+      path.join(dir, "cs", "game.html"),
+      "<!-- title: Moje hra -->\n<!-- date: 2024-01-01 -->\n<!-- description: Popis hry -->\n<!-- tags: Games -->\n<p>Text</p>"
+    );
+    const [article] = build.getAllArticles(path.join(dir, "cs"), "cs");
+    expect(article.lang).toBe("cs");
+    expect(article.tags).toEqual([{ label: "Hry", slug: "games" }]);
+    // The language directory is not an article of the default language
+    expect(build.getAllArticles(dir)).toEqual([]);
+  });
+
+  it("should typeset Czech text without touching markup or code", () => {
+    expect(
+      build.typeset('<p>Hra v C a <a href="a b">odkaz</a> s 10 000 hráči – 40 %</p>', "cs")
+    ).toBe('<p>Hra v&nbsp;C a&nbsp;<a href="a b">odkaz</a> s&nbsp;10&nbsp;000 hráči&nbsp;– 40&nbsp;%</p>');
+    expect(build.typeset("<pre>a b\nv c</pre><code>k x</code>", "cs")).toBe(
+      "<pre>a b\nv c</pre><code>k x</code>"
+    );
+    // A word ending in an inline element is not a one-letter word
+    expect(build.typeset("<em>dom</em>a pak", "cs")).toBe("<em>dom</em>a pak");
+    expect(build.typeset("<p>a v k</p>", "en")).toBe("<p>a v k</p>");
+  });
+
+  it("should count posts with Czech plurals", () => {
+    const tag = (count) => ({
+      label: "Hry",
+      slug: "games",
+      articles: Array.from({ length: count }, (_, i) =>
+        cs({ slug: `a${i}`, title: `Článek ${i}` })
+      ),
+    });
+    expect(build.generateTagHtml(tag(1))).toContain("1 příspěvek, od nejnovějších.");
+    expect(build.generateTagHtml(tag(3))).toContain("3 příspěvky, od nejnovějších.");
+    expect(build.generateTagHtml(tag(5))).toContain("5 příspěvků, od nejnovějších.");
+  });
+
+  it("should render a translation in its language with hreflang links", () => {
+    const article = cs({
+      title: "Testovací článek",
+      content: '<p>Obrázek <img src="images/chuck/facade.png" alt="Fasáda" /> a <a href="other.html">jiný</a> a <a href="test-article.html#x">tento</a>.</p>',
+    });
+    const html = build.renderArticleHtml(article, [article], {
+      translations: translations({
+        "": ["en", "cs"],
+        "test-article.html": ["en", "cs"],
+        "other.html": ["en"],
+      }),
+    });
+
+    expect(html).toContain('<html lang="cs">');
+    expect(html).toContain('<meta property="og:locale" content="cs_CZ" />');
+    expect(html).toContain('<meta property="og:locale:alternate" content="en_US" />');
+    expect(html).toContain(`<link rel="canonical" href="${BASE_URL}/cs/test-article.html" />`);
+    expect(html).toContain(`<link rel="alternate" hreflang="en" href="${BASE_URL}/test-article.html" />`);
+    expect(html).toContain(`<link rel="alternate" hreflang="cs" href="${BASE_URL}/cs/test-article.html" />`);
+    expect(html).toContain(`<link rel="alternate" hreflang="x-default" href="${BASE_URL}/test-article.html" />`);
+    expect(html).toContain(`<a class="lang-switch" href="${BASE_URL}/test-article.html" hreflang="en" lang="en" title="English">EN</a>`);
+    expect(html).toContain("15. ledna 2024");
+    expect(html).toContain("min čtení");
+    expect(jsonLd(html).inLanguage).toBe("cs-CZ");
+    // Static files live at the site root, untranslated pages in English,
+    // translated ones next to it
+    expect(html).toContain('src="../images/chuck/facade.png"');
+    expect(html).toContain('href="../other.html"');
+    expect(html).toContain('href="test-article.html#x"');
+    expect(html).toContain('href="../styles.css"');
+    expect(html).toContain('<link rel="preload" href="../fonts/inter-latin-ext.woff2"');
+  });
+
+  it("should link the language switch to the other home page when a page is not translated", () => {
+    const article = makeArticle({ lang: "en" });
+    const html = build.renderArticleHtml(article, [article], {
+      translations: translations({ "": ["en", "cs"], "test-article.html": ["en"] }),
+    });
+    expect(html).toContain(`<a class="lang-switch" href="${BASE_URL}/cs/" hreflang="cs" lang="cs" title="Česky">CS</a>`);
+    expect(html).not.toContain('hreflang="x-default"');
+    // Without translations (a site in one language) there is no switch
+    expect(build.renderArticleHtml(article, [article])).not.toContain("lang-switch");
+  });
+
+  it("should mirror the original's related reading in a translation", () => {
+    const originals = [
+      makeArticle({ slug: "a", tags: [{ label: "Games", slug: "games" }] }),
+      makeArticle({ slug: "b", date: "2024-01-10", tags: [{ label: "Games", slug: "games" }] }),
+      makeArticle({ slug: "c", date: "2024-01-05", tags: [{ label: "AI", slug: "ai" }] }),
+    ];
+    const translated = originals.map((article) =>
+      cs({ ...article, title: `CZ ${article.slug}`, tags: build.localizeTags(article.tags, "cs") })
+    );
+    const html = build.renderArticleHtml(translated[0], translated, {
+      originals,
+    });
+    const related = html.slice(html.indexOf('class="related"'));
+    expect(related).toContain("Související články");
+    expect(related.indexOf("CZ b")).toBeLessThan(related.indexOf("CZ c"));
+  });
+
+  it("should give each language its own feed and social cards", () => {
+    const article = cs({ title: "Testovací článek", tags: [{ label: "Hry", slug: "games" }] });
+    const feed = build.renderRSSFeed([article]);
+    expect(feed).toContain("<language>cs</language>");
+    expect(feed).toContain(`<atom:link href="${BASE_URL}/cs/feed.xml"`);
+    expect(feed).toContain(`<link>${BASE_URL}/cs/test-article.html</link>`);
+
+    const files = build.socialCardSpecs([article], [], [{ name: "X", featured: true }], "cs").map(
+      (spec) => spec.file
+    );
+    expect(files).toEqual([
+      "og-image-cs.png",
+      "og/cs/test-article.png",
+      "og/cs/tag-games.png",
+      "og/cs/projects.png",
+    ]);
+  });
+
+  it("should translate projects and validate their translations", () => {
+    expect(
+      build.localizeProject(
+        { name: "A", summary: "Game", translations: { cs: { summary: "Hra" } } },
+        "cs"
+      )
+    ).toEqual({ name: "A", summary: "Hra" });
+
+    const dir = tempDir();
+    const file = path.join(dir, "projects.json");
+    fs.writeFileSync(
+      file,
+      JSON.stringify([
+        {
+          name: "A",
+          summary: "Game",
+          url: "https://example.com",
+          category: "games",
+          translations: { xx: {}, cs: { url: "https://evil.example" } },
+        },
+      ])
+    );
+    expect(() => build.loadProjects(file)).toThrow(/unknown language "xx"/);
+    expect(() => build.loadProjects(file)).toThrow(/translations\.cs\.url/);
+  });
+
+  it("should index every page of the site by the languages it exists in", () => {
+    const site = [
+      { lang: "en", articles: [makeArticle({ slug: "a", tags: [{ label: "AI", slug: "ai" }] })], pages: [{ filename: "about.html" }], projects: [{}] },
+      { lang: "cs", articles: [cs({ slug: "a", tags: [{ label: "AI", slug: "ai" }] })], pages: [], projects: [{}] },
+    ];
+    const index = build.translationIndex(site);
+    expect(index.get("")).toEqual(["en", "cs"]);
+    expect(index.get("a.html")).toEqual(["en", "cs"]);
+    expect(index.get("tags/ai.html")).toEqual(["en", "cs"]);
+    expect(index.get("about.html")).toEqual(["en"]);
+  });
+
+  it("should submit translated pages to IndexNow in their language", () => {
+    const { urlsForChangedFiles, allSiteUrls } = require("../index-now.js");
+    const site = {
+      baseUrl: "https://example.com",
+      articleFiles: ["a.html", "cs/a.html"],
+      pageFiles: ["about.html", "cs/about.html"],
+      hasProjects: true,
+      tagsByArticle: { "a.html": ["ai"], "cs/a.html": ["ai"] },
+    };
+    expect(urlsForChangedFiles(["articles/cs/a.html"], site)).toEqual([
+      "https://example.com/cs/",
+      "https://example.com/cs/archive.html",
+      "https://example.com/cs/a.html",
+      "https://example.com/cs/tags/ai.html",
+    ]);
+    expect(urlsForChangedFiles(["pages/cs/about.html"], site)).toEqual([
+      "https://example.com/cs/about.html",
+    ]);
+    expect(urlsForChangedFiles(["projects.json"], site)).toEqual([
+      "https://example.com",
+      "https://example.com/projects.html",
+      "https://example.com/cs/",
+      "https://example.com/cs/projects.html",
+    ]);
+    expect(allSiteUrls(site)).toEqual([
+      "https://example.com",
+      "https://example.com/archive.html",
+      "https://example.com/projects.html",
+      "https://example.com/about.html",
+      "https://example.com/tags/ai.html",
+      "https://example.com/a.html",
+      "https://example.com/cs/",
+      "https://example.com/cs/archive.html",
+      "https://example.com/cs/projects.html",
+      "https://example.com/cs/about.html",
+      "https://example.com/cs/tags/ai.html",
+      "https://example.com/cs/a.html",
+    ]);
+    expect(urlsForChangedFiles(["i18n.js"], site)).toEqual(allSiteUrls(site));
+  });
+});

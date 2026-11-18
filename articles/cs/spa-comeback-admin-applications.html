@@ -1,0 +1,279 @@
+<!-- title: Proč jsem se u administrací vrátil od Next.js k SPA -->
+<!-- date: 2025-09-06 -->
+<!-- description: Po zkušenostech s Next.js jsem se u administrací vrátil k single page aplikacím. Vysvětluji, proč se SPA hodí pro aplikace schované za přihlášením. -->
+<!-- tags: Web Development, Next.js -->
+
+<p>
+  Po dlouhé době strávené s Next.js a jeho App Routerem jsem se vědomě
+  rozhodl vrátit se u administrací k single page aplikacím (SPA). Nebyl to
+  krok zpět – byla to strategická volba, která mi u jednoho konkrétního typu
+  projektů výrazně zlepšila vývoj i výkon výsledných aplikací.
+</p>
+
+<h2>Kontext: administrace versus veřejné weby</h2>
+
+<p>
+  Nejdřív si ujasněme, o čem mluvíme. Když říkám „administrace“, myslím tím
+  rozsáhlé firemní aplikace, které celé běží za přihlášením: systémy pro
+  správu zaměstnanců, CRM platformy, interní firemní nástroje a složité
+  dashboardy. Tyto aplikace mají zásadně jiné požadavky než veřejně přístupné
+  weby.
+</p>
+
+<p>
+  Next.js vznikl, aby řešil konkrétní problémy, se kterými SPA zápasily –
+  hlavně SEO a to, jak rychle uvidí obsah návštěvník, který přijde poprvé.
+  Obojí je pro veřejné weby zásadní. V administraci se ale lidé přihlásí a pak
+  v ní hodiny pracují, takže na obojím tam záleží mnohem méně – a mašinérie
+  postavená na jejich optimalizaci může dokonce překážet.
+</p>
+
+<h2>Proč na SEO u administrací nezáleží</h2>
+
+<p>
+  Hlavním prodejním argumentem Next.js je server-side rendering a statické
+  generování, díky kterým se stránky lépe optimalizují pro vyhledávače. Ale
+  zamyslete se: kdy jste naposledy chtěli, aby Google zaindexoval interní
+  systém vaší firmy pro správu zaměstnanců?
+</p>
+
+<p>Administrace obvykle:</p>
+
+<ul>
+  <li>
+    <strong>Běží za přihlášením</strong> – žádný vyhledávač se k nim
+    nedostane
+  </li>
+  <li>
+    <strong>Slouží konkrétním skupinám uživatelů</strong> – zaměstnancům,
+    partnerům nebo zákazníkům s účtem
+  </li>
+  <li>
+    <strong>Upřednostňují funkčnost před dohledatelností</strong> – uživatelé
+    je nenacházejí přes vyhledávač
+  </li>
+  <li>
+    <strong>Dávají přednost uživatelskému zážitku před pozicemi ve
+    vyhledávání</strong> – rychlost a použitelnost jsou důležitější než SEO
+  </li>
+</ul>
+
+<p>
+  Stavět architekturu optimalizovanou pro SEO, když SEO výslovně nechcete, je
+  jako namontovat na ponorku stahovací střechu – technicky působivé, ale
+  úplně mimo.
+</p>
+
+<h2>Paradox výkonu</h2>
+
+<p>
+  Next.js slibuje lepší výkon díky statickému vykreslování a pre-renderingu,
+  ale u administrací jsem v praxi zjistil opak. Dodatečná složitost, kterou
+  framework přináší, často zpomalila vývoj a zpomalila i samotnou běžící
+  aplikaci.
+</p>
+
+<h3>Režie statického generování a cachování</h3>
+
+<p>
+  Next.js vám statické generování nevnucuje – routa, která čte cookies nebo
+  hlavičky, jako to dělá každá stránka za přihlášením, se vykresluje
+  dynamicky. V Next.js 13 a 14 ale výchozí nastavení silně tíhlo ke
+  statickému vykreslování a cachování: výsledky <code>fetch</code> se
+  cachovaly, pokud jste to výslovně nevypnuli, a přijít na to, proč stránka
+  ukazuje zastaralá data, znamenalo naučit se několik vrstev cache. (Next.js
+  15 konečně přestal <code>fetch</code> ve výchozím stavu cachovat.) To
+  všechno je složitost, kterou nepotřebujete, když je váš obsah od základu
+  dynamický. Administrace obvykle zobrazují:
+</p>
+
+<ul>
+  <li>Data v reálném čase, která se často mění</li>
+  <li>Informace specifické pro uživatele, které nejde předem vykreslit</li>
+  <li>Interaktivní dashboardy s živými aktualizacemi</li>
+  <li>Formuláře a workflow závislé na aktuálním stavu</li>
+</ul>
+
+<p>
+  Když musíte na stránkách, které jsou ze své podstaty dynamické, bojovat s
+  výchozím statickým vykreslováním a cachováním, nástroj zkrátka neodpovídá
+  úkolu.
+</p>
+
+<h3>Velikost bundlu versus uživatelský zážitek</h3>
+
+<p>
+  Next.js se sice snaží zmenšovat bundly pomocí code splittingu a serverových
+  komponent, jenže administrace kvůli tomu můžou ve skutečnosti působit
+  pomaleji. Každá navigace si vyžádá nový payload vykreslený na serveru a ty
+  opakované cesty na server a zpět se sčítají – v aplikaci, kde uživatelé za
+  hodinu proklikají desítky obrazovek, pak celá aplikace působí těžkopádně.
+</p>
+
+<h2>Výhoda SPA: okamžitá odezva</h2>
+
+<p>
+  Single page aplikace vynikají v tom, na čem v administraci záleží nejvíc: v
+  okamžité odezvě na akce uživatele. Když uživatel klikne na odkaz, přepne
+  záložku nebo přejde do jiné sekce, reakce by měla být okamžitá.
+</p>
+
+<h3>Bleskově rychlá navigace</h3>
+
+<p>V dobře postavené SPA působí každá interakce okamžitě, protože:</p>
+
+<ul>
+  <li>
+    <strong>Při navigaci se nic nevykresluje na serveru</strong> – UI se
+    přepne hned na klientovi, z API přicházejí jen data
+  </li>
+  <li>
+    <strong>Sdílená správa stavu</strong> – data zůstávají zachovaná napříč
+    routami
+  </li>
+  <li>
+    <strong>Prediktivní načítání</strong> – komponenty mohou předem načíst
+    data, která budou nejspíš potřeba
+  </li>
+  <li>
+    <strong>Plynulé přechody</strong> – žádné znovunačítání celé stránky a
+    stavy načítání jen tam, kde data opravdu chybějí
+  </li>
+</ul>
+
+<p>
+  Tahle okamžitá odezva je klíčová v administracích, kde uživatelé dělají
+  opakující se úkoly a potřebují, aby rozhraní stíhalo jejich tempo.
+</p>
+
+<h2>Škálovatelnost: řešením je lazy loading</h2>
+
+<p>
+  Častou obavou u SPA je, že se s rostoucí velikostí aplikace špatně škálují.
+  To platí jen tehdy, když s růstem nepočítáte od začátku. Řešení je
+  jednoduché: lazy loading.
+</p>
+
+<h3>Strategický code splitting</h3>
+
+<p>Moderní SPA umožňují chytrý code splitting:</p>
+
+<ul>
+  <li>
+    <strong>Rozdělení podle rout</strong> – komponenty se načtou, až když
+    uživatel na danou routu přejde
+  </li>
+  <li>
+    <strong>Rozdělení podle funkcí</strong> – související funkce se seskupí do
+    samostatných bundlů
+  </li>
+  <li>
+    <strong>Rozdělení na úrovni komponent</strong> – těžké komponenty se
+    načítají až na požádání
+  </li>
+  <li>
+    <strong>Podmíněné načítání</strong> – funkce se načítají podle oprávnění
+    uživatele
+  </li>
+</ul>
+
+<p>
+  Lazy loading sice při navigaci taky stahuje kód, ale jen při prvním otevření
+  dané sekce – pak už je její kód v cache prohlížeče a každá další návštěva je
+  okamžitá. Získáte tak to nejlepší z obou světů: rychlé první načtení a
+  okamžitou navigaci, jakmile uživatel začne s aplikací pracovat.
+</p>
+
+<h2>Rychlost vývoje: vítězí jednoduchost</h2>
+
+<p>
+  Návrat k architektuře SPA u administrací můj vývoj dramaticky zrychlil. Bez
+  mentální zátěže z rozhodování, co se má vykreslit na serveru a co na
+  klientovi, se můžu soustředit na funkce, které jsou pro uživatele důležité.
+</p>
+
+<h3>Jasné hranice v architektuře</h3>
+
+<p>Přístup API + SPA přináší jasné oddělení odpovědností:</p>
+
+<ul>
+  <li>
+    <strong>Backend se soustředí na data a business logiku</strong> – čistá,
+    testovatelná API
+  </li>
+  <li>
+    <strong>Frontend se soustředí na uživatelský zážitek</strong> –
+    interaktivní, responzivní rozhraní
+  </li>
+  <li>
+    <strong>Žádná hybridní složitost</strong> – žádné zmatky v tom, kde má kód
+    běžet
+  </li>
+  <li>
+    <strong>Nezávislé škálování</strong> – frontend a backend se dají škálovat
+    odděleně
+  </li>
+</ul>
+
+<h2>Správný nástroj pro správnou práci</h2>
+
+<p>
+  Netvrdím, že jsou SPA univerzálně lepší než Next.js. Každý přístup má své
+  silné stránky a případy, kdy se hodí:
+</p>
+
+<h3>Next.js zvolte pro:</h3>
+<ul>
+  <li>Veřejné weby, které potřebují SEO</li>
+  <li>Marketingové weby s formuláři a dynamickým obsahem</li>
+  <li>E-commerce platformy</li>
+  <li>Weby s množstvím obsahu, které potřebují i interaktivní části</li>
+  <li>Veřejné stránky, u kterých je klíčové první načtení</li>
+</ul>
+
+<h3>SPA zvolte pro:</h3>
+<ul>
+  <li>Administrace a interní nástroje</li>
+  <li>Složité interaktivní aplikace</li>
+  <li>Dashboardy a monitorovací nástroje v reálném čase</li>
+  <li>Aplikace, ve kterých uživatelé tráví hodně času</li>
+  <li>Situace, kdy je okamžitá odezva na akce uživatele prvořadá</li>
+</ul>
+
+<h2>Koexistence, ne soupeření</h2>
+
+<p>
+  Budoucnost webového vývoje nespočívá ve výběru jediného architektonického
+  přístupu pro každý projekt. Jde o to rozumět silným a slabým stránkám
+  různých přístupů a používat je tam, kam patří.
+</p>
+
+<p>
+  Next.js a SPA můžou ve vývojářském ekosystému pokojně koexistovat. Řeší
+  různé problémy pro různé typy aplikací. Klíčové je poznat, který nástroj
+  odpovídá vašim konkrétním požadavkům, místo abyste se hnali za nejnovějším
+  trendem.
+</p>
+
+<h2>Závěr</h2>
+
+<p>
+  Můj návrat k SPA u administrací nebyl odmítnutím moderních vývojových
+  postupů – byla to vědomá volba správného nástroje pro danou práci. Když
+  stavíte aplikace, u kterých je rychlost interakce důležitější než viditelnost
+  ve vyhledávačích, zůstávají SPA lepší volbou.
+</p>
+
+<p>
+  Vývojářská komunita se občas nechá unést nadšením z nových technologií a
+  zapomíná, že pro některé situace můžou být starší přístupy pořád tím
+  nejlepším řešením. SPA od svých začátků výrazně dospěly a s moderními
+  nástroji a osvědčenými postupy dokážou v administracích nabídnout výjimečný
+  uživatelský zážitek.
+</p>
+
+<p>
+  Než si vyberete další technologický stack, zeptejte se sami sebe: Jaký
+  problém se vlastně snažím vyřešit? Odpověď vás možná dovede zpátky k
+  technologii, o které jste si mysleli, že jste z ní už vyrostli.
+</p>

@@ -1,0 +1,391 @@
+<!-- title: Šachy, minigolf a solitér pro iPhone bez reklam -->
+<!-- date: 2026-10-19 -->
+<!-- description: Tři nové hry zdarma pro iPhone a iPad: Chess Offline, Mini Golf 3D a Klondike Solitaire. Bez reklam, bez nákupů v aplikaci, bez internetu – jen samotná hra. -->
+<!-- image: images/ios-games/cover.webp -->
+<!-- tags: Games, iOS, Swift -->
+
+<p>
+  Od doby, kdy vyšel
+  <a href="jetshot-ios-game-swift-spritekit.html">Jetshot</a>, jsem vydal
+  další tři hry v
+  <a
+    href="https://apps.apple.com/us/developer/robert-libsansky/id1634043416"
+    target="_blank"
+    rel="noopener"
+    >App Storu</a
+  >: <strong>Chess Offline</strong>, <strong>Mini Golf 3D</strong> a
+  <strong>Klondike Solitaire</strong>. Všechny tři jsou klasiky, které zná
+  každý, všechny tři jsou zdarma a všechny tři běží na iPhonu i iPadu
+  v angličtině i v češtině.
+</p>
+
+<p>
+  V tomhle článku vám každou z nich představím – a přidám pár historek zpod
+  kapoty, protože v každé se skrývá aspoň jeden problém, který se nakonec
+  ukázal mnohem zajímavější, než na první pohled vypadal.
+</p>
+
+<h2>Jen hra, nic víc</h2>
+
+<p>
+  Klasických her je v App Storu spousta a často patří k nejpřeplácanějším
+  aplikacím, jaké tam najdete. Partii solitéru přeruší videoreklama, šachová
+  aplikace po vás chce předplatné, než vám ukáže, kde jste udělali chybu, a
+  minigolf vám chce prodat mince. Chtěl jsem pravý opak, a tak se všechny tři
+  hry drží stejných pravidel:
+</p>
+
+<ul>
+  <li><strong>Žádné reklamy</strong> – ani jediný banner</li>
+  <li><strong>Žádné nákupy v aplikaci</strong> – všechno je v bezplatné aplikaci</li>
+  <li>
+    <strong>Žádný účet a žádný sběr dat</strong> – nemusíte se nikam registrovat
+  </li>
+  <li>
+    <strong>Plně offline</strong> – připojení není potřeba a šachy ani solitér
+    neobsahují jediný řádek síťového kódu
+  </li>
+</ul>
+
+<p>
+  Každý popis v App Storu končí podobnou větou:
+  <em>Jen šachy. Nic víc.</em> A přesně o to jde.
+</p>
+
+<h2>Chess Offline: hra i rozbor partií</h2>
+
+<p>
+  <a
+    href="https://apps.apple.com/us/app/chess-offline-play-review/id6809805041"
+    target="_blank"
+    rel="noopener"
+    >Chess Offline</a
+  >
+  vám umožní hrát proti počítači na pěti úrovních, od začátečníka po
+  velmistra, nebo proti kamarádovi na jednom zařízení – šachovnice se umí
+  otáčet k hráči, který je na tahu. To nejlepší ale přichází až po partii.
+</p>
+
+<p>
+  Když partie skončí, engine ji přehraje a ohodnotí každý jednotlivý tah:
+  brilantní, skvělý, nejlepší, výborný, dobrý, teoretický, nepřesnost, chyba,
+  promarněná šance nebo hrubá chyba.
+  Každý hráč dostane skóre přesnosti, graf hodnocení ukáže, kdo kdy vedl, a
+  tah, který by engine zahrál raději, se vykreslí přímo na šachovnici. Na
+  mnoha šachových platformách je takový rozbor partie prémiová funkce s denním
+  limitem. Tady žádný limit nemá a funguje i v režimu letadla.
+</p>
+
+<figure class="gallery">
+  <img src="images/ios-games/chess-review.webp" alt="Rozbor partie v Chess Offline: přesnost obou hráčů, graf hodnocení a hrubá chyba vyznačená na šachovnici" />
+  <img src="images/ios-games/chess-report.webp" alt="Souhrn partie po výhře matem se skóre přesnosti a přehledem hodnocení jednotlivých tahů" />
+  <img src="images/ios-games/chess-puzzle.webp" alt="Hodnocená šachová úloha, ve které se hledá nejlepší tah bílého" />
+  <figcaption>Chess Offline: rozbor partie, souhrn partie a hodnocené úlohy.</figcaption>
+</figure>
+
+<p>
+  Pro nováčky je tu také průvodce pravidly v devíti kapitolách s 27 diagramy
+  šachovnice. Patnáct z nich si můžete rovnou zahrát – tečky na nich jsou
+  skutečné povolené tahy, které spočítal engine, a klepnutím na tečku se tah
+  zahraje.
+</p>
+
+<h3>Vlastní engine</h3>
+
+<p>
+  Aplikace nepoužívá žádný šachový engine třetí strany. Její vlastní engine,
+  napsaný v čistém Swiftu, stojí na klasických technikách šachového
+  programování: alfa-beta prohledávání s transpoziční tabulkou, klidové
+  prohledávání (quiescence search), prořezávání nulovým tahem (null-move
+  pruning) a statické hodnocení výměn. Právě to poslední pomáhá rozboru
+  rozeznat brilantní oběť od obyčejné hrubé chyby – v obou případech přijdete
+  na místě o materiál, ale jen v jednom za něj něco dostanete zpátky.
+</p>
+
+<p>
+  Dvě nejsilnější úrovně čerpají zahájení z knihovny s více než 80 pojmenovanými variantami,
+  takže jen zřídka odehrají dvakrát stejnou partii. Slabší úrovně svá zahájení
+  obměňují tak, že do výběru mezi prohledanými tahy přidávají trochu
+  náhody.
+</p>
+
+<p>
+  Jak poznat, že šachový engine hraje podle pravidel? Šachoví programátoři na
+  to mají techniku zvanou <strong>perft</strong> (performance test): z dané
+  pozice se projdou všechny povolené posloupnosti tahů do hloubky N půltahů,
+  spočítají se listy výsledného stromu tahů a číslo se porovná se známými
+  referenčními hodnotami. Ze základního postavení existuje po jednom půltahu
+  20 posloupností tahů, po dvou 400, po třech 8 902 a po čtyřech 197 281.
+  Stačí, aby generátor tahů pokazil jediné pravidlo – rošádu přes napadené
+  pole, braní mimochodem, proměnu pěšce – a číslo nebude sedět. Testy spouštějí
+  perft na šesti známých pozicích, mezi nimi i na slavné „Kiwipete“, která do
+  jediného postavení vměstná rošády, braní mimochodem, proměny i vazby.
+</p>
+
+<h3>Šachy, které se dají hrát po sluchu</h3>
+
+<p>
+  Každé pole šachovnice je samostatný prvek přístupnosti. VoiceOver přečte
+  jeho souřadnici, co na něm stojí, jestli se figura může pohnout a kam by tah
+  vedl – celou partii tak lze odehrát, aniž byste viděli na obrazovku.
+  Lokalizovaný je i zápis: tah jezdcem, který se anglicky zapíše <code>Nf3</code>,
+  je v češtině <code>Jf3</code>, zatímco engine a uložené partie interně dál
+  používají anglickou notaci.
+</p>
+
+<p>
+  Malý easter egg pro milovníky šachu: ukázkové video v App Storu není žádná
+  naaranžovaná partie. Přehrává sedmnáct tahů slavné
+  <strong>Operní partie</strong> – Paul Morphy proti vévodovi Brunšvickému a
+  hraběti Isouardovi, odehrané v roce 1858 v lóži pařížské opery.
+</p>
+
+<h2>Mini Golf 3D: 108 jamek</h2>
+
+<p>
+  <a
+    href="https://apps.apple.com/us/app/mini-golf-3d-108-holes/id6799511530"
+    target="_blank"
+    rel="noopener"
+    >Mini Golf 3D</a
+  >
+  je opravdový minigolf ve 3D, postavený na SwiftUI a RealityKitu. Nabízí 108
+  ručně navržených jamek v devíti světech – od Green Garden přes Frozen Fjord,
+  Neon Nights a Volcano Forge až po Orbital Station – a každý svět má vlastní
+  překážky: pískové pasti, led, portály, odrazníky jako z pinballu, lávu,
+  gejzíry, otočné plošiny, děla, magnety a loopingy.
+</p>
+
+<figure class="gallery">
+  <img src="images/ios-games/minigolf-aim.webp" alt="Mini Golf 3D: míření s tečkovanou zaměřovací čárou na zelené zahradní jamce" />
+  <img src="images/ios-games/minigolf-neon.webp" alt="Jamka ze světa Neon Nights se svítícími azurovými mantinely na tmavé mřížce" />
+  <img src="images/ios-games/minigolf-volcano.webp" alt="Jamka se dvěma pruhy lávy po obou stranách úzké cestičky k cíli" />
+  <figcaption>Mini Golf 3D: tři ze 108 jamek.</figcaption>
+</figure>
+
+<p>
+  Hraje se jako s prakem: potáhnete prstem od míčku dozadu a čím dál
+  potáhnete, tím silnější je úder. Tečkovaná zaměřovací čára předpovídá dráhu
+  míčku včetně odrazů od mantinelů, a jakmile úder míří do jamky, zbarví se
+  dozlatova. Každý svět má navíc dvojici místních obyvatel – ježka, tučňáka,
+  sněhuláka, kraba – a nejsou to jen kulisy. Míček se od nich odráží.
+</p>
+
+<p>
+  Jamky vycházejí ze skutečného minigolfu. Jejich tvary odpovídají
+  standardním drahám, které definuje World Minigolfsport Federation – pyramidy,
+  blesk, labyrint, dvojitá branka – a pravidla jsou ve stejném duchu: limit
+  úderů je par + 3 a voda nebo láva znamená trestný úder.
+</p>
+
+<h3>Obtížnost změřená Dijkstrou</h3>
+
+<p>
+  U 108 jamek nebyl největší problém návrhu v tom, jak je postavit, ale jak
+  zajistit, aby obtížnost rostla rovnoměrně. Plocha jamky se ukázala jako
+  nepoužitelné měřítko: labyrint má jen dva metry čtvereční a hraje se na
+  čtyři údery, kdežto na dvakrát větší otevřenou kotlinu stačí jeden.
+</p>
+
+<p>
+  Obtížnost se proto měří jako <strong>délka cesty</strong>: nejkratší
+  vzdálenost, kterou musí míček urazit od odpaliště do jamky, kolem všech
+  mantinelů a přes rampy a portály. Malý offline nástroj ji počítá
+  Dijkstrovým algoritmem nad mřížkou s buňkami o velikosti 3 cm a u všech 108
+  jamek kontroluje několik pravidel. Každá jamka má na jeden úder paru 0,95 až
+  1,55 metru cesty, poslední jamka každého světa je vždy jeho nejdelší a
+  medián délky cesty roste od světa ke světu. Druhý nástroj projde každou
+  jamku v krocích po 2 cm a prokáže, že se míček opravdu dostane do jamky i ke skryté
+  bonusové hvězdě.
+</p>
+
+<h3>Looping, na který fyzika nestačila</h3>
+
+<p>
+  Většina hry spoléhá na fyzikální engine RealityKitu, loopingy ale ne.
+  Třícentimetrový míček by se při běžné rychlosti úderu buď zachytil o spoj
+  mezi dvěma díly trati a odletěl do nebe, nebo by se k trati přilepil. Uvnitř
+  loopingu proto hra míček z fyzikálního enginu vyjme a po kružnici ho
+  posouvá sama, podle energetické bilance skutečné valící se koule.
+</p>
+
+<p>
+  Skrývá se v tom pěkný kousek fyziky: valící se míček zpomaluje do svahu
+  pozvolněji než klouzající, protože část jeho energie je uložená v rotaci.
+  Plnou kouli brzdí podél trati jen 5/7 gravitace. Když looping trefíte
+  příliš slabě, míček vyjede jen kus a skutálí se zpátky; když síla jen
+  trochu nestačí, těsně pod vrcholem ztratí kontakt s tratí a spadne dovnitř
+  kruhu – přesně jako by to udělal skutečný míček.
+</p>
+
+<h3>Každý den stejná jamka pro všechny</h3>
+
+<p>
+  Mini Golf má také denní výzvu: jednu jamku denně, pro všechny hráče stejnou.
+  Stejně jako u denního runu v mé rozbíječce cihel
+  <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a> za ní nestojí
+  žádný server. Jamka se odvozuje jen z data – den se zahashuje funkcí FNV-1a
+  a výsledek se předá generátoru náhodných čísel SplitMix64 – takže každé
+  zařízení vybere stejnou jamku nezávisle na ostatních.
+</p>
+
+<p>
+  Záludné bylo jedno zdánlivě jednoduché pravidlo: nikdy stejná jamka dva dny
+  po sobě. Pokud se dnešní los shoduje se včerejším, losuje se znovu. Jenže i
+  včera se mohlo losovat znovu, takže porovnávat s prvním včerejším losem
+  nestačí – je potřeba vědět, co včera skutečně padlo, a to zase závisí na dni
+  předtím. Hra tenhle řetězec rozplétá čtyři dny zpátky.
+</p>
+
+<h2>Klondike Solitaire: bez reklam</h2>
+
+<p>
+  <a
+    href="https://apps.apple.com/us/app/klondike-solitaire-no-ads/id6806802031"
+    target="_blank"
+    rel="noopener"
+    >Klondike Solitaire</a
+  >
+  je klasický solitér, udělaný pořádně. Lízat můžete po jedné nebo po třech
+  kartách a bodování je přesně takové, jak si ho pamatujete z Windows, se
+  vším všudy: +10 za kartu přesunutou na základnu, +5 za otočení karty, −2 každých deset
+  sekund a časový bonus za rychlé dokončení. Pokud chcete, je tu i bodování
+  Vegas, nebo hra úplně bez bodů.
+</p>
+
+<p>
+  Cílem je, abyste se nikdy nezasekli a nikdy nemuseli hádat. Tahy jde vracet
+  přes celou hru, nápověda postupně ukáže všechny tahy, které má smysl zahrát, a
+  když v rozdání opravdu dojdou užitečné tahy, hra vám to sama řekne. Jakmile
+  je výhra jistá, zbytek hry za vás dohraje kouzelná hůlka.
+</p>
+
+<figure class="gallery">
+  <img src="images/ios-games/solitaire-board.webp" alt="Rozdaný solitér Klondike na zeleném suknu" />
+  <img src="images/ios-games/solitaire-stuck.webp" alt="Upozornění, že nezbývají žádné užitečné tahy, s nabídkou vrátit tah nebo začít novou hru" />
+  <img src="images/ios-games/solitaire-vegas.webp" alt="Rozdání s bodováním Vegas na červeném suknu" />
+  <figcaption>Solitér: běžné rozdání, upozornění na slepou uličku a bodování Vegas.</figcaption>
+</figure>
+
+<h3>Celý stůl v 65 bajtech</h3>
+
+<p>
+  Vracení tahů přežije i zavření aplikace, takže rozdání, které znovu otevřete
+  ve slepé uličce, jde pořád vrátit až k místu, kde se to pokazilo. To ale
+  znamená ukládat celou historii tahů po každém jednotlivém tahu. V JSONu by
+  to zabralo zhruba 200 bajtů na krok, pokaždé zapsaných znovu od nuly, a tak
+  hra místo toho používá vlastní kompaktní binární formát. Každá karta se
+  vejde do jednoho bajtu – barva a hodnota do sedmi bitů a osmý bit říká, jestli
+  je otočená lícem nahoru – a celý stůl zabere pouhých 65 bajtů.
+</p>
+
+<h3>400 her odehraných při každém pushi</h3>
+
+<p>
+  Herní logiku testuje fuzz test, který odehraje 400 rozdání a po každém
+  jednotlivém tahu zkontroluje stůl: 52 různých karet, platné základny, platné
+  posloupnosti, žádná odkrytá karta nikdy pohřbená pod jinými.
+  Hlídá také, aby se nápověda a detekce slepé uličky vždy shodly, takže hra
+  nikdy neohlásí, že je rozdání mrtvé, zatímco by ještě měla nějakou nápovědu
+  v záloze.
+</p>
+
+<p>
+  Přesto tím vším jedna chyba proklouzla: klepnutí kamkoli na
+  prázdný stůl lízlo kartu, jako byste klepli na balíček. Logika byla v pořádku
+  – problém byl v tom, jak velká plocha balíčku reaguje na klepnutí. Ve
+  SwiftUI si view umístěné pomocí <code>.position</code> zabere všechen
+  prostor, který dostane, takže oblast pro klepnutí přidaná až po něm
+  potichu pokryla celý stůl. Unit testy jen žádají model, aby provedl tah;
+  nikdy doopravdy neklepnou. Dnes UI testy spustí aplikaci, klepnou na prázdné
+  sukno a čekají, že se nic nestane.
+</p>
+
+<h2>Aplikace, které si samy pořizují screenshoty</h2>
+
+<p>
+  Všechny tři hry mají společné i to, jak vznikly jejich screenshoty a
+  ukázková videa pro App Store. Nic z toho není mockup. Každá aplikace má
+  speciální debug režimy, díky kterým ji skript může spustit v určitém stavu
+  a nechat ji hrát samotnou, takže každé skóre, čas na hodinách i údaj o
+  přesnosti na obrázcích je výsledkem skutečné hry.
+</p>
+
+<p>
+  U solitéru to vedlo k zábavnému hledání. Potřeboval jsem screenshot s
+  upozorněním na slepou uličku – rozdání, ve kterém se herní rádce tahů sám
+  dohraje do pozice bez jediného užitečného tahu a na stole přitom ještě
+  zůstane skóre. Najít ho znamenalo přehrát statisíce rozdání. Podmínky
+  splnila jen dvě z dvou set tisíc.
+</p>
+
+<h2>Nativní a malé</h2>
+
+<p>
+  Všechny tři hry jsou napsané ve Swiftu a SwiftUI, bez závislostí třetích
+  stran – jen s vlastními frameworky Applu. Solitér a šachy syntetizují zvuky
+  za běhu, solitér si karty kreslí v kódu a Mini Golf generuje 3D grafiku i
+  textury procedurálně. Výsledkem jsou na dnešní poměry drobné
+  aplikace:
+</p>
+
+<ul>
+  <li><strong>Klondike Solitaire</strong> – asi 2,5 MB</li>
+  <li><strong>Chess Offline</strong> – asi 9,2 MB</li>
+  <li>
+    <strong>Mini Golf 3D</strong> – asi 28 MB, z čehož většinu tvoří
+    soundtrack s 32 skladbami
+  </li>
+</ul>
+
+<p>
+  Všechny tři navíc myslí na přístupnost – VoiceOver, Dynamic Type i Reduce
+  Motion jsou podporované všude.
+</p>
+
+<h2>Vyzkoušejte je</h2>
+
+<p>
+  Pokud máte iPhone nebo iPad, budu moc rád, když je vyzkoušíte. Hodnocení
+  nebo krátká recenze v App Storu hodně pomůže – pro malého nezávislého
+  vývojáře je to hlavní cesta, jak se o hrách dozvědí další hráči.
+</p>
+
+<ul>
+  <li>
+    <a
+      href="https://apps.apple.com/us/app/chess-offline-play-review/id6809805041"
+      target="_blank"
+      rel="noopener"
+      >Chess Offline: Play &amp; Review</a
+    >
+  </li>
+  <li>
+    <a
+      href="https://apps.apple.com/us/app/mini-golf-3d-108-holes/id6799511530"
+      target="_blank"
+      rel="noopener"
+      >Mini Golf 3D: 108 Holes</a
+    >
+  </li>
+  <li>
+    <a
+      href="https://apps.apple.com/us/app/klondike-solitaire-no-ads/id6806802031"
+      target="_blank"
+      rel="noopener"
+      >Klondike Solitaire: No Ads</a
+    >
+  </li>
+</ul>
+
+<h2>Závěrem</h2>
+
+<p>
+  Snadno si člověk řekne, že klasické hry jako šachy nebo solitér jsou
+  „vyřešené“ – že už na nich není co stavět. Jenže když je chcete udělat
+  pořádně, narazíte na spoustu zajímavých problémů: šachový engine, kterému
+  se dá věřit, křivku obtížnosti, kterou jde změřit, historii tahů za 65 bajtů
+  na tah. A někdy je nejcennější funkcí prostě to, co aplikace vynechá.
+</p>
+
+<p>Díky za přečtení a ať vás hry baví!</p>

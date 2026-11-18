@@ -1,0 +1,320 @@
+<!-- title: Breakup: neonová rozbíječka cihel ve stylu roguelite -->
+<!-- date: 2026-10-19 -->
+<!-- description: Breakup je bezplatná neonová rozbíječka cihel pojatá jako roguelite, napsaná v C se SDL3. Věže místo zdí, perky, bossové a denní run bez serveru. -->
+<!-- image: images/breakup/stormfront.webp -->
+<!-- tags: Games, C, WebAssembly -->
+
+<p>
+  Rád bych vám představil
+  <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener"
+    >Breakup</a
+  >, jednu ze svých dvou nových her napsaných v C (tou druhou je
+  <a href="chuck-stealth-platformer-600-kilobytes.html">Chuck</a>): neonovou
+  rozbíječku cihel pojatou jako roguelite. Bere jeden z nejstarších nápadů
+  arkádových her – pálku, míček a zeď z cihel – a ptá se, co se stane,
+  když zeď přestane nehybně stát na jedné obrazovce a z každé hry se stane run
+  s vlastními pravidly.
+</p>
+
+<p>
+  Breakup je zdarma a můžete si ho zahrát přímo v prohlížeči na itch.io, bez
+  jakékoli instalace. K dispozici jsou i verze ke stažení pro Windows, macOS
+  a Linux. Typický run trvá asi hodinu, ale k tomu, abyste zjistili, jestli je
+  to hra pro vás, stačí jedna věž.
+</p>
+
+<figure
+  class="embed"
+  data-embed="https://itch.io/embed-upload/19462149?color=000000"
+  data-embed-ratio="800 / 630"
+  data-embed-title="Breakup"
+  data-embed-touch-note="Určeno pro myš nebo klávesnici&nbsp;· asi&nbsp;20&nbsp;MB"
+>
+  <div class="embed__stage">
+    <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener">
+      <img src="images/breakup/title.webp" alt="Úvodní obrazovka hry Breakup: zářící drátěný obličej nad logem hry v pixelovém písmu" />
+    </a>
+  </div>
+  <figcaption>Breakup běží v prohlížeči a nic se neinstaluje. Hru spustíte kliknutím na obrázek, případně ji můžete <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener">otevřít na itch.io</a>.</figcaption>
+</figure>
+
+<h2>Věže místo zdí</h2>
+
+<p>
+  V klasické rozbíječce cihel zeď vyčistíte a jdete dál. V Breakupu je každý
+  level věž – patnáct cihel široká a až šedesát tři řad vysoká – a kamera po ní
+  šplhá spolu s vaším míčkem. Nejste tu proto, abyste zeď vyčistili. Jste tu
+  proto, abyste našli krystaly, které jsou v ní zazděné. Roztříštěte všechny
+  a level končí, ať už zbylo stát cokoli dalšího.
+</p>
+
+<p>Všechno ostatní ve věži vám buď stojí v cestě, nebo je to zbraň:</p>
+
+<ul>
+  <li>
+    <strong>Ocel</strong> – Nikdy se nerozbije. Není to překážka – je to tvar
+    místnosti a naučit se od ní míček odrážet je polovina hry
+  </li>
+  <li>
+    <strong>Výbušné cihly</strong> – Vezmou s sebou své sousedy a ty zase
+    svoje. Jeden dobrý zásah dokáže srazit půl věže
+  </li>
+  <li>
+    <strong>Zlaté a odolné cihly</strong> – Stojí za ty zásahy navíc, pokud na
+    to máte čas
+  </li>
+  <li>
+    <strong>Nepřátelé</strong> – Plachtiči, střemhlavci, děliči a létající
+    talíře. Žádný z nich vás nemůže zabít, ale všichni stojí přesně tam, kam
+    mířil váš míček
+  </li>
+</ul>
+
+<p>
+  Hra má čtyři světy – Cyan Dawn, Emerald Drift, Ember Fields a Violet
+  Void – a každý z nich má vlastní paletu, oblohu, hudbu a pět ručně navržených věží.
+</p>
+
+<figure>
+  <img
+    src="images/breakup/citadel.webp"
+    alt="Level hry Breakup jménem Citadel: neonové cihly ve věžích a řadách, nahoře zlaté cihly, dole pálka"
+  />
+  <figcaption>Citadel, jeden z levelů prvního aktu.</figcaption>
+</figure>
+
+<h2>Každá hra je run</h2>
+
+<p>
+  Tady přichází na řadu roguelite. Run má čtyři akty, jeden pro každý svět,
+  a každý akt tvoří tři levely a boss. Levely se pokaždé losují ze sady
+  daného světa v jiném pořadí a od druhého aktu často přicházejí
+  s mutátorem – třeba zrcadlově převrácený, obrněný či křehký level, zlatá
+  horečka nebo roj nepřátel.
+</p>
+
+<p>
+  Po každém levelu si vyberete jeden ze tří perků a ten vám zůstane po zbytek
+  runu. Je jich čtrnáct a většina z nich není jen větší číslo, ale pravidlo,
+  které se napojí na něco, co hra už dělá, takže se dají navzájem
+  kombinovat:
+</p>
+
+<figure>
+  <img
+    src="images/breakup/perks.webp"
+    alt="Obrazovka s výběrem perků nabízí tři možnosti: Lucky, Overtime a Safety Net"
+  />
+  <figcaption>Mezi levely: vyberte si jeden ze tří perků a ponechte si ho do konce runu.</figcaption>
+</figure>
+
+<ul>
+  <li><strong>Crystal Blast</strong> – Krystaly při rozbití vybuchnou</li>
+  <li>
+    <strong>Chain Reaction</strong> – Každá cihla, kterou rozbije výbuch, se
+    započítá do komba
+  </li>
+  <li>
+    <strong>Inferno</strong> – Dokud hoří ohnivá koule, má každý výbuch větší
+    dosah
+  </li>
+  <li>
+    <strong>Glass Cannon</strong> – Zvedne strop komba z 5× na 8× a daní za to
+    je rychlejší míček
+  </li>
+</ul>
+
+<p>
+  Když získáte první tři najednou, začne se věž čistit sama. Právě ta chvíle,
+  kdy do sebe jednotlivá malá pravidla najednou zapadnou a vznikne z nich něco
+  mnohem většího, je to, co žánr roguelite umí nejlépe.
+</p>
+
+<p>
+  Každý akt končí bossem a žádní dva nebojují stejně. Každý z prvních tří aktů
+  končí jedním ze dvojice bossů a čtvrtý vždycky bossem The Sovereign, takže
+  bossů je celkem sedm. Boss je vlastní slovník hry
+  obrácený proti vám: krystal ukrytý za prstencem pancéřových plátů, které kolem
+  něj obíhají, a jediná cesta dovnitř vede mezerou.
+  A po každém bossovi přichází nejdůležitější otázka celého runu:
+  <strong>vybrat body, nebo jít hlouběji?</strong> Když body vyberete, zůstanou
+  vám všechny. Když půjdete hlouběji, násobitel skóre vzroste, ale přijde s ním
+  i kletba, a pokud zemřete dřív, než budete mít další příležitost body vybrat,
+  přijdete o polovinu všeho, co jste od té doby nasbírali.
+</p>
+
+<figure>
+  <img
+    src="images/breakup/sovereign.webp"
+    alt="Boss The Sovereign: zářící obličej obklopený obíhajícími bílými štíty nad fialovou mlhovinou"
+  />
+  <figcaption>The Sovereign, finální boss – ten, který mluví. Zachycený ve skriptovaném režimu hry pro snímky obrazovky, proto je v horní liště „Act 1-1“.</figcaption>
+</figure>
+
+<h2>Kombo je ta pravá hra</h2>
+
+<p>
+  Každá cihla, kterou rozbijete, než se míček vrátí na pálku, prodlouží kombo
+  a každých pět cihel v něm zvedne násobitel o stupeň, až na 5×.
+  Věž dobytá jedním dlouhým, nenasytným řetězem vynese několikanásobně
+  víc než stejná věž hraná na jistotu. A je tu jeden drobný detail, který mění
+  celý pocit ze hry: každý článek řetězu zazní o půltón výš než
+  ten předchozí. Dobré kombo neopakuje pořád stejný zvuk – stoupá po hudební
+  stupnici, takže doslova slyšíte, jak dobře hrajete.
+</p>
+
+<figure>
+  <img
+    src="images/breakup/stormfront.webp"
+    alt="Level hry Breakup uprostřed komba: nad rozbitými cihlami se vznášejí body a je vidět nápis combo x2"
+  />
+  <figcaption>Rozjeté kombo v levelu Stormfront.</figcaption>
+</figure>
+
+<p>
+  Power-upy se drží stejné filozofie: rozhodnutí místo dárků zadarmo.
+  Nejčastější kapslí ve hře je Shrink. Zmenší vám pálku, se kterou se pak
+  špatně hraje – ale dokud účinek trvá, je násobitel komba o stupeň vyšší.
+  Každá kapsle, která se k vám snáší, je tak volba a rozhodnout se musíte,
+  ještě než dopadne.
+</p>
+
+<h2>Pod kapotou: C, SDL3 a žádné obrázky</h2>
+
+<p>
+  Breakup je napsaný v C17 se SDL3. Stejně jako u hry
+  <a href="jetshot-ios-game-swift-spritekit.html">Jetshot</a> v něm není ani
+  jediný obrázkový soubor. Veškerá grafika se generuje procedurálně při
+  spuštění – cihly, neonová záře, hvězdná pole s paralaxou i bloom přes celou
+  hrací plochu. Každý zvukový efekt syntetizuje v kódu malý vestavěný chiptune
+  engine.
+</p>
+
+<p>
+  Jediné, co hra negeneruje, je písmo a hudba. Soundtrack tvoří devatenáct
+  smyčkových chiptunových skladeb z alba
+  <a
+    href="https://abstractionmusic.bandcamp.com/album/three-red-hearts"
+    target="_blank"
+    rel="noopener"
+    >Three Red Hearts</a
+  > od Abstraction, uvolněného do public domain, ve verzích upravených pro
+  plynulé smyčkování z kolekce
+  <a
+    href="https://tallbeard.itch.io/music-loop-bundle"
+    target="_blank"
+    rel="noopener"
+    >Music Loop Bundle</a
+  > od Tallbeard Studios
+  – a právě kvůli němu má hra asi 20 MB místo několika stovek
+  kilobajtů.
+</p>
+
+<p>
+  Finální boss, The Sovereign, dokonce mluví. Jeho hlas tvoří pět zpívaných
+  samohlásek syntetizovaných při spuštění. Každá začíná jako pilovitá vlna,
+  která stejně jako bzučení lidských hlasivek obsahuje všechny harmonické,
+  a prochází třemi rezonátory naladěnými na formanty dané samohlásky – a jen
+  tím se „á“ liší od „ú“. Zpívá se třemi hlasy najednou, v základním tónu,
+  o kvintu výš a o oktávu níž, protože The Sovereign není člověk a nemá tak
+  ani znít. Jedna samohláska na slabiku, výška podle vyslovovaného slova a máte
+  melodii řeči, ve které není čemu rozumět.
+</p>
+
+<p>
+  Verze pro prohlížeč je úplně stejný kód v C zkompilovaný do WebAssembly
+  pomocí Emscriptenu. Vaše nastavení, odemčené perky i nejlepší runy přežijí
+  zavření záložky díky tomu, že SDL ukládá svůj adresář s uloženými daty do
+  IndexedDB prohlížeče. Samotná hra na síť vůbec nesahá.
+</p>
+
+<h2>Denní run bez serveru</h2>
+
+<p>
+  Jedna funkce si zaslouží bližší pohled – denní run. Každý den dostanou
+  všichni, kdo hrají, stejný run: stejné věže ve stejném pořadí, stejné
+  mutátory a stejnou nabídku perků. Má vlastní nejlepší skóre, takže můžete
+  porovnávat výsledky s přáteli.
+</p>
+
+<p>
+  Zajímavé na tom je, že za ním nestojí žádný server. O tom, jak vypadá dnešní
+  run, nerozhoduje žádný backend a nic se nestahuje. Trik je v tom, že
+  <strong>seedem je datum</strong>. Veškerá náhoda v runu pochází
+  z deterministického generátoru pseudonáhodných čísel (PCG) a stejný seed
+  vždycky vytvoří stejnou posloupnost čísel. Dejte mu dnešní datum a každá
+  kopie hry kdekoli na světě sestaví úplně stejný run – i offline.
+</p>
+
+<p>
+  Funguje to jen proto, že hra přísně hlídá, odkud náhoda pochází. Jediné
+  volání systémových hodin nebo náhodné funkce bez seedu na špatném místě by to
+  potichu rozbilo. Proto testy ověřují run jako funkci jeho seedu: stejný seed
+  musí vždycky vytvořit stejné levely, mutátory i nabídky perků.
+</p>
+
+<h2>Hra, která se sama fotí</h2>
+
+<p>
+  To, že hra nemá žádné obrázkové soubory, má jeden úsměvný důsledek. Když
+  přišla řada na screenshoty pro stránku hry na itch.io, nebylo prostě co
+  ořezat. Každý pixel se kreslí až za běhu, takže jediné místo, kde nějaký
+  obrázek Breakupu existuje, je framebuffer běžící hry.
+</p>
+
+<p>
+  Hra se proto fotí sama. Jediný příkaz ji spustí ve skriptovaném režimu, ve
+  kterém hraje sama – pálka prostě sleduje míček – a v zadaných snímcích
+  ukládá screenshoty a GIFy. V tomto režimu hra postupuje o pevný časový krok
+  místo podle skutečných hodin, takže číslo snímku je okamžik ve hře, ne
+  okamžik na počítači. S pevným seedem dají dvě spuštění bajtově identické
+  obrázky, a kdykoli se změní grafika, dá se celý press kit vygenerovat znovu,
+  místo aby se musel ručně přefotit.
+</p>
+
+<p>
+  Podobnou funkci mají k dispozici i hráči. Stiskněte <strong>G</strong>
+  a posledních osm sekund hraní se uloží jako GIF. Hra si neustále drží
+  průběžně přepisovaný buffer posledních snímků, takže dokonalá řetězová
+  reakce, kterou chcete někomu ukázat, je už nahraná ve chvíli, kdy sáhnete po
+  klávese. GIF enkodér je napsaný od nuly, včetně komprese LZW. (Tohle funguje
+  jen ve verzích ke stažení, ne v buildu pro prohlížeč.)
+</p>
+
+<h2>Zahrajte si Breakup</h2>
+
+<p>
+  Breakup je zdarma pro Windows, macOS a Linux a dá se hrát i v prohlížeči bez
+  instalace. Doporučuji hrát se zapnutým zvukem – polovinu toho, co hra dělá,
+  dělá zvukem: stoupající stupnice komba, prasknutí krystalu, znělka, když věž
+  konečně padne.
+</p>
+
+<p>
+  Jestli máte rádi arkády, budu moc rád, když si
+  <a href="https://roblib.itch.io/breakup" target="_blank" rel="noopener"
+    >zahrajete Breakup na itch.io</a
+  >
+  a dáte mi vědět, jak daleko jste se dostali. A pokud vás zajímá, jak je hra postavená,
+  <a href="https://github.com/RobertLib/breakup" target="_blank" rel="noopener"
+    >zdrojový kód najdete na GitHubu</a
+  >
+  pod licencí MIT.
+</p>
+
+<h2>Závěrem</h2>
+
+<p>
+  Breakup mi připomněl, kolik hloubky se může skrývat v jednoduché mechanice.
+  Míček odrážející se od pálky je jeden z nejstarších nápadů ve videohrách,
+  a přesto se z něj po přidání věží, perků a jediné riskantní otázky po každém
+  bossovi stane hra, ve které každý run vypráví jiný příběh.
+</p>
+
+<p>
+  Zároveň navazuje na přístup, který jsem zvolil u Jetshotu: generovat grafiku
+  kódem místo ručního kreslení není omezení. Je to jiný způsob přemýšlení
+  o herní grafice – takový, ve kterém se programátoři můžou cítit jako doma.
+</p>
+
+<p>Díky za přečtení a hodně štěstí s krystaly!</p>

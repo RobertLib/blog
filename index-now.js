@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 const { execFileSync } = require("child_process");
-const path = require("path");
 const build = require("./build.js");
 const { submitToIndexNow } = build;
 const config = require("./config.js");
+
+const { LANGUAGES, DEFAULT_LANGUAGE } = require("./i18n.js");
 
 // Changes here affect the markup of every page (a test checks that every
 // module build.js loads is listed, except the SEO validator)
@@ -12,25 +13,82 @@ const SITE_WIDE_FILES = [
   "build.js",
   "config.js",
   "html-entities.js",
+  "i18n.js",
   "image-size.js",
 ];
 const SITE_WIDE_DIRS = [`${config.build.templatesDir}/`];
 
+// A content file's language and name, from its path inside articles/ or
+// pages/: "x.html" is in the default language, "cs/x.html" in Czech
+function splitLanguage(relativeFile) {
+  const [first, ...rest] = relativeFile.split("/");
+  const language =
+    rest.length > 0 && LANGUAGES.find((candidate) => candidate.dir === first);
+  return language
+    ? { language, name: rest.join("/") }
+    : { language: DEFAULT_LANGUAGE, name: relativeFile };
+}
+
+// URL of a page of a language; the empty path is its home page
+function pageUrlIn(baseUrl, language, pagePath = "") {
+  if (!language.dir) return pagePath ? `${baseUrl}/${pagePath}` : baseUrl;
+  return `${baseUrl}/${language.dir}/${pagePath}`;
+}
+
+// Path inside a content directory: "articles/cs/x.html" -> "cs/x.html"
+function relativeTo(dir, file) {
+  const prefix = `${dir}/`;
+  return file.startsWith(prefix) ? file.slice(prefix.length) : file;
+}
+
 function articleUrl(baseUrl, file) {
-  return `${baseUrl}/${path.basename(file)}`;
+  const { language, name } = splitLanguage(
+    relativeTo(config.build.articlesDir, file)
+  );
+  return pageUrlIn(baseUrl, language, name);
 }
 
-function listingUrls(baseUrl) {
-  return [baseUrl, `${baseUrl}/archive.html`];
+function pageFileUrl(baseUrl, file) {
+  const { language, name } = splitLanguage(
+    relativeTo(config.build.pagesDir, file)
+  );
+  return pageUrlIn(baseUrl, language, name);
 }
 
-function tagPageUrl(baseUrl, slug) {
-  return `${baseUrl}/tags/${slug}.html`;
+function listingUrls(baseUrl, language = DEFAULT_LANGUAGE) {
+  return [
+    pageUrlIn(baseUrl, language),
+    pageUrlIn(baseUrl, language, "archive.html"),
+  ];
 }
 
-// Every page of the site. Besides the articles, `site` may list standalone
-// pages (pageFiles), whether there is a projects page (hasProjects) and the
-// tag slugs of each article (tagsByArticle).
+function tagPageUrl(baseUrl, slug, language = DEFAULT_LANGUAGE) {
+  return pageUrlIn(baseUrl, language, `tags/${slug}.html`);
+}
+
+// The tag pages of an article (a path inside articles/), in its language
+function articleTagUrls(baseUrl, file, ...tagMaps) {
+  const relative = relativeTo(config.build.articlesDir, file);
+  const { language } = splitLanguage(relative);
+  return tagMaps
+    .flatMap((tags) => tags[relative] || [])
+    .map((slug) => tagPageUrl(baseUrl, slug, language));
+}
+
+// Languages the site has: the default one and every one with articles
+function siteLanguages(articleFiles) {
+  const codes = new Set(
+    articleFiles.map((file) => splitLanguage(file).language.code)
+  );
+  return LANGUAGES.filter(
+    (language) => language === DEFAULT_LANGUAGE || codes.has(language.code)
+  );
+}
+
+// Every page of the site, language by language. Besides the articles (paths
+// inside articles/: "x.html", "cs/x.html"), `site` may list standalone pages
+// (pageFiles, paths inside pages/), whether there is a projects page
+// (hasProjects) and the tag slugs of each article (tagsByArticle).
 function allSiteUrls({
   baseUrl,
   articleFiles,
@@ -38,14 +96,28 @@ function allSiteUrls({
   hasProjects = false,
   tagsByArticle = {},
 }) {
-  const tagSlugs = [...new Set(Object.values(tagsByArticle).flat())].sort();
-  return [
-    ...listingUrls(baseUrl),
-    ...(hasProjects ? [`${baseUrl}/projects.html`] : []),
-    ...pageFiles.map((file) => `${baseUrl}/${path.basename(file)}`),
-    ...tagSlugs.map((slug) => tagPageUrl(baseUrl, slug)),
-    ...articleFiles.map((file) => articleUrl(baseUrl, file)),
-  ];
+  const inLanguage = (language) => (file) =>
+    splitLanguage(file).language === language;
+  return siteLanguages(articleFiles).flatMap((language) => {
+    const tagSlugs = [
+      ...new Set(
+        Object.entries(tagsByArticle)
+          .filter(([file]) => inLanguage(language)(file))
+          .flatMap(([, slugs]) => slugs)
+      ),
+    ].sort();
+    return [
+      ...listingUrls(baseUrl, language),
+      ...(hasProjects ? [pageUrlIn(baseUrl, language, "projects.html")] : []),
+      ...pageFiles
+        .filter(inLanguage(language))
+        .map((file) => pageFileUrl(baseUrl, file)),
+      ...tagSlugs.map((slug) => tagPageUrl(baseUrl, slug, language)),
+      ...articleFiles
+        .filter(inLanguage(language))
+        .map((file) => articleUrl(baseUrl, file)),
+    ];
+  });
 }
 
 // Maps files changed by a push to the public URLs whose content changed.
@@ -65,16 +137,12 @@ function urlsForChangedFiles(changedFiles, site) {
     articleUrl(baseUrl, file)
   );
   // Tag pages list their articles' titles and descriptions
-  const changedTagUrls = changedArticles.flatMap((file) => {
-    const name = path.basename(file);
-    return [
-      ...(tagsByArticle[name] || []),
-      ...(previousTagsByArticle[name] || []),
-    ].map((slug) => tagPageUrl(baseUrl, slug));
-  });
+  const changedTagUrls = changedArticles.flatMap((file) =>
+    articleTagUrls(baseUrl, file, tagsByArticle, previousTagsByArticle)
+  );
   const changedPageUrls = changedFiles
     .filter((file) => file.startsWith(pagePrefix) && file.endsWith(".html"))
-    .map((file) => `${baseUrl}/${path.basename(file)}`);
+    .map((file) => pageFileUrl(baseUrl, file));
   // The projects list shows on the projects page and the home page
   const projectsChanged = changedFiles.includes(config.build.projectsFile);
 
@@ -91,11 +159,28 @@ function urlsForChangedFiles(changedFiles, site) {
   }
 
   const urls = [];
+  // The home page and archive of each language whose articles changed
+  const changedLanguages = LANGUAGES.filter((language) =>
+    changedArticles.some(
+      (file) =>
+        splitLanguage(relativeTo(config.build.articlesDir, file)).language ===
+        language
+    )
+  );
   if (changedArticleUrls.length > 0) {
-    urls.push(...listingUrls(baseUrl), ...changedArticleUrls, ...changedTagUrls);
+    urls.push(
+      ...changedLanguages.flatMap((language) => listingUrls(baseUrl, language)),
+      ...changedArticleUrls,
+      ...changedTagUrls
+    );
   }
   if (projectsChanged) {
-    urls.push(baseUrl, `${baseUrl}/projects.html`);
+    for (const language of siteLanguages(site.articleFiles || [])) {
+      urls.push(
+        pageUrlIn(baseUrl, language),
+        pageUrlIn(baseUrl, language, "projects.html")
+      );
+    }
   }
   urls.push(...changedPageUrls);
 
@@ -104,17 +189,21 @@ function urlsForChangedFiles(changedFiles, site) {
 
 // What the site consists of now, from the same sources the build uses
 function currentSite(baseUrl) {
-  const articles = build.getAllArticles();
+  const site = build.loadSite();
+  const inLanguage = (lang, items) =>
+    items.map((item) => build.langPath(item.filename, lang));
   return {
     baseUrl,
-    articleFiles: articles.map((article) => article.filename),
-    pageFiles: build.getAllPages().map((page) => page.filename),
-    hasProjects: build.loadProjects().length > 0,
+    articleFiles: site.flatMap(({ lang, articles }) => inLanguage(lang, articles)),
+    pageFiles: site.flatMap(({ lang, pages }) => inLanguage(lang, pages)),
+    hasProjects: site[0].projects.length > 0,
     tagsByArticle: Object.fromEntries(
-      articles.map((article) => [
-        article.filename,
-        article.tags.map((tag) => tag.slug),
-      ])
+      site.flatMap(({ lang, articles }) =>
+        articles.map((article) => [
+          build.langPath(article.filename, lang),
+          article.tags.map((tag) => tag.slug),
+        ])
+      )
     ),
   };
 }
@@ -149,8 +238,9 @@ function getChangedFiles(baseRef) {
     .filter(Boolean);
 }
 
-// Tag slugs each of `files` (repository paths) had at commit `ref`; files
-// that didn't exist then are left out
+// Tag slugs each of `files` (repository paths in articles/) had at commit
+// `ref`, by their path inside articles/; files that didn't exist then are
+// left out
 function tagsAtCommit(ref, files, cwd = process.cwd()) {
   const tags = {};
   for (const file of files) {
@@ -164,8 +254,12 @@ function tagsAtCommit(ref, files, cwd = process.cwd()) {
     } catch (error) {
       continue; // Added since ref
     }
-    tags[path.basename(file)] = build
-      .parseTags(build.extractMetadata(content).metadata.tags)
+    const relative = relativeTo(config.build.articlesDir, file);
+    tags[relative] = build
+      .localizeTags(
+        build.parseTags(build.extractMetadata(content).metadata.tags),
+        splitLanguage(relative).language.code
+      )
       .map((tag) => tag.slug);
   }
   return tags;

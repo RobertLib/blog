@@ -1,0 +1,380 @@
+<!-- title: S AI potřebujete méně npm balíčků, než si myslíte -->
+<!-- date: 2026-01-23 -->
+<!-- description: Jak AI mění rozhodování mezi npm balíčkem a vlastním kódem – kdy sáhnout po externí knihovně a kdy kvůli dlouhodobé stabilitě napsat vlastní řešení. -->
+<!-- tags: AI, Web Development -->
+
+<p>
+  V roce 2026 by si každý vývojář a systémový architekt měl položit jednu
+  otázku: potřebujeme v době, kdy kód generuje AI, ještě všechny ty npm balíčky,
+  na kterých jsme se stali závislí?
+</p>
+
+<p>
+  Odpověď není jednoduché ano, nebo ne. Myslím si ale, že AI zásadně mění poměr
+  sil v tom, jak bychom o externích závislostech měli přemýšlet, zejména
+  u enterprise aplikací, které musí zůstat stabilní a udržovatelné po celé roky.
+</p>
+
+<h2>Dilema závislostí</h2>
+
+<p>
+  Ujasněme si jednu věc: některé externí knihovny jsou naprosto nezbytné
+  a zůstanou takové i nadále. Frameworky jako React, Vue nebo Angular
+  představují obrovské ekosystémy, do jejichž testování, optimalizace a řešení
+  okrajových případů vložily velké týmy roky práce. Stavět React znovu od nuly
+  nechcete a ani byste neměli.
+</p>
+
+<p>
+  Pak je tu ale druhá kategorie: menší knihovny na formátování textu,
+  serializaci dat, validaci, práci s datem a časem, obsluhu formulářů a stovky
+  dalších „pomocných“ funkcí. A tady to začíná být zajímavé.
+</p>
+
+<p>
+  Pokaždé, když do projektu přidáme externí závislost, sázíme na:
+</p>
+
+<ul>
+  <li>
+    <strong>Další údržbu</strong> – budou to správce projektu zajímat i za dva
+    roky?
+  </li>
+  <li>
+    <strong>Stabilitu</strong> – nerozhodnou se všechno přepsat a rozbít
+    zpětnou kompatibilitu?
+  </li>
+  <li>
+    <strong>Kompatibilitu</strong> – bude to fungovat s příští verzí Node,
+    Reactu nebo TypeScriptu?
+  </li>
+  <li><strong>Bezpečnost</strong> – opraví se zranitelnosti včas?</li>
+  <li>
+    <strong>Velikost bundlu</strong> – neimportujeme megabajty kvůli jedné
+    jednoduché funkci?
+  </li>
+</ul>
+
+<p>
+  Při vývoji enterprise aplikací, zvlášť v konzervativním korporátním prostředí,
+  potřebujeme <strong>stabilitu nade vše</strong>. Nechceme po půl roce vývoje
+  zjistit, že klíčovou závislost už nikdo neudržuje nebo že verze 2.0 vyžaduje
+  kompletní přepsání našeho kódu.
+</p>
+
+<h2>Tradiční kompromis</h2>
+
+<p>
+  Dřív byla kalkulace jednoduchá: psát vlastní řešení bylo drahé. Proč utrácet čas
+  vývojářů i peníze za stavbu vlastní validační knihovny, když se dá nainstalovat
+  jedním příkazem?
+</p>
+
+<p>
+  <code>npm install some-validator</code> – hotovo. Problém vyřešen. Funkci
+  můžeme pustit ven.
+</p>
+
+<p>
+  Dávalo to dokonalý smysl v době, kdy byl nejvzácnějším zdrojem čas vývojářů.
+  Postavit od nuly i jen středně složitou funkcionalitu znamenalo hodiny psaní
+  kódu, testování a debugování. Vzít na sebe riziko externí závislosti se
+  v porovnání s náklady na vlastní vývoj vyplatilo.
+</p>
+
+<h2>AI mění celou rovnici</h2>
+
+<p>
+  Jenže teď je jedna věc jinak:
+  <strong>AI drasticky snížila náklady na psaní vlastního kódu.</strong>
+</p>
+
+<p>
+  Dnes stačí AI asistentovi pro programování popsat, co potřebujete, a během pár
+  minut máte funkční implementaci, která dělá přesně to, co chcete. Potřebujete
+  formátovat datum podle specifických požadavků vaší byznysové logiky? AI vám to
+  vygeneruje. Potřebujete validační pravidla pro svou konkrétní doménu? AI je
+  napíše. Potřebujete vlastní serializační formát? Hotovo.
+</p>
+
+<p>
+  Čas a úsilí potřebné k vytvoření malé až středně velké funkcionality radikálně
+  klesly. Co dřív trvalo hodiny nebo dny, dnes zabere minuty.
+</p>
+
+<blockquote>
+  <p>
+    Když klesnou náklady na vlastní vývoj, zásadně se mění i to, nakolik se
+    vyplatí sáhnout po hotovém.
+  </p>
+</blockquote>
+
+<h2>Nový rámec pro rozhodování</h2>
+
+<p>
+  Tahle změna znamená, že potřebujeme nový rámec pro rozhodování, kdy použít
+  externí závislost a kdy napsat vlastní řešení. Já o tom teď přemýšlím
+  takhle:
+</p>
+
+<h3>Externí knihovnu použijte, když:</h3>
+
+<ul>
+  <li>
+    <strong>Jde o extrémně složitou věc</strong> – celé frameworky, databázové
+    ovladače, kryptografické knihovny
+  </li>
+  <li>
+    <strong>Záleží na dodržení standardů</strong> – implementace OAuth, HTTP
+    klienty, obsluha protokolů
+  </li>
+  <li>
+    <strong>Knihovna je prověřená praxí</strong> – miliony stažení, roky
+    nasazení v produkci
+  </li>
+  <li>
+    <strong>Má aktivní, profesionální údržbu</strong> – stojí za ní firma nebo
+    zavedená nadace
+  </li>
+  <li>
+    <strong>Integrace do ekosystému je zásadní</strong> – klíčové závislosti, na
+    kterých stojí další nástroje
+  </li>
+</ul>
+
+<h3>Vlastní řešení napište, když:</h3>
+
+<ul>
+  <li>
+    <strong>Funkcionalita je malá až středně velká</strong> – dá se
+    implementovat na pár stovkách řádků
+  </li>
+  <li>
+    <strong>Požadavky jsou specifické</strong> – potřebujete přesně tohle
+    chování, ne jeho 90 %
+  </li>
+  <li>
+    <strong>Záleží na dlouhodobé stabilitě</strong> – enterprise aplikace, které
+    musí roky běžet beze změn
+  </li>
+  <li>
+    <strong>Knihovna vypadá opuštěně</strong> – poslední aktualizace je roky
+    stará, issues se hromadí
+  </li>
+  <li>
+    <strong>Kvůli drobnostem importujete obří balíčky</strong> – využíváte 1 %
+    funkcí knihovny
+  </li>
+  <li>
+    <strong>Strom závislostí je znepokojivý</strong> – jeden balíček s sebou
+    stáhne dalších 50
+  </li>
+</ul>
+
+<h2>Příklad z praxe</h2>
+
+<p>
+  Dám vám konkrétní příklad z nedávného projektu. Potřebovali jsme validovat
+  e-mail v registračním formuláři. Tradiční přístup by byl nainstalovat
+  validační knihovnu:
+</p>
+
+<pre><code>npm install validator
+</code></pre>
+
+<pre><code>import isEmail from 'validator/lib/isEmail'
+</code></pre>
+
+<p>
+  Abych byl fér, <code>validator</code> patří k tomu nejlepšímu, co mezi
+  závislostmi najdete: je vyzrálý, hojně používaný a sám žádné závislosti nemá.
+  Podle mých vlastních pravidel výše je to naprosto rozumná volba. My jsme ale
+  potřebovali jednu funkci z desítek, a i když importujeme jen tu jednu, celý
+  balíček je pořád závislost, kterou musíme průběžně aktualizovat. Bude ho za
+  5 let ještě někdo udržovat? Bude fungovat s budoucími verzemi Node?
+</p>
+
+<p>
+  Místo toho jsem požádal AI asistenta, aby napsal vlastní validátor e-mailů
+  podle našich konkrétních požadavků. O pár minut později, když jsem kód prošel
+  a doplnil testy, jsem měl funkci, která dělá přesně to, co potřebujeme, nic
+  víc, nic míň. Je <strong>naše</strong>. Máme ji pod kontrolou. Nerozbije se
+  s příchodem nové major verze. Nikdy nebude opuštěná. V tom je ten kompromis:
+  vzdali jsme se let oprav okrajových případů, které knihovna nasbírala,
+  a výměnou získali kód, kterému plně rozumíme.
+</p>
+
+<h2>Výhoda vlastnictví</h2>
+
+<p>
+  Vlastní kód vygenerovaný pomocí AI má ještě jednu výhodu, která se často
+  přehlíží: <strong>plně ho vlastníte a plně mu rozumíte</strong>.
+</p>
+
+<p>
+  Když použijete externí balíček, věříte kódu, který jste nečetli a kterému
+  nejspíš úplně nerozumíte. Když se něco rozbije, jste závislí na tom, že to
+  opraví někdo jiný. Když potřebujete drobnou úpravu, buď si balíček forknete
+  (a přiděláte si práci s údržbou), nebo ho obejdete (a vyrobíte technický
+  dluh).
+</p>
+
+<p>S vlastním kódem vygenerovaným pomocí AI získáte:</p>
+
+<ul>
+  <li>
+    <strong>Plný přehled</strong> – můžete si přečíst a pochopit každý řádek
+  </li>
+  <li>
+    <strong>Snadné úpravy</strong> – potřebujete změnit chování? Prostě kód
+    upravíte
+  </li>
+  <li>
+    <strong>Žádné konflikty verzí</strong> – kód není svázaný s cizími cykly
+    aktualizací
+  </li>
+  <li>
+    <strong>Zaručenou stabilitu</strong> – mění se jen tehdy, když se tak
+    rozhodnete
+  </li>
+  <li>
+    <strong>Příležitost se učit</strong> – váš tým rozumí tomu, jak funguje
+  </li>
+</ul>
+
+<h2>Stabilita především</h2>
+
+<p>
+  V konzervativním enterprise vývoji je stabilita na prvním místě. Když stavíte
+  aplikace, které musí spolehlivě běžet 5, 10 nebo 15 let, je každá externí
+  závislost potenciální časovaná bomba.
+</p>
+
+<p>
+  Viděl jsem projekty, které uvízly na mrtvém bodě, protože klíčovou závislost
+  přestal někdo udržovat. Sledoval jsem týmy, jak týdny aktualizují balíčky
+  kvůli nekompatibilním změnám, o které nikdy nestály. Debugoval jsem záludné
+  chyby, které přinesly „minor“ aktualizace.
+</p>
+
+<p>
+  S AI teď máme reálnou alternativu: napsat si kód sami. Ne proto, že bychom
+  byli proti open source nebo spolupráci, ale protože u určitých typů
+  funkcionality vede vlastní kód dlouhodobě k lepším výsledkům.
+</p>
+
+<h2>Praktická doporučení</h2>
+
+<p>Pokud tenhle přístup chcete zavést, tady je pár praktických doporučení:</p>
+
+<ol>
+  <li>
+    <strong>Buďte vybíraví</strong> – nepadejte do opačného extrému, kdy se
+    vyhýbáte všem závislostem. Soustřeďte se na malé až středně velké utility.
+  </li>
+  <li>
+    <strong>Dokumentujte kód od AI</strong> – přidejte komentáře, co dělá a proč
+    jste ho napsali sami.
+  </li>
+  <li>
+    <strong>Pište testy</strong> – ty umí AI vygenerovat taky. Nevynechávejte
+    testování jen proto, že se kód psal snadno.
+  </li>
+  <li>
+    <strong>Důkladně kontrolujte</strong> – AI dělá chyby. Před mergem nechte
+    kód zkontrolovat zkušené vývojáře.
+  </li>
+  <li>
+    <strong>Držte to jednoduché</strong> – pokud je řešení od AI příliš složité,
+    je to signál, že možná přece jen potřebujete knihovnu.
+  </li>
+  <li>
+    <strong>Udržujte si knihovnu vlastních utilit</strong> – vybudujte si
+    vlastní sbírku funkcí, kterým věříte.
+  </li>
+</ol>
+
+<h2>Kulturní posun</h2>
+
+<p>
+  Jde o kulturní posun v tom, jak stavíme software. JavaScriptový ekosystém roky
+  podporoval přístup „nainstaluj všechno“ – známé jsou případy balíčků s pár
+  řádky kódu, které měly miliony stažení.
+</p>
+
+<p>
+  Tahle kultura ale vznikla ve světě před AI, kdy bylo psaní kódu drahé. Teď
+  žijeme v jiném světě a naše postupy se musí vyvíjet s ním.
+</p>
+
+<p>
+  Nejde mi o syndrom NIH (Not Invented Here), kdy týmy arogantně odmítají
+  cokoli zvenčí. Jde mi o promyšlenější rozhodování, které bere v úvahu kontext
+  a počítá s vlastním vývojem s pomocí AI jako s legitimní možností – zejména
+  u enterprise aplikací, kde má přednost dlouhodobá stabilita.
+</p>
+
+<h2>Pohled do budoucna</h2>
+
+<p>
+  Myslím, že se tenhle trend bude zrychlovat. S tím, jak budou AI nástroje pro
+  programování schopnější a čím víc vývojářů se je naučí efektivně používat,
+  uvidíme:
+</p>
+
+<ul>
+  <li>
+    <strong>Méně mikrobalíčků</strong> – bude menší potřeba jednoúčelových
+    pomocných knihoven
+  </li>
+  <li>
+    <strong>Více interních knihoven</strong> – firmy si budou budovat sbírky
+    vlastních utilit
+  </li>
+  <li>
+    <strong>Vyšší laťku pro závislosti</strong> – externí balíčky budou
+    potřebovat pádnější zdůvodnění
+  </li>
+  <li>
+    <strong>Konsolidaci kolem velkých frameworků</strong> – skutečně nezbytné
+    knihovny si udrží dominantní postavení
+  </li>
+  <li>
+    <strong>Lepší vlastnictví kódu</strong> – týmy budou svému kódu rozumět
+    hlouběji
+  </li>
+</ul>
+
+<p>
+  Neznamená to, že externí závislosti zmizí. Znamená to, že se mění rovnováha.
+  Váhy, které se dřív výrazně přikláněly k „npm install“, se vyrovnávají
+  a v mnoha případech se už naklánějí k „napišme si to sami“.
+</p>
+
+<h2>Závěr</h2>
+
+<p>
+  Každý systémový architekt a senior vývojář by měl s ohledem na schopnosti AI
+  přehodnotit svou strategii závislostí. Stará pravidla o tom, kdy si něco
+  napsat sám a kdy sáhnout po hotovém, se mění.
+</p>
+
+<p>
+  U malé až středně velké funkcionality udělala AI z vlastního vývoje rychlou,
+  levnou a praktickou možnost. Když k tomu připočtete stabilitu, kterou přináší
+  vlastnictví kódu, rovnice se dramaticky mění – zejména u dlouho žijících
+  enterprise aplikací.
+</p>
+
+<p>
+  Otázka nezní „potřebujeme ještě externí knihovny?“, ale „které externí
+  knihovny opravdu potřebujeme?“ A odpověď čím dál častěji zní: méně, než si
+  myslíme.
+</p>
+
+<p>
+  <strong
+    >AI nám nepomáhá jen psát kód rychleji. Mění i to, jaký kód bychom vůbec
+    měli psát.</strong
+  >
+</p>

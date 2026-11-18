@@ -1,0 +1,210 @@
+<!-- title: Jak jsem postavil web pro hraní DOSových her v prohlížeči -->
+<!-- date: 2025-07-12 -->
+<!-- description: Jak jsem postavil Old School Games, web pro hraní klasických DOSových her v prohlížeči, s DOSBoxem a záměrně staromódním stackem renderovaným na serveru. -->
+<!-- image: images/old-school-games/homepage.webp -->
+<!-- tags: Games, Web Development, WebAssembly -->
+
+<p>
+  V době, kdy moderní vývoj webu často znamená složité frameworky, nespočet
+  závislostí a renderování na straně klienta, je na tom něco osvěžujícího
+  postavit webovou aplikaci, která zůstává věrná starému dobrému přístupu. Dnes
+  vám chci představit
+  <a href="https://oldschoolgames.eu/" target="_blank" rel="noopener"
+    >Old School Games</a
+  >, retro herní platformu, kterou vyvíjím a která nejen oslavuje klasické
+  DOSové hry, ale zároveň se hlásí i ke způsobu vývoje webu, jaký se používal
+  kdysi.
+</p>
+
+<h2>Co je Old School Games?</h2>
+
+<p>
+  Old School Games je webová platforma, která se věnuje uchování zlatého věku
+  PC her a jeho zpřístupnění. Web nabízí pečlivě vybranou sbírku
+  klasických DOSových her z 80. a 90. let – tituly jako System Shock,
+  Monkey Island, Civilization, Wolfenstein 3D a mnoho dalších. Výjimečný je
+  tím, že se všechny tyto hry dají hrát přímo v prohlížeči bez stahování
+  a složitého nastavování.
+</p>
+
+<figure>
+  <img
+    src="images/old-school-games/homepage.webp"
+    alt="Domovská stránka Old School Games v modrém retro vzhledu: nabídka žánrů, hra týdne, novinky a doporučené hry"
+  />
+  <figcaption>Domovská stránka <a href="https://oldschoolgames.eu/" target="_blank" rel="noopener">Old School Games</a>, jak vypadá dnes (snímek přidán v roce 2026).</figcaption>
+</figure>
+
+<p>
+  Platforma funguje jako digitální muzeum herní historie – s podrobnými popisy
+  každé hry, informacemi o vývojářích, screenshoty a možností si tyto klasiky
+  okamžitě zahrát. Je to nostalgický návrat do doby, kdy se hry tvořily srdcem
+  i duší, s pixelovou grafikou, nezapomenutelnou hudbou a tou jedinečnou
+  atmosférou, která definovala celou jednu herní generaci.
+</p>
+
+<h2>Technická filozofie: vývoj webu postaru</h2>
+
+<p>
+  Na Old School Games je obzvlášť zajímavé, že retro hry jen neoslavuje – je
+  i sám postavený retro přístupem k vývoji webu. V souladu s filozofií
+  jednoduchosti a věrnosti době, kterou představuje, je celá platforma
+  postavená na tradičních serverových technologiích:
+</p>
+
+<ul>
+  <li>
+    <strong>Node.js a Express</strong> – Pro backendový server a routing
+  </li>
+  <li>
+    <strong>PostgreSQL</strong> – Přímé databázové dotazy bez režie ORM
+  </li>
+  <li>
+    <strong>Šablony EJS</strong> – Renderování na serveru pro rychlé stránky
+    přátelské k SEO
+  </li>
+  <li>
+    <strong>Minimum JavaScriptu na klientovi</strong> – Jen tolik, kolik je
+    potřeba pro základní interakce
+  </li>
+</ul>
+
+<p>
+  Tento přístup kopíruje to, jak se weby stavěly v 90. letech a na začátku
+  nultých let – převážně s renderováním na serveru a minimem JavaScriptu na
+  klientovi. Je to záměrná volba v souladu s posláním platformy uchovávat
+  minulost a vzdávat jí hold.
+</p>
+
+<h2>Proč má renderování na serveru pořád smysl</h2>
+
+<p>
+  V dnešním světě vývoje webu, kterému vládne JavaScript, ukazuje Old School
+  Games, že renderování na serveru (SSR) má pořád výrazné
+  výhody:
+</p>
+
+<ul>
+  <li>
+    <strong>Výhody pro SEO</strong> – Stránky se kompletně vyrenderují na
+    serveru, takže je vyhledávače snadno zaindexují
+  </li>
+  <li>
+    <strong>Výkon</strong> – Rychlé první načtení stránky bez čekání na
+    JavaScriptové bundly
+  </li>
+  <li>
+    <strong>Odolnost</strong> – Procházení a čtení funguje i s vypnutým
+    JavaScriptem
+  </li>
+  <li>
+    <strong>Jednoduchost</strong> – Žádné složité buildovací procesy ani správa stavu
+  </li>
+</ul>
+
+<p>
+  Výsledkem je web, který se rychle načítá, spolehlivě funguje a nabízí skvělý
+  uživatelský zážitek na všech zařízeních a ve všech prohlížečích – podobně
+  jako odolné a spolehlivé hry, které hostí.
+</p>
+
+<h2>Sbírka her a funkce</h2>
+
+<p>
+  Old School Games nabízí působivou sbírku napříč mnoha žánry:
+</p>
+
+<ul>
+  <li>
+    <strong>Strategie</strong> – Civilization, Dune II, Transport Tycoon
+    Deluxe
+  </li>
+  <li>
+    <strong>Adventury</strong> – Série Monkey Island, Indiana Jones and
+    the Fate of Atlantis
+  </li>
+  <li>
+    <strong>Akční hry</strong> – Duke Nukem 3D, Wolfenstein 3D, Doom II
+  </li>
+  <li><strong>RPG</strong> – System Shock, Lands of Lore, série Ishar</li>
+  <li><strong>Simulátory</strong> – SimCity, Star Wars: TIE Fighter</li>
+</ul>
+
+<p>Platforma nabízí i užitečné funkce, například:</p>
+
+<ul>
+  <li>Procházení podle abecedy a filtrování podle žánrů</li>
+  <li>Informace o vývojářích a vydavatelích</li>
+  <li>Řazení podle roku vydání</li>
+  <li>Zvýrazněná hra týdne</li>
+  <li>Sekce nedávno přidaných her</li>
+</ul>
+
+<h2>Zajímavosti z technického řešení</h2>
+
+<p>
+  Stavba retro herní platformy přináší specifické technické výzvy. Hry běží
+  v DOSBoxu zkompilovaném do WebAssembly, díky čemuž klasické DOSové programy
+  fungují i v moderních prohlížečích. To vyžaduje pečlivou optimalizaci, aby
+  byl výkon dobrý a zároveň zůstala zachovaná kompatibilita napříč různými
+  prohlížeči a zařízeními.
+</p>
+
+<p>
+  Struktura databáze je navržená tak, aby efektivně zvládala metadata her,
+  uživatelské preference a stavy her. Použití PostgreSQL s přímými SQL dotazy
+  (bez ORM) dává maximální kontrolu nad výkonem databáze a umožňuje složité
+  dotazy potřebné pro filtrování a vyhledávání ve sbírce her.
+</p>
+
+<h2>Budoucnost retro her</h2>
+
+<p>
+  Old School Games je víc než jen herní platforma – je to projekt, který má
+  tyto hry zachovat. S postupem času těmto klasickým hrám hrozí, že upadnou
+  v zapomnění nebo se stanou nedostupnými, protože hardware i software
+  zastarávají. Tím, že je zpřístupníme v moderních prohlížečích, zajistíme, aby
+  si i budoucí generace mohly zahrát hry, které formovaly celý herní průmysl.
+</p>
+
+<p>
+  Platforma dál roste a pravidelně přibývají nové hry. Přednost má stále
+  kvalita před kvantitou – každá hra je pečlivě vybraná pro svůj historický
+  význam a herní hodnotu.
+</p>
+
+<h2>Závěr</h2>
+
+<p>
+  Old School Games dokazuje, že nejlepší cesta je někdy ta nejjednodušší. Díky
+  tradičním webovým technologiím a renderování na serveru nabízí platforma
+  rychlý, spolehlivý a přístupný zážitek, který ctí jak hry, které hostí, tak
+  postupy vývoje webu své doby.
+</p>
+
+<p>
+  Ať už jste herní nadšenec, který si chce oživit vzpomínky na dětství,
+  vývojář, kterého zajímá uchovávání retro her, nebo prostě zvědavec se zájmem
+  o klasický herní design, Old School Games nabízí jedinečný pohled do zlatého
+  věku PC her.
+</p>
+
+<p>
+  Navštivte
+  <a href="https://oldschoolgames.eu/" target="_blank" rel="noopener"
+    >Old School Games</a
+  >
+  a
+  vydejte se zpátky do doby, kdy byly hry jednodušší, ale dalo by se říct, že
+  i nezapomenutelnější. Spusťte si některou z klasik a zažijte kouzlo, které
+  definovalo celou jednu herní generaci.
+</p>
+
+<blockquote>
+  <p>
+    <em
+      >Ve světě složitých moderních her někdy ty nejhlubší zážitky přinášejí ty
+      nejprostší pixely a nejpřímočařejší hratelnost.</em
+    >
+  </p>
+</blockquote>

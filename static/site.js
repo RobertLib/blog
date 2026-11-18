@@ -4,6 +4,27 @@
 
   var root = document.documentElement;
 
+  // Text this script writes, in the page's language (<html lang>)
+  var STRINGS = {
+    en: {
+      toDark: "Switch to dark theme",
+      toLight: "Switch to light theme",
+      copied: "Copied",
+      play: "Play {name}",
+      playDefault: "Play in your browser",
+      embedded: "Embedded content"
+    },
+    cs: {
+      toDark: "Přepnout na tmavý motiv",
+      toLight: "Přepnout na světlý motiv",
+      copied: "Zkopírováno",
+      play: "Spustit {name}",
+      playDefault: "Spustit v prohlížeči",
+      embedded: "Vložený obsah"
+    }
+  };
+  var text = STRINGS[(root.lang || "").split("-")[0]] || STRINGS.en;
+
   /* ---------- Theme ---------- */
   var toggle = document.querySelector("[data-theme-toggle]");
 
@@ -18,9 +39,9 @@
 
   function syncToggleLabel() {
     if (!toggle) return;
-    var next = currentTheme() === "dark" ? "light" : "dark";
-    toggle.setAttribute("aria-label", "Switch to " + next + " theme");
-    toggle.setAttribute("title", "Switch to " + next + " theme");
+    var label = currentTheme() === "dark" ? text.toLight : text.toDark;
+    toggle.setAttribute("aria-label", label);
+    toggle.setAttribute("title", label);
   }
 
   // The browser UI colour follows the chosen theme, not the system's
@@ -170,7 +191,7 @@
         .writeText(copyBtn.getAttribute("data-copy-link"))
         .then(function () {
           if (!copyLabel) return;
-          copyLabel.textContent = "Copied";
+          copyLabel.textContent = text.copied;
           clearTimeout(copyTimer);
           copyTimer = setTimeout(function () {
             copyLabel.textContent = copyText;
@@ -212,7 +233,7 @@
     label.className = "embed__play-text";
     label.textContent =
       embed.getAttribute("data-embed-label") ||
-      (name ? "Play " + name : "Play in your browser");
+      (name ? text.play.replace("{name}", name) : text.playDefault);
     if (touchNote && touchOnly) {
       var note = document.createElement("small");
       note.className = "embed__play-note";
@@ -226,7 +247,7 @@
     function play() {
       var frame = document.createElement("iframe");
       frame.src = src;
-      frame.title = name || "Embedded content";
+      frame.title = name || text.embedded;
       frame.className = "embed__frame";
       frame.setAttribute("allow", "autoplay; fullscreen; gamepad");
       frame.setAttribute("allowfullscreen", "");

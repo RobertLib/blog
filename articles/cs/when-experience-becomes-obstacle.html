@@ -1,0 +1,256 @@
+<!-- title: Znal jsem CSS příliš dobře na to, abych pochopil Tailwind -->
+<!-- date: 2025-11-28 -->
+<!-- description: Jak jsem se kvůli hluboké znalosti CSS roky bránil Tailwindu – osobní příběh o tom, kdy nás zkušenost zaslepí vůči inovacím a proč se i experti můžou mýlit. -->
+<!-- tags: Web Development, Career -->
+
+<p>
+  CSS píšu prakticky od chvíle, kdy vzniklo. Za ta léta jsem dokonale zvládl
+  všechny nuance kaskády, pravidla specificity i umění psát udržovatelné
+  styly. Byl jsem na tuhle odbornost hrdý. Jenže nepříjemná pravda je taková,
+  že právě kvůli ní jsem neviděl jedno z nejvýznamnějších zlepšení v tom, jak
+  stylujeme webové aplikace.
+</p>
+
+<p>
+  Tohle je příběh o Tailwind CSS, ale hlavně je to příběh o tom, jak může být
+  zkušenost někdy naší největší překážkou v dalším růstu.
+</p>
+
+<h2>Kaskádové myšlení</h2>
+
+<p>
+  Slovo „cascading“ (kaskádové) v názvu Cascading Style Sheets není náhoda.
+  CSS vzniklo s konkrétní filozofií: globální pravidla platí pro celý
+  dokument. Když na stejný prvek míří několik pravidel, o vítězi rozhoduje
+  kaskáda – podle původu, specificity a pořadí ve zdrojovém kódu. Dědičnost
+  přitom předává vlastnosti jako barvu nebo písmo z rodičovského prvku na
+  potomky.
+</p>
+
+<p>
+  Po desetiletí to dávalo dokonalý smysl. Servery renderovaly kompletní HTML
+  stránky a CSS nabízelo krásný způsob, jak z jednoho centrálního místa
+  definovat konzistentní vzhled. Napiš jednou, použij všude. Kaskáda byla
+  elegantní, efektivní a přesně to, co jsme potřebovali.
+</p>
+
+<p>
+  Když se začala objevovat řešení pro stylování v JavaScriptu, okamžitě jsem
+  je zavrhl. <strong>Tohle jde proti všemu, na čem CSS stojí,</strong> říkal
+  jsem si. A když pak přišel Tailwind se svým utility-first přístupem? Byl
+  jsem upřímně zděšený.
+</p>
+
+<h2>Zděšení z utility tříd</h2>
+
+<p>
+  Dodnes si pamatuju své první setkání s kódem v Tailwindu. Nekonečné řetězce
+  záhadných názvů tříd, které zaplevelovaly HTML:
+</p>
+
+<pre><code>&lt;div class="flex items-center justify-between p-4 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"&gt;
+</code></pre>
+
+<p>
+  „To nemyslíte vážně,“ říkal jsem kolegům. „Tohle je přesně to, proti čemu
+  jsme roky bojovali. Jsou to inline styly s kroky navíc. Porušuje to
+  oddělení zodpovědností. Údržba bude noční můra. Tohle je antipattern!“
+</p>
+
+<p>
+  Byl jsem přesvědčený, že kdo tyhle zjevné problémy nevidí, prostě CSS
+  dostatečně do hloubky nerozumí. Že jsou to naivní vývojáři, které svedl
+  nový nablýskaný nástroj a kteří nedokážou ocenit eleganci správně
+  strukturovaných stylů.
+</p>
+
+<p>
+  <strong>Mýlil jsem se.</strong>
+</p>
+
+<h2>Svět se změnil a já si toho nevšiml</h2>
+
+<p>
+  Můj úsudek zastřený zkušenostmi přehlédl jednu věc: svět webového vývoje se
+  zásadně proměnil. Už jsme nestavěli stránky renderované na serveru. Stavěli
+  jsme aplikace založené na komponentách.
+</p>
+
+<p>
+  Ve světě komponent se kaskáda, pro kterou bylo CSS navržené, mění z výhody
+  v přítěž. Vue a Angular mají aspoň vestavěné styly omezené na komponentu,
+  ale v Reactu – kde trávím většinu času – jste na to sami. Když stavíte
+  izolované komponenty s obyčejnými CSS soubory:
+</p>
+
+<ul>
+  <li>
+    <strong>Globální styly se stávají nebezpečnými</strong> – změna stylu
+    v jedné komponentě může nečekaně ovlivnit jinou
+  </li>
+  <li>
+    <strong>Pojmenování se mění v noční můru</strong> – abyste se vyhnuli
+    konfliktům, potřebujete čím dál složitější názvy ve stylu BEM
+  </li>
+  <li>
+    <strong>Velikost bundlu roste lineárně</strong> – každá nová komponenta
+    přidá další CSS, i když používá podobné styly
+  </li>
+  <li>
+    <strong>Přepínání kontextu snižuje produktivitu</strong> – skákání mezi
+    HTML a CSS soubory vytrhává ze soustředění
+  </li>
+</ul>
+
+<p>
+  Shadow DOM se pokusil vyřešit problém zapouzdření, ale neodstranil zásadní
+  potíž s bobtnajícím CSS ani mentální zátěž spojenou s údržbou oddělených
+  stylů.
+</p>
+
+<h2>Prozření s Tailwindem</h2>
+
+<p>
+  Když jsem Tailwindu konečně dal poctivou šanci, něco mi docvaklo.
+  „Problémy“, které jsem v něm viděl, byly ve skutečnosti řešením problémů,
+  které jsem si odmítal přiznat:
+</p>
+
+<ul>
+  <li>
+    <strong>Žádné vymýšlení názvů</strong> – nespočet hodin jsem strávil
+    debatami o názvech tříd. S Tailwindem prostě popíšete, co chcete
+  </li>
+  <li>
+    <strong>Kolokace</strong> – styly jsou zapsané přímo na prvku, takže
+    jejich změna nemůže ovlivnit jiné komponenty
+  </li>
+  <li>
+    <strong>Velikost bundlu se ustálí</strong> – CSS přestane růst spolu
+    s aplikací, protože pořád znovu používáte stejné utility třídy
+  </li>
+  <li>
+    <strong>Okamžitá vizuální zpětná vazba</strong> – změníte třídu, vidíte
+    výsledek, žádné přepínání mezi soubory
+  </li>
+</ul>
+
+<p>
+  Nelíbí se vám dlouhé řetězce tříd? Použijte vzor s funkcí <code>cn()</code>
+  a rozdělte je na víc řádků. Nejde o součást samotného Tailwindu, je to jen
+  malá pomocná funkce postavená na clsx a tailwind-merge, kterou proslavilo
+  shadcn/ui. Strukturu máte zcela ve svých rukou:
+</p>
+
+<pre><code>className={cn(
+  "flex items-center justify-between",
+  "p-4 bg-white rounded-lg",
+  "shadow-md hover:shadow-lg",
+  "transition-shadow duration-200"
+)}
+</code></pre>
+
+<p>
+  Tailwind neignoroval principy CSS z neznalosti. Rozpoznal, že tyhle
+  principy vznikly pro jinou dobu, a nabídl pragmatické řešení pro dnešní
+  svět komponent.
+</p>
+
+<h2>Zadostiučinění v éře AI</h2>
+
+<p>
+  A pak přišel vývoj s pomocí AI a ukázalo se, že přístup Tailwindu byl skoro
+  prorocký.
+</p>
+
+<p>
+  Když AI požádáte o nastylování komponenty, je Tailwind dokonalý jazyk. Styly
+  jsou deklarativní, explicitní a přímo navázané na prvky. Není potřeba
+  rozumět složitým vztahům v kaskádě, nemusíte nic hledat v oddělených
+  souborech ani se bát nechtěných vedlejších efektů.
+</p>
+
+<p>
+  AI si přečte komponentu s Tailwindem a okamžitě přesně ví, jak vypadá. Styly
+  dokáže precizně upravovat, protože všechno má přímo před sebou – explicitně
+  a pohromadě. Přímočarost, kterou jsem kdysi odmítal jako primitivní, se
+  ukázala být přesně tím, co moderní nástroje potřebovaly.
+</p>
+
+<blockquote>
+  <p>To, čemu jsem říkal antipattern, ve skutečnosti předběhlo dobu.</p>
+</blockquote>
+
+<h2>Lekce pokory</h2>
+
+<p>
+  Tahle zkušenost mě naučila něco cenného o odbornosti. Hluboké znalosti
+  v jakémkoli oboru vytvářejí mentální modely, silné názory na to, jak by věci
+  <em>měly</em> fungovat. Tyhle modely jsou většinou užitečné, ale můžou se
+  z nich stát i vězení.
+</p>
+
+<p>Když nový přístup odporuje vašemu mentálnímu modelu, máte dvě možnosti:</p>
+
+<ol>
+  <li>Usoudit, že nový přístup je špatně, protože nezapadá do vašeho modelu</li>
+  <li>Zpochybnit, jestli váš model v současném kontextu ještě platí</li>
+</ol>
+
+<p>
+  Já jsem až příliš dlouho volil první možnost. Moje odbornost v tom,
+  „jak má CSS fungovat“, mi zakryla skutečnost, že problémy, které mělo CSS
+  řešit, se mezitím změnily.
+</p>
+
+<h2>Zkušenost vs. přizpůsobivost</h2>
+
+<p>
+  Neznamená to, že je zkušenost bezcenná. Ani zdaleka. Díky zkušenosti
+  rozpoznáváme vzorce, vyhýbáme se známým nástrahám a máme základ pro
+  pochopení nových konceptů.
+</p>
+
+<p>Zkušenost ale potřebuje společníka: <strong>intelektuální pokoru.</strong></p>
+
+<ul>
+  <li>
+    Když se něco nového prosazuje navzdory vašim námitkám, zeptejte se sami
+    sebe, <em>proč</em> to má úspěch
+  </li>
+  <li>
+    Když mladší vývojáři přijmou něco, co vy odmítáte, připusťte, že možná
+    vidí něco, co vy ne
+  </li>
+  <li>
+    Když vaše kritika zní jako „takhle to přece nebylo navržené“, zpochybněte,
+    jestli ten původní návrh ještě platí
+  </li>
+</ul>
+
+<p>
+  Technologie jako Tailwind neuspěly s požehnáním zkušených vývojářů – často
+  uspěly navzdory našim námitkám. Obor šel dál a někteří
+  z nás nerudných veteránů nakonec museli přiznat, že jsme se mýlili.
+</p>
+
+<h2>Jak dál</h2>
+
+<p>
+  Dnes je Tailwind v moderním webovém vývoji v podstatě standardem. Komunita
+  vyrostla, nástroje jsou výborné a i ti nejskeptičtější vývojáři se z velké
+  části nechali přesvědčit. Jsem jedním z nich.
+</p>
+
+<p>
+  Tuhle lekci se ale snažím mít pořád na paměti: až se příště objeví něco
+  nového, co bude odporovat mému hluboce zakořeněnému přesvědčení o tom, „jak
+  by věci měly fungovat“, zkusím se zastavit. Zkusím pochopit, jaký problém to
+  řeší, pro jaký kontext to vzniklo a jestli jsou moje mentální modely ještě
+  aktuální.
+</p>
+
+<p>
+  Protože někdy je ten nerudný starý vývojář, přesvědčený, že se všichni
+  ostatní mýlí… právě tím, kdo se potřebuje naučit něco nového.
+</p>

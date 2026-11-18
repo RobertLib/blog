@@ -1,0 +1,169 @@
+<!-- title: Next.js App Router v produkci: upřímné hodnocení -->
+<!-- date: 2025-05-31 -->
+<!-- description: Upřímný pohled na App Router a Server Components v Next.js v produkci: autentizace, mentální zátěž, stavy načítání a skrytá složitost. -->
+<!-- tags: Next.js, Web Development -->
+
+<p>
+  Když Next.js představil App Router se Server Components, vypadalo to jako
+  revoluční řešení mnoha problémů SPA. Lepší SEO, rychlejší načítání a příslib
+  efektivnějšího vývoje. S touto technologií pracuji od jejího uvedení a chci
+  se podělit o své upřímné zkušenosti – o to dobré i o to frustrující.
+</p>
+
+<h2>Původní příslib</h2>
+
+<p>
+  Zdálo se, že App Router a jeho Server Components řeší zásadní problémy, které
+  single page aplikace trápí už léta:
+</p>
+
+<ul>
+  <li>
+    <strong>SEO</strong> – stránky přicházejí vykreslené na serveru, stejně
+    jako už s Pages Routerem, a jsou připravené pro vyhledávače bez dalšího
+    nastavování
+  </li>
+  <li>
+    <strong>Problémy s výkonem</strong> – menší bundly a rychlejší první
+    načtení
+  </li>
+  <li>
+    <strong>Složitost načítání dat</strong> – jednodušší tok dat díky načítání
+    na serveru
+  </li>
+</ul>
+
+<p>
+  V příkladech typu Hello World to vypadalo fantasticky. Oddělení serverového
+  a klientského kódu působilo čistě a logicky. Produkční aplikace ale
+  vyprávějí jiný příběh.
+</p>
+
+<h2>Střet s realitou</h2>
+
+<h3>Složitost autentizace</h3>
+
+<p>
+  Jednou z prvních velkých překážek, na které narazíte, je autentizace. U
+  klasických SPA spravujete stav session na jednom místě – na klientovi. Se
+  Server Components musíte session řešit na serveru i na klientovi. Tahle
+  duplicita není jen nepohodlná, je to zdroj chyb a nekonzistencí.
+</p>
+
+<pre><code>// Server-side session handling
+async function getServerSession() {
+  // Server-side session logic
+}
+
+// Client-side session handling
+function useClientSession() {
+  // Client-side session logic
+}
+
+// Now you need to keep these in sync...</code></pre>
+
+<h3>Mentální zátěž</h3>
+
+<p>Z každého rozhodnutí o komponentě se stává složitá otázka:</p>
+
+<ul>
+  <li>Má to být serverová, nebo klientská komponenta?</li>
+  <li>Kde mám tato data načíst – na serveru, na klientovi, nebo na obou?</li>
+  <li>Jak spolu budou tyto komponenty spolupracovat?</li>
+  <li>
+    Co když v serverové komponentě potřebuji interaktivitu na straně klienta?
+  </li>
+</ul>
+
+<p>
+  Tohle neustálé rozhodování představuje značnou kognitivní zátěž. Místo aby
+  se vývojáři soustředili na business logiku, tráví čas navrhováním hranice
+  mezi serverovým a klientským kódem.
+</p>
+
+<h3>Stavy načítání a streaming</h3>
+
+<p>
+  Streamování dat zní teoreticky skvěle, ale implementovat praktické stavy
+  načítání je překvapivě složité:
+</p>
+
+<ul>
+  <li><strong>Načítání na úrovni stránky</strong> – příliš hrubé pro dobré UX</li>
+  <li>
+    <strong>Hranice Suspense</strong> – fungují pro bloky komponent, ale co
+    jemnější stavy načítání?
+  </li>
+  <li>
+    <strong>Částečné vykreslování</strong> – zobrazit statický obsah, zatímco
+    se načítají dynamické části, se streamingem jde, ale každá dynamická část
+    potřebuje vlastní hranici a fallback
+  </li>
+</ul>
+
+<p>
+  Nakonec vytváříte specializované komponenty pro každý drobný kousek, který
+  potřebuje vlastní obsluhu načítání. Z jednoduchosti rychle nic nezbude.
+</p>
+
+<blockquote>
+  <p>
+    Složitost, kterou ušetříte na jednom místě, se často vynoří jinde – někdy
+    v horší podobě.
+  </p>
+</blockquote>
+
+<h2>Širší souvislosti</h2>
+
+<p>
+  Tahle zkušenost se Server Components v Next.js odráží širší trend ve
+  frontendovém vývoji, který mě znepokojuje. Místo abychom využívali nativní
+  schopnosti prohlížeče a zjednodušovali si vývoj, přidáváme další vrstvy
+  abstrakce, ve kterých se bez rozsáhlých mentálních modelů nedá vyznat.
+</p>
+
+<p>
+  Webový vývoj by se měl postupem času zjednodušovat. Prohlížeče toho zvládnou
+  víc než kdy dřív – mají nativní moduly, lepší API a vyšší výkon. Přesto dál
+  stavíme frameworky, které tato vylepšení schovávají za abstrakce a vytvářejí
+  novou složitost.
+</p>
+
+<h2>Co to znamená pro vývojáře</h2>
+
+<p>
+  Netvrdím, že jsou Server Components samy o sobě špatné – řeší skutečné
+  problémy a ve správném kontextu můžou být přínosné. Propast mezi
+  marketingovými sliby a realitou v produkci je ale značná.
+</p>
+
+<p>
+  Než nasadíte jakoukoli novou technologii, zvlášť takovou, která zásadně mění
+  architekturu vaší aplikace, zvažte:
+</p>
+
+<ul>
+  <li>Řešíte skutečný problém, nebo se ženete za hypem?</li>
+  <li>Kolik bude stát dlouhodobá údržba?</li>
+  <li>Jak to ovlivní produktivitu vašeho týmu?</li>
+  <li>Nedosáhli byste stejných cílů jednodušším řešením?</li>
+</ul>
+
+<h2>Co dál</h2>
+
+<p>
+  Tahle zkušenost mě inspirovala k tomu, abych začal víc sdílet upřímné
+  pohledy na moderní webové technologie. V naší komunitě je příliš mnoho hypu
+  a málo kritické analýzy.
+</p>
+
+<p>
+  V dalších článcích chci rozebírat skutečné výhody a nevýhody populárních
+  frameworků a knihoven – na základě reálných zkušeností z produkce, ne
+  teoretických přínosů.
+</p>
+
+<p>
+  Protože nakonec je nejlepší ta technologie, která vám pomáhá efektivně
+  stavět skvělé produkty – ne ta s nejpůsobivějším demem.
+</p>

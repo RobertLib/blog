@@ -1,0 +1,265 @@
+<!-- title: Jetshot: střílečka bez spritů ve Swiftu a SpriteKitu -->
+<!-- date: 2026-01-31 -->
+<!-- description: Jak vznikla 2D arkádová střílečka pro iOS ve Swiftu a SpriteKitu: nativní vývoj, level design řízený daty a vektorová grafika. -->
+<!-- image: images/jetshot/cover.webp -->
+<!-- tags: Games, iOS, Swift -->
+
+<p>
+  S radostí vám představuji svůj nejnovější projekt –
+  <a
+    href="https://apps.apple.com/us/app/jetshot/id6754814450"
+    target="_blank"
+    rel="noopener"
+    >Jetshot</a
+  >, 2D arkádovou střílečku pro iOS. Díky tomuto projektu jsem se mohl ponořit
+  hluboko do nativního vývoje her pro iOS a prozkoumat výkonný, a přesto
+  nedoceněný framework SpriteKit.
+</p>
+
+<p>
+  Jetshot je bezplatná arkádová střílečka s postupně rostoucí obtížností,
+  navržená na krátké chvíle zábavy, které vám nezaberou moc času. Pokud máte
+  zařízení s iOS, budu nadšený, když ji vyzkoušíte a ohodnotíte v App
+  Storu!
+</p>
+
+<figure class="gallery">
+  <img src="images/jetshot/wave.webp" alt="Záběr ze hry Jetshot: hráčova loď střílí do vlny neonových nepřátel" />
+  <img src="images/jetshot/boss.webp" alt="Souboj s bossem v Jetshotu s ukazatelem zdraví v horní části obrazovky" />
+  <img src="images/jetshot/overdrive.webp" alt="Režim Overdrive: dávka žlutých střel likviduje nepřátelskou palbu" />
+  <figcaption>Jetshot na iPhonu. Ve hře není jediný sprite: každý tvar je vektorová grafika definovaná v kódu.</figcaption>
+</figure>
+
+<h2>Proč vyvíjet hry ve Swiftu?</h2>
+
+<p>
+  Když jsem se rozhodl vyvinout hru čistě pro iOS, byl Swift jasnou volbou.
+  Jako kompilovaný jazyk s moderními prvky a čistou syntaxí dělá z vývoje her
+  překvapivě příjemnou práci. Jazyk nabízí:
+</p>
+
+<ul>
+  <li>
+    <strong>Moderní jazykové prvky</strong> – protokolově orientované
+    programování, generika a silnou typovou bezpečnost
+  </li>
+  <li>
+    <strong>Vynikající výkon</strong> – kompilovaný kód běží na zařízeních
+    s iOS efektivně
+  </li>
+  <li>
+    <strong>Čistou syntaxi</strong> – oproti Objective-C méně boilerplatu,
+    takže herní logika zůstává čitelná
+  </li>
+  <li>
+    <strong>Prvotřídní integraci s iOS</strong> – bezproblémový přístup ke
+    všem frameworkům a funkcím iOS
+  </li>
+</ul>
+
+<p>
+  Swift je bohužel úzce svázaný s ekosystémem Applu, a proto se v herním
+  průmyslu obecně používá jen zřídka. Většina herních vývojářů dává
+  přednost multiplatformním řešením jako Unity nebo Unreal Engine, aby se
+  dostali na více platforem najednou. Jetshot ale mířil čistě na iOS,
+  takže práce se Swiftem byla skvělá zkušenost bez kompromisů, které
+  multiplatformní frameworky často vyžadují.
+</p>
+
+<h2>SpriteKit: skrytý klenot od Applu</h2>
+
+<p>
+  Jako herní framework jsem zvolil SpriteKit – framework od Applu pro vývoj
+  2D her. SpriteKit je výborná technologie, která si zaslouží víc uznání, než
+  se jí dostává. Nabízí:
+</p>
+
+<ul>
+  <li>
+    <strong>Stromovou strukturu objektů</strong> – přehledná hierarchie grafu
+    scény, ve které jsou herní objekty uspořádané
+  </li>
+  <li>
+    <strong>Bohatý systém akcí</strong> – animace a pohyby přes deklarativní,
+    snadno použitelné API
+  </li>
+  <li>
+    <strong>Správu scén</strong> – plynulé přechody mezi jednotlivými herními
+    obrazovkami
+  </li>
+  <li>
+    <strong>Vestavěnou fyziku</strong> – 2D fyzikální engine připravený
+    k použití hned po vybalení
+  </li>
+  <li>
+    <strong>Vestavěné základy</strong> – řadu běžných úkolů herního vývoje
+    řeší elegantně sám
+  </li>
+</ul>
+
+<p>
+  Díky systému akcí se dá velká část animací popsat deklarativně a framework
+  se postará o řadu běžných starostí herního vývoje, takže se vývojáři můžou
+  soustředit na herní logiku místo nízkoúrovňových detailů vykreslování.
+</p>
+
+<h2>Smutný osud skvělé technologie</h2>
+
+<p>
+  Apple bohužel SpriteKit v posledních letech skoro nerozvíjí. Celá situace mi
+  připomíná framework XNA od Microsoftu – výbornou technologii pro vývoj her,
+  kterou Microsoft nakonec opustil. Frameworku XNA vdechla nový život open
+  source komunita v podobě MonoGame, ale SpriteKit takové štěstí nejspíš mít
+  nebude, protože jeho popularita i rozšíření jsou omezené.
+</p>
+
+<p>
+  Je to opravdu škoda, protože SpriteKit je skutečně vynikající technologie,
+  hlavně pro mobilní 2D hry. Nabízí skvělou rovnováhu mezi možnostmi a
+  jednoduchostí, takže se v něm dají efektivně vytvářet vyladěné 2D hry. Jeho
+  možné zastarání mi přijde jako promrhaná skvělá inženýrská práce.
+</p>
+
+<h2>Hra bez spritů ve SpriteKitu</h2>
+
+<p>
+  Je tu zajímavý paradox: přestože název SpriteKit napovídá grafiku postavenou
+  na spritech, Jetshot nepoužívá jediný sprite. Zvolil jsem jiný přístup –
+  veškerá grafika je definovaná programově pomocí vektorového vykreslování,
+  podobně jako funguje SVG na webu.
+</p>
+
+<p>Tento přístup má několik výhod:</p>
+
+<ul>
+  <li>
+    <strong>Kontrola z kódu</strong> – všechno se dá přímo ovládat kódem
+  </li>
+  <li>
+    <strong>Dokonalá škálovatelnost</strong> – grafika zůstává ostrá na
+    displeji jakékoli velikosti a v jakémkoli rozlišení
+  </li>
+  <li>
+    <strong>Snadné úpravy</strong> – vizuální změny nevyžadují zásahy do
+    pipeline pro assety
+  </li>
+  <li>
+    <strong>Menší aplikace</strong> – není potřeba k ní přibalovat žádné
+    obrázky
+  </li>
+</ul>
+
+<p>
+  Díky programovému přístupu můžu tvary, barvy i animace definovat celé
+  v kódu. Výsledkem je ostrá grafika nezávislá na rozlišení, která vypadá
+  dokonale na každém displeji iPhonu, od starších modelů až po nejnovější
+  obrazovky Pro Max.
+</p>
+
+<h2>Level design řízený daty</h2>
+
+<p>
+  Dalším klíčovým prvkem Jetshotu je level design řízený daty. Místo skládání
+  levelů ve vizuálním editoru píšu každý z nich ručně jako datovou
+  konfiguraci. Pro mě jako programátora je to přirozený a účinný přístup:
+</p>
+
+<ul>
+  <li>
+    <strong>Návrh řízený daty</strong> – levely jsou definované jako
+    konfigurační data
+  </li>
+  <li>
+    <strong>Dynamické skládání</strong> – hra levely sestavuje za běhu z těchto
+    konfigurací
+  </li>
+  <li>
+    <strong>Snadné iterace</strong> – doladit level je jen otázka úpravy
+    dat
+  </li>
+  <li>
+    <strong>Konzistence</strong> – když mám parametry všech levelů vedle sebe,
+    snadno udržím vyrovnanou křivku obtížnosti
+  </li>
+</ul>
+
+<p>
+  Tento přístup se nehodí pro každý herní žánr, ale pro arkádovou střílečku,
+  jako je Jetshot, funguje skvěle. Systém levelů řízený daty umožňuje rychlé
+  iterace a zajišťuje, že obtížnost roste vyváženě a férově.
+</p>
+
+<h2>Výhody pro vývojářský workflow</h2>
+
+<p>
+  Vývoj pro iOS přímo ve Swiftu a SpriteKitu mi v každodenní práci přinesl
+  několik výhod, kterým se multiplatformní nástroje nevyrovnají:
+</p>
+
+<ul>
+  <li>
+    <strong>Přímý přístup k funkcím iOS</strong> – bez obalových vrstev a
+    pluginů
+  </li>
+  <li>
+    <strong>Výborná integrace s Xcode</strong> – prvotřídní nástroje pro
+    ladění a profilování
+  </li>
+  <li>
+    <strong>Okamžité testování</strong> – spuštění přímo na zařízení nebo
+    v simulátoru bez jakéhokoli exportu
+  </li>
+  <li>
+    <strong>Optimální výkon</strong> – nativní kód běží bez režie
+    multiplatformních vrstev
+  </li>
+</ul>
+
+<p>
+  Díky těsnému propojení Swiftu, SpriteKitu a Xcode probíhá vývoj hladce. Když nemusíte bojovat s build systémy ani řešit abstrakční vrstvy nad
+  platformami, můžete se plně soustředit na to, aby vaše hra byla
+  zábavná.
+</p>
+
+<h2>Vyzkoušejte Jetshot ještě dnes</h2>
+
+<p>
+  Jetshot je v App Storu zdarma a jeho obtížnost roste postupně. Hra je
+  navržená pro rychlou zábavu, která po vás nechce
+  hodiny času – ideální na krátké pauzy nebo na cestu do práce.
+</p>
+
+<p>
+  Pokud máte rádi arkádové střílečky nebo vás zajímá, co se dá ve Swiftu a
+  SpriteKitu dokázat, budu moc rád, když si
+  <a
+    href="https://apps.apple.com/us/app/jetshot/id6754814450"
+    target="_blank"
+    rel="noopener"
+    >stáhnete Jetshot</a
+  >
+  a vyzkoušíte ho. Vaše hodnocení a zpětná vazba v App Storu pro mě budou
+  hodně znamenat a pomůžou hru objevit dalším hráčům!
+</p>
+
+<h2>Zamyšlení nad nativním vývojem her pro iOS</h2>
+
+<p>
+  Vývoj Jetshotu mě ještě víc utvrdil v tom, jak si cením vývoje pro
+  konkrétní platformu. Multiplatformní nástroje mají své místo a často jsou
+  pragmatickou volbou, ale práce přímo s nativními technologiemi má něco do
+  sebe. Jste blíž hardwaru, máte méně abstrakčních vrstev a můžete využívat
+  funkce specifické pro danou platformu bez obezliček.
+</p>
+
+<p>
+  Swift a SpriteKit možná nejsou pro vývoj her standardní volbou, ale
+  u projektů čistě pro iOS nabízejí skvělý vývojářský zážitek. Je škoda, že
+  budoucnost SpriteKitu je nejistá, ale i dnes zůstává výkonným nástrojem pro
+  tvorbu vyladěných 2D her.
+</p>
+
+<p>
+  Díky za přečtení a doufám, že vás hraní Jetshotu bude bavit stejně, jako
+  mě bavila jeho tvorba!
+</p>

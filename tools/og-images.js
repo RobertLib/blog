@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 // Generates the social cards (og:image) of every page into static/: one per
-// article, standalone page, tag and the projects page, plus the default card.
+// article, standalone page, tag and the projects page, plus the default card,
+// in every language of the site (og/cs/... and og-image-cs.png for Czech).
 // Each card is tools/og-card.html filled in and screenshotted with headless
 // Chrome. Only cards whose title, image or template changed are regenerated
 // (tools/og-cards.json remembers what each was made from); --all redoes all.
@@ -28,6 +29,7 @@ process.chdir(ROOT);
 
 const config = require("../config");
 const build = require("../build");
+const { getLanguage } = require("../i18n");
 const { imageSize } = require("../image-size");
 
 const STATIC_DIR = path.join(ROOT, config.build.staticDir);
@@ -84,6 +86,7 @@ const PICTURE_WIDTH = 500;
 const PICTURE_HEIGHT = 548;
 
 function cardHtml(spec, template) {
+  const language = getLanguage(spec.lang);
   const imagePath = spec.image ? path.join(STATIC_DIR, spec.image) : null;
   const image = imagePath ? pathToFileURL(imagePath).href : "";
   // A picture too small to fill the box without blurring (a profile photo)
@@ -106,6 +109,13 @@ function cardHtml(spec, template) {
     "font-url": pathToFileURL(
       path.join(STATIC_DIR, "fonts", "inter-latin.woff2")
     ).href,
+    "font-ext-url": pathToFileURL(
+      path.join(STATIC_DIR, "fonts", "inter-latin-ext.woff2")
+    ).href,
+    // The card's footer: the language's part of the site and its author
+    lang: language.code,
+    "site-path": language.dir ? `/${escapeHtml(language.dir)}` : "",
+    author: escapeHtml(language.author),
   };
   return template.replace(/\{\{([\w-]+)\}\}/g, (match, key) =>
     key in values ? values[key] : match
@@ -176,31 +186,35 @@ async function runPool(items, worker) {
 
 async function main() {
   const all = process.argv.includes("--all");
-  const articles = build.getAllArticles();
-  if (articles.length === 0) {
+  const site = build.loadSite();
+  if (site[0].articles.length === 0) {
     throw new Error(
       `No articles found in ${path.resolve(config.build.articlesDir)}; refusing to treat every card as unused.`
     );
   }
-  const pages = build.getAllPages();
-  const projects = build.loadProjects();
-  const specs = build.socialCardSpecs(articles, pages, projects);
+  // Every language's cards (og/<slug>.png, og/cs/<slug>.png ...)
+  const specs = build.siteSocialCardSpecs(site);
 
   const manifest = build.readSocialCardManifest(MANIFEST);
   const todo = all ? specs : build.staleSocialCards(specs, STATIC_DIR, manifest);
 
-  // Cards of pages that no longer exist (renamed articles, removed tags)
+  // Cards of pages that no longer exist (renamed articles, removed tags,
+  // languages without articles), in og/ and its language directories
   const cardsDir = path.join(STATIC_DIR, build.SOCIAL_CARDS_DIR);
   const wanted = new Set(specs.map((spec) => spec.file));
-  if (fs.existsSync(cardsDir)) {
-    for (const file of fs.readdirSync(cardsDir)) {
-      const relative = `${build.SOCIAL_CARDS_DIR}/${file}`;
-      if (file.endsWith(".png") && !wanted.has(relative)) {
-        fs.rmSync(path.join(cardsDir, file));
+  const removeUnused = (dir, prefix) => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const relative = `${prefix}/${entry.name}`;
+      if (entry.isDirectory()) {
+        removeUnused(path.join(dir, entry.name), relative);
+      } else if (entry.name.endsWith(".png") && !wanted.has(relative)) {
+        fs.rmSync(path.join(dir, entry.name));
         console.log(`Removed unused card ${relative}`);
       }
     }
-  }
+  };
+  removeUnused(cardsDir, build.SOCIAL_CARDS_DIR);
 
   let failures = [];
   if (todo.length === 0) {
@@ -224,6 +238,9 @@ async function main() {
           path.join(tmp, `profile-${index}`)
         );
         // Replaces the old card only once the new one is known to be good
+        fs.mkdirSync(path.dirname(path.join(STATIC_DIR, spec.file)), {
+          recursive: true,
+        });
         fs.copyFileSync(pngFile, path.join(STATIC_DIR, spec.file));
         console.log(`  ${spec.file}`);
       });

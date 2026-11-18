@@ -5,6 +5,7 @@ A simple static blog generator that creates a blog from HTML articles with metad
 ## ✨ Features
 
 - 📝 Static blog generation from HTML articles, plus short notes and link posts
+- 🌍 A Czech version under `/cs/`, with hreflang links and a language switch
 - 🏷️ Metadata in HTML comments, with tags and a page per tag
 - 🖼️ Images sized at build time, click-to-play game and video embeds
 - 🃏 A generated social card (og:image) for every page
@@ -21,7 +22,9 @@ A simple static blog generator that creates a blog from HTML articles with metad
 ```
 blog/
 ├── articles/          # HTML articles and notes with metadata
+│   └── cs/            # Czech translations (same file names)
 ├── pages/             # Standalone pages (about.html)
+│   └── cs/            # Czech versions of the pages
 ├── projects.json      # Projects page and home page showcase
 ├── templates/         # HTML templates (index, archive, article, tag,
 │   │                  # page, projects, 404)
@@ -36,6 +39,7 @@ blog/
 ├── image-size.js      # Image dimensions from file headers
 ├── seo-validate.js    # SEO checks run at the end of every build
 ├── html-entities.js   # HTML entity decoding shared by the scripts above
+├── i18n.js            # Languages and the text of the site around the articles
 ├── index-now.js       # IndexNow submission (manual or from CI)
 ├── config.js          # Project configuration
 └── package.json       # NPM configuration
@@ -181,6 +185,46 @@ without a mouse or trackpad: say there what a game needs that a touch screen
 lacks, or that it is a big download. Prefer WebP for screenshots
 (`cwebp -q 82 -resize 1200 0 in.png -o out.webp`).
 
+## 🌍 Languages
+
+The site is in English at the root and in Czech under `/cs/`
+(`roblibs-blog.com/cs/`). Languages are defined in `i18n.js`: the first one
+is the default, every other one lives in a subdirectory named by its `dir`.
+
+- **Translations** are files with the same name in the language's directory:
+  `articles/cs/chuck-stealth-platformer-600-kilobytes.html` is the Czech
+  version of `articles/chuck-stealth-platformer-600-kilobytes.html`, and
+  `pages/cs/about.html` of `pages/about.html`. The file name pairs them: both
+  get `hreflang` links to each other (English is also `x-default`), and the
+  header's language switch (and the footer) leads to the other version. An
+  article can also exist in one language only; the switch then leads to the
+  other language's home page.
+- **Metadata** is the same as the original's except `title`, `description`
+  and `lede`, which are translated. Copy `date`, `updated`, `image`, `tags`,
+  `type`, `link` and `discuss` as they are.
+- **Tags** keep their English names in the metadata (`Games`, `Web
+  Development`); `i18n.js` translates the labels (`Hry`, `Vývoj webu`) while
+  tag pages keep the same file names (`cs/tags/games.html`). A translated
+  label in the metadata (`Hry`) is the same tag.
+- **Links and images** in a translation are written exactly as in the
+  original: `images/...` is resolved to the site root, `other-article.html`
+  to the Czech version, or to the English one when there is no translation.
+- **Czech typography** is applied by the build: a one-letter preposition or
+  conjunction (v, k, s, z, o, u, a, i) is joined to the next word with a
+  non-breaking space, as are digit groups (`10 000`), `40 %` and the dash
+  before a spaced en dash. Code is left alone.
+- **Everything around the articles** (navigation, headings, labels, dates,
+  structured data, the RSS feed `cs/feed.xml`, social cards in `og/cs/`) is
+  in the page's language. Text written by `static/site.js` (theme toggle,
+  copy link, play buttons) follows `<html lang>`.
+- **Projects** take a translation of their texts from
+  `"translations": { "cs": { "summary": "...", "linkLabel": "..." } }`
+  (`name`, `summary`, `linkLabel`, `platforms`).
+
+A language with no articles is not built. To add a language, add it to
+`LANGUAGES` in `i18n.js` with all its text, and its articles to
+`articles/<dir>/`.
+
 ## 📄 Pages and projects
 
 - `pages/*.html` become top-level pages with the same metadata comments
@@ -190,7 +234,8 @@ lacks, or that it is a big download. Prefer WebP for screenshots
   `category` (`games`, `apps`, `web`). Projects with `featured: true`
   appear on the home page. Fields: `name`, `summary`, `url`,
   `linkLabel`, optional `platforms`, `source`, `article` (an article
-  file name) and `image` (a path inside `static/`).
+  file name), `image` (a path inside `static/`) and `translations` (see
+  [Languages](#-languages)).
 
 ## 🃏 Social cards
 
@@ -201,7 +246,8 @@ npm run og-images -- --all # regenerate every card
 
 The generator renders `tools/og-card.html` with headless Chrome, Chromium
 or Edge (set `CHROME_PATH` if none is found) into `static/og/<slug>.png` and
-`static/og-image.png`, and records what each card was made from in
+`static/og-image.png` (Czech: `static/og/cs/<slug>.png` and
+`static/og-image-cs.png`), and records what each card was made from in
 `tools/og-cards.json`. The build never runs it (CI has no Chrome): it warns
 about missing or outdated cards. Until the cards are regenerated and
 committed, a page without a card uses the default one, and an outdated card
@@ -265,13 +311,18 @@ npm run clean       # Clean dist folder
    - `[page].html` - Standalone pages from `pages/`
    - `404.html` - Not-found page served by GitHub Pages
    - `sitemap.xml` and `feed.xml` (the 20 newest posts, full content)
+   - the same pages of every other language in its directory (`cs/`), with
+     its own `cs/feed.xml`; the sitemap lists both languages
 4. **Validate SEO** of every generated page
 
 Templates share markup through partials: a line holding only
 `{{> header}}` is replaced by `templates/partials/header.html`. Partial
 placeholders are filled like the page's own; `{{root}}` prefixes asset and
 page links (empty, i.e. relative; `../` on tag pages; absolute on the 404
-page, which GitHub Pages also serves for nested paths). Structured data is
+page, which GitHub Pages also serves for nested paths). `{{root}}` leads to
+the site root (static files) and `{{home}}` to the page language's root (its
+pages), which differ on Czech pages; `{{t.<key>}}` is text from `i18n.js` in
+the page's language. Structured data is
 built in `build.js` and inserted as `{{json-ld}}`.
 
 ## 🔄 Deployment
@@ -358,11 +409,13 @@ IndexNow is an open protocol that allows websites to instantly inform search eng
   changes from a push whose run was cancelled or failed are not lost:
   - changed, added or deleted articles, plus the homepage, archive and the
     article's tag pages, including tags it had before the change (so a
-    deleted or retagged article's old tag pages are resubmitted too)
+    deleted or retagged article's old tag pages are resubmitted too), in the
+    article's language (`articles/cs/x.html` is `/cs/x.html` and the Czech
+    home page, archive and tag pages)
   - changed pages from `pages/`; the homepage and projects page when
     `projects.json` changes
   - every page when `templates/`, `build.js`, `config.js`,
-    `html-entities.js` or `image-size.js` changed
+    `html-entities.js`, `i18n.js` or `image-size.js` changed
   - nothing when only static assets or docs changed
 - If every IndexNow endpoint fails (or times out after 15 s), the job fails,
   so the next run submits the same pages again
@@ -407,7 +460,8 @@ every build:
 - `edge-cases.test.js`, `utils.test.js` - Edge cases of the helpers
 - `seo-validate.test.js` - SEO validator
 - `features.test.js` - Tags, notes, images and embeds, projects and pages,
-  analytics and newsletter, social cards, IndexNow URLs for every page type
+  analytics and newsletter, social cards, IndexNow URLs for every page type,
+  languages (Czech pages, hreflang, typography, translated tags and projects)
 - `indexnow.test.js` - IndexNow configuration and changed-URL selection
 - `contrast.test.js` - WCAG AA contrast of the text colors in both themes,
   including accent text on the translucent accent wash and on hovered rows,

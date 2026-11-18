@@ -1,0 +1,300 @@
+<!-- title: Chuck: stealth plošinovka, která se vejde do 600 kilobajtů -->
+<!-- date: 2026-10-19 -->
+<!-- description: Chuck je bezplatná stealth plošinovka o cestě vzhůru uzavřenou věží. Každý pixel i zvuk generuje kód, takže verze pro prohlížeč má asi 600 kilobajtů. -->
+<!-- image: images/chuck/sector-09.png -->
+<!-- tags: Games, C, WebAssembly -->
+
+<p>
+  <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener"
+    >Chuck</a
+  > je jedna z mých dvou nových her napsaných v C (tou druhou je
+  <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a>): 2D
+  stealth plošinovka o jednom muži, který stoupá vzhůru čtyřicetipatrovou
+  věží, kterou zevnitř uzavřelo dvanáct ozbrojenců. Jeho žena je někde nad ním,
+  nikdo další nepřijde a čas běží.
+</p>
+
+<p>
+  Chuck je zdarma a dá se hrát přímo v prohlížeči na itch.io. Běží také na
+  Windows, macOS a Linuxu, s klávesnicí nebo libovolným gamepadem. Všechno
+  shrnuje jeho slogan: <em>čtyřicet pater, jediná cesta nahoru a třicet osm minut.</em>
+</p>
+
+<figure
+  class="embed"
+  data-embed="https://itch.io/embed-upload/20080149?color=000000"
+  data-embed-ratio="800 / 582"
+  data-embed-title="Chuck"
+  data-embed-touch-note="Vyžaduje klávesnici nebo gamepad"
+>
+  <div class="embed__stage">
+    <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener">
+      <img src="images/chuck/sector-09.png" alt="Sektor 09 věže: cihlová patra propojená žlutými žebříky a na každém patře ozbrojení strážní" />
+    </a>
+  </div>
+  <figcaption>Chuck se hraje v prohlížeči na klávesnici nebo gamepadu a webová verze má asi 600 KB. Hru spustíte kliknutím na obrázek, případně ji můžete <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener">otevřít na itch.io</a>.</figcaption>
+</figure>
+
+<h2>Ta noc</h2>
+
+<p>
+  Ellen Ross napsala přístupový systém pro Kessler Tower a po nocích tam drží
+  službu jako dispečerka. V 00:12 je s kávou v ruce tři bloky od práce, její
+  manžel Chuck dvacet metrů za ní, když krajním pruhem přijíždí SUV se
+  zhasnutými světly. Dva muži v údržbářských kombinézách ji do něj vtáhnou. Nikdo
+  nepřijede, protože o osm minut dřív poslali všechny policejní hlídky ve městě
+  jinam.
+</p>
+
+<p>
+  Chuck je sleduje a v 00:22 vidí, jak ji vedou dovnitř přímo hlavním vchodem
+  věže. Jde za nimi. To, co se uvnitř děje, není únos. Gang v budově už měsíce
+  pracuje jako externí dodavatel noční údržby a jeho požadavky za propuštění
+  rukojmí, vysílané do éteru, jsou čisté divadlo – díky nim stojí všechny hlídky
+  z celého města v kordonu kolem budovy a uvnitř není vůbec nikdo. Skutečným
+  cílem je podzemní trezor a jeho poslední zámek potřebuje dispečerku, která
+  má v budově službu – živou a přímo na místě. V 01:00 dluhopisy opustí
+  střechu.
+</p>
+
+<p>
+  Jestli vám jeden muž, jedna věž, jedna noc, dvanáctičlenný gang a 640 milionů
+  v dluhopisech na doručitele něco připomínají, je to schválně. Chuck je moje
+  pocta jisté akční klasice z roku 1988. Stanovil jsem si pro něj ale jedno
+  pravidlo: hra vzdává hold filmu tím, že ho popisuje, ale nikdy ho nejmenuje.
+  Kdo tu noc pozná podle jejích obrysů, ten ji poznat má.
+</p>
+
+<h2>Jak se hraje</h2>
+
+<p>
+  Hra začíná krátkým prologem – včetně noční automobilové honičky městem
+  s pohledem shora – a pak se z ní stane plošinovka s bočním pohledem. Mezi
+  vstupní halou a střechou leží sedmnáct sektorů. Každý z nich je malá
+  infiltrační trasa: je potřeba najít přístupovou kartu nebo hacknout
+  bezpečnostní terminál, který otevře cestu dál, a patro po patře se
+  rozhodovat, kdy bojovat, kdy se proplížit a kdy nechat budovu, aby práci
+  odvedla za vás.
+</p>
+
+<figure>
+  <img
+    src="images/chuck/pursuit.png"
+    alt="Pohled shora na noční ulici: Chuckovo auto pronásleduje tmavé SUV přes křižovatku s příčným provozem"
+  />
+  <figcaption>Prolog: automobilová honička nočním městem s pohledem shora.</figcaption>
+</figure>
+
+<p>Stealth hrou, a ne střílečkou, ji dělají právě strážní:</p>
+
+<ul>
+  <li>
+    <strong>Vidí</strong> – Zorným kuželem před sebou, který zastaví zdi,
+    podlahy i bedny, takže vás zahlédnou i šikmo nebo vystřelí přímo dolů
+    šachtou se žebříkem
+  </li>
+  <li>
+    <strong>Slyší</strong> – Střelba přiláká nejbližšího z nich, aby se šel
+    podívat, co se děje
+  </li>
+  <li>
+    <strong>Pamatují si</strong> – Kdo padne, zůstane ležet na místě, a strážný,
+    který najde tělo, často běží co nejrychleji k poplachovému spínači
+  </li>
+  <li>
+    <strong>Mluví</strong> – Dvanáct mužů má tuhle noc zorganizovanou jako
+    pracovní směnu,
+    a když stojíte dost blízko, objeví se jejich hovory z vysílaček na
+    obrazovce i s volacím znakem toho, kdo mluví. Většina příběhu se vypráví
+    právě takhle, aniž by se hra zastavila
+  </li>
+</ul>
+
+<p>
+  Chuck se ale kolem nich může dostat i potichu. Nůž složí strážného zezadu
+  jedinou ranou, pokud vás ovšem nikdo neviděl. Kapsa plná šroubů, které nikdy
+  nedojdou, vám umožní udělat hluk někde jinde a klidní strážní pak jdou za
+  zvukem, a ne za vámi. A tělo se dá z místnosti, kde padlo, odtáhnout –
+  pomalu, bez žebříků a bez skákání. Kam ho necháte, je totiž stejně skutečné
+  rozhodnutí jako to, kde jste bojovali.
+</p>
+
+<p>
+  Když se něco pokazí, poplach level neukončí. Změní ho: rudé světlo, všichni
+  strážní v pohybu a pročesávání okolí místa, kde vás naposledy viděli.
+  Záblesková nálož na pár sekund oslepí všechny poblíž, aniž by kohokoli
+  zabila. Střet tím nevyřešíte – jen získáte pár vteřin a ty jsou na to,
+  abyste zmizeli.
+</p>
+
+<figure>
+  <img
+    src="images/chuck/sector-09-alert.png"
+    alt="Chuck s bazukou na patře ze žlutých cihel, regály kolem něj svítí rudě a ukazatel zabezpečení v horní liště hlásí poplach"
+  />
+  <figcaption>Sektor 09 ve chvíli, kdy je ostraha budovy v pohotovosti.</figcaption>
+</figure>
+
+<p>
+  Pět sektorů se vůbec neprochází pěšky. Dveře na schodiště jsou zavařené,
+  cesta dál vede otevřeným oknem a Chuck šplhá po vnější straně budovy po zdivu
+  a uhýbá poryvům větru, ptákům i věcem, které muži házejí z oken.
+</p>
+
+<figure>
+  <img
+    src="images/chuck/facade.png"
+    alt="Chuck v noci šplhá po osvětlené fasádě věže, v horní liště ukazatele větru a výšky"
+  />
+  <figcaption>Jeden z venkovních výstupů: okenní římsy, poryvy větru a věci házené shora.</figcaption>
+</figure>
+
+<h2>Těžká, ale nikdy nefér</h2>
+
+<p>
+  Chuck je těžká hra, ale chtěl jsem, abyste ji nikdy nevypnuli z frustrace.
+  Postup uvnitř sektoru se průběžně ukládá, takže po smrti pokračujete od
+  poslední přístupové karty, hacku nebo dveří, ne od schodiště. Když vám
+  dojdou životy, hra vždycky nabídne stejný sektor znovu – nikdy vás nepošle
+  zpátky do vstupní haly. Zaseknout vás nemůže ani automobilová honička
+  v prologu: po pár neúspěšných pokusech vám prostě dovolí ji přeskočit,
+  protože předehra nikdy nesmí být zdí, o kterou se někdo zarazí a hru vzdá.
+</p>
+
+<p>V nastavení si každý může hru vyladit podle toho, jak ji chce hrát:</p>
+
+<ul>
+  <li>
+    <strong>Usnadnění</strong> – Víc srdíček, pomalejší strážní nebo smrti,
+    které nikdy nestojí život. Nic z toho není podmíněno dohráním hry
+  </li>
+  <li>
+    <strong>Veteránský režim</strong> – Stejná páka, jen opačným směrem: rychlejší
+    gang, jeden život a žádné pokračování
+  </li>
+  <li>
+    <strong>Omezení pohybu</strong> – Žádné otřesy obrazovky ani blikající
+    výstražná světla
+  </li>
+  <li>
+    <strong>Plně přemapovatelné ovládání</strong> – Na klávesnici i gamepadu.
+    Hra se dokonce každého gamepadu zeptá, jaká písmena má natištěná na
+    tlačítkách, takže „A“ je vždycky tlačítko označené A
+  </li>
+</ul>
+
+<h2>Hodiny na zdi jsou skóre</h2>
+
+<p>
+  Tohle je jeden z mých nejoblíbenějších detailů. Podle příběhu Ellen odvedou
+  do budovy v 00:22 a dluhopisy opustí střechu v 01:00. To je třicet osm minut
+  – a hra to číslo bere doslova.
+</p>
+
+<p>
+  Noc je rovnoměrně rozdělená mezi sedmnáct sektorů, takže na každý připadá
+  asi 134 sekund. Na zdi každého vnitřního sektoru visí hodiny, které
+  ukazují, kolik je v tu chvíli příběhu hodin. A právě těch 134 sekund je
+  i referenční čas, se kterým vás porovnává skóre: každou sekundu, kterou
+  ušetříte, dostanete proplacenou v bodech. Hodiny na zdi i časový bonus jsou
+  jedno a totéž číslo, odvozené z jediné konstanty v kódu, a test hlídá, aby se
+  nikdy nemohly rozejít.
+</p>
+
+<p>
+  Tahle konzistence odhalila i chybu, která s kódem neměla nic společného.
+  Jeden z venkovních výstupů býval nasvícený krásným východem slunce – teplý
+  kámen, ptáci, slunce vycházející za budovou. Jenže ten výstup se odehrává
+  v 00:44, mezi hodinami na zdi, které ukazují 00:42, a dalšími, které ukazují
+  00:46. Hráči by tak během pěti minut viděli slunce vyjít i zapadnout.
+  Z východu slunce se stal východ měsíce a scéna si zachovala kompozici – jen
+  uprostřed noci, kam patří.
+</p>
+
+<h2>Celá hra v 600 kilobajtech</h2>
+
+<p>
+  Druhá věc, díky které je Chuck výjimečný, se skrývá pod kapotou. Celá hra je
+  jediná binárka <strong>úplně bez souborů s assety</strong>. Žádný sprite
+  sheet, žádný tileset, žádná složka se zvuky. Každý sprite je pixel art
+  zapsaný ve zdrojovém kódu jako řádky znaků a vykreslený až za běhu, levely jsou zkompilované přímo do spustitelného souboru a
+  každý zvukový efekt i každá skladba se syntetizuje až při spuštění
+  hry.
+</p>
+
+<figure>
+  <img
+    src="images/chuck/sector-02.png"
+    alt="Kancelářské patro s azurovými stěnami, žebříky, stoly a strážnými, nakreslené v retro počítačové paletě"
+  />
+  <figcaption>Sektor 02. Všechno na této obrazovce kreslí kód za běhu – hra nemá vůbec žádné obrázkové soubory.</figcaption>
+</figure>
+
+<p>
+  Zvuk vzniká ze stejných stavebních kamenů jako u starých zvukových čipů –
+  obdélníkový, trojúhelníkový a pilovitý oscilátor, generátor šumu a navíc
+  sinusovka – a všechno tvarují obálky. I
+  tady jsou drobná rozhodnutí, na kterých záleží. Matematicky dokonalá
+  obdélníková vlna má nekonečnou řadu ostrých harmonických, která v digitálním
+  mixéru zní křehce a unavuje, a tak je obdélníková vlna v Chuckovi poskládaná
+  jen ze tří z nich – to stačí, aby si zvuk zachoval retro zabarvení, ale bez
+  unavujících výšek.
+</p>
+
+<p>
+  Chuck je napsaný v C17 nad SDL3 a verze pro prohlížeč je úplně stejný kód
+  zkompilovaný do WebAssembly. Protože se nestahují žádné assety, má celý
+  webový build asi <strong>600 kilobajtů</strong> a naběhne zhruba za
+  sekundu – je menší než leckterý hero obrázek na moderních webech.
+  Pro srovnání: moje druhá nová hra,
+  <a href="breakup-neon-brick-breaker-roguelite.html">Breakup</a>, sice také
+  kreslí celou grafiku kódem, ale obsahuje nahraný soundtrack a už jen kvůli
+  němu má kolem 20 MB.
+</p>
+
+<p>
+  Pěkně to ukazuje, jak levný je kód ve srovnání s obsahem. Téměř
+  60&nbsp;000 řádků C – strážní se zornými kužely, automobilová honička,
+  cutscény, ilustrovaná polní příručka a celý procedurální soundtrack – zabírá
+  méně místa než průměrná skladba ze soundtracku hry Breakup.
+</p>
+
+<h2>Zahrajte si Chucka</h2>
+
+<p>
+  Chuck je úplně zdarma, a když ho hrajete v prohlížeči, nemusíte nic
+  instalovat. Celá kampaň zabere několik hodin a hra si pamatuje, kam nejdál
+  jste se dostali, vaše nejlepší skóre i nejrychlejší čas v každém sektoru,
+  takže ji můžete hrát po kratších kouscích.
+</p>
+
+<p>
+  Budu moc rád, když si
+  <a href="https://roblib.itch.io/chuck" target="_blank" rel="noopener"
+    >Chucka zahrajete na itch.io</a
+  >
+  – a pokud se dostanete na střechu před 01:00, dejte mi vědět.
+  <a href="https://github.com/RobertLib/chuck" target="_blank" rel="noopener"
+    >Zdrojový kód najdete na GitHubu</a
+  >
+  pod licencí MIT, včetně editoru levelů, který je součástí hry.
+</p>
+
+<h2>Závěrem</h2>
+
+<p>
+  Chuck začal jako jednoduchý nápad – jeden muž, jedna budova, jediná cesta
+  nahoru – a vyrostla z něj hra se strážnými, kteří vidí, slyší a pamatují si,
+  s automobilovou honičkou, cutscénami a gangem, který se domlouvá
+  vysílačkami. Překvapivě velká část práce se vůbec netýkala kódu, ale
+  konzistence: aby hodiny na zdi, hovory ve vysílačkách i skóre na konci patra
+  vyprávěly stejný příběh.
+</p>
+
+<p>
+  Postavit celou hru jen v kódu, bez jediného obrázku nebo zvukového souboru,
+  se ukázalo jako správná volba. Když je grafika kódem, může se řídit stejnými
+  pravidly jako všechno ostatní ve hře – a dá se i stejně testovat.
+</p>
+
+<p>Díky za přečtení a hodně štěstí tam nahoře!</p>

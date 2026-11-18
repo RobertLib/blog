@@ -1,0 +1,264 @@
+<!-- title: Jak vybírám technologický stack: od čistého HTML po Next.js -->
+<!-- date: 2025-07-15 -->
+<!-- description: Jak pro každý projekt vybrat správný stack: kdy stačí čisté HTML a kdy sáhnout po statickém generátoru, Next.js nebo samostatném backendu. -->
+<!-- tags: Web Development, Next.js -->
+
+<p>
+  V dnešním světě webových technologií čelíme paradoxu volby. Máme k dispozici
+  nespočet frameworků, knihoven a nástrojů, jenže právě to může být náš
+  největší problém. Často vídám projekty, kde vývojáři použili Next.js na
+  jednoduchou landing page nebo čistě klientskou aplikaci v Reactu na veřejný
+  e-shop, který potřebuje SEO. Klíčem k úspěchu je věnovat na začátku dost
+  času výběru správné technologie.
+</p>
+
+<h2>Portfolio nebo firemní web: HTML + CSS + JavaScript</h2>
+
+<p>
+  Začněme nejjednodušším případem. Potřebujete osobní portfolio nebo
+  jednoduchý firemní web? <strong>Žádný framework nepotřebujete.</strong>
+  Stačí čisté HTML, CSS a trocha JavaScriptu pro interaktivitu.
+</p>
+
+<p>Výhody tohoto přístupu:</p>
+
+<ul>
+  <li><strong>Rychlost načítání</strong> – žádné další knihovny</li>
+  <li>
+    <strong>Dobré SEO</strong> – všechno je v HTML od samého začátku
+  </li>
+  <li><strong>Jednoduché nasazení</strong> – nahrajete to kamkoli</li>
+  <li><strong>Nulové závislosti</strong> – není potřeba žádný build</li>
+</ul>
+
+<p>
+  Pokud má váš web méně než 10 stránek a hlavně prezentuje informace,
+  framework přinese jen zbytečnou složitost. Často vídám vývojáře, kteří kvůli
+  jednoduché landing page rozjedou celý projekt v Reactu s konfigurací
+  Webpacku. To je jako kopat jámu pro stromek bagrem.
+</p>
+
+<h2>Blog: statický generátor místo serveru</h2>
+
+<p>
+  U blogu, jako je tento, máte dvě rozumné možnosti: server-side rendering,
+  nebo statický generátor.
+  <strong>Statický generátor je skoro vždycky lepší volba.</strong>
+</p>
+
+<p>Proč statický generátor vítězí:</p>
+
+<ul>
+  <li>
+    <strong>Výkon</strong> – HTML soubory se servírují přímo z CDN
+  </li>
+  <li>
+    <strong>Bezpečnost</strong> – žádná databáze ani serverový kód, takže
+    mnohem menší plocha pro útok
+  </li>
+  <li><strong>Cena</strong> – hosting statických souborů je skoro zadarmo</li>
+  <li><strong>Škálovatelnost</strong> – zvládne miliony návštěvníků</li>
+</ul>
+
+<p>
+  Tento blog běží na vlastním statickém generátoru v Node.js. Články píšu v
+  HTML, generátor z nich sestaví výsledné stránky a ty pak nahrávám na GitHub
+  Pages. Celý build trvá pár sekund, web se načítá bleskově a nikdy nespadne.
+</p>
+
+<pre><code>// Example of a simple generator
+const fs = require('fs');
+
+function generateBlog() {
+  const articles = loadArticles();
+  const template = loadTemplate();
+
+  articles.forEach(article => {
+    // A function, so "$&amp;" in an article isn't read as a replacement pattern
+    const html = template.replace('{{content}}', () => article.content);
+    fs.writeFileSync(`dist/${article.slug}.html`, html);
+  });
+}
+</code></pre>
+
+<h2>Administrace/CMS: API + frontend v Reactu</h2>
+
+<p>
+  Jakmile potřebujete administraci nebo systém pro správu obsahu, dostáváme se
+  do oblasti, kde framework dává smysl.
+  <strong>Samostatný backend (API) + frontend v Reactu</strong> je osvědčená
+  volba.
+</p>
+
+<p>Proč tento přístup funguje:</p>
+
+<ul>
+  <li>
+    <strong>Jasné oddělení</strong> – backend se stará o data, frontend o
+    UI
+  </li>
+  <li><strong>Flexibilita</strong> – kteroukoli z vrstev můžete vyměnit</li>
+  <li><strong>Testovatelnost</strong> – každá vrstva se testuje zvlášť</li>
+  <li><strong>Škálovatelnost</strong> – jednotlivé části škálujete nezávisle</li>
+</ul>
+
+<p>
+  Na backend můžete použít Node.js s Expressem, Python s Djangem/FastAPI nebo
+  jakýkoli jiný stack. O uživatelské rozhraní se stará frontend, single page
+  aplikace v Reactu. Takové řešení je ideální pro interní nástroje, dashboardy
+  a správu obsahu.
+</p>
+
+<h2>Hybridní aplikace: Next.js jako zlatá střední cesta</h2>
+
+<p>
+  Next.js zvolte, když
+  <strong
+    >potřebujete spojit výhody server-side renderingu s interaktivním
+    frontendem</strong
+  >
+  a chcete mít všechno v jednom projektu.
+</p>
+
+<p>Kdy je Next.js správná volba:</p>
+
+<ul>
+  <li><strong>E-shopy</strong> – potřebujete SEO i interaktivitu</li>
+  <li><strong>Marketingové weby</strong> – s formuláři a dynamickým obsahem</li>
+  <li>
+    <strong>Aplikace volající API třetích stran</strong> – tajné klíče
+    zůstanou v serverovém kódu a nemusíte provozovat samostatný backend
+  </li>
+  <li><strong>Menší týmy</strong> – jeden projekt, jedna technologie</li>
+</ul>
+
+<p>
+  Next.js umožňuje vykreslovat stránky kvůli SEO na serveru a přitom mít plně
+  interaktivní části aplikace. API klíče navíc můžete bezpečně schovat do
+  serverového kódu. Je to kompromis mezi jednoduchostí a funkčností.
+</p>
+
+<blockquote>
+  <p>
+    Next.js je jako švýcarský nůž – umí toho hodně, ale v žádné konkrétní
+    oblasti není nejlepší. A někdy je to přesně to, co potřebujete.
+  </p>
+</blockquote>
+
+<h2>Velké aplikace: samostatný backend + React SPA</h2>
+
+<p>
+  U velkých aplikací se složitou logikou začínají být hybridní řešení
+  problematická.
+  <strong
+    >Pro enterprise aplikace zvolte jasně oddělený backend a React SPA
+    sestavenou do statických souborů.</strong
+  >
+</p>
+
+<p>Proč u velkých projektů vítězí oddělení:</p>
+
+<ul>
+  <li>
+    <strong>Jasná odpovědnost</strong> – backendový a frontendový tým mohou
+    pracovat nezávisle
+  </li>
+  <li><strong>Škálovatelnost</strong> – každá vrstva se škáluje podle potřeby</li>
+  <li><strong>Technologická nezávislost</strong> – vyměnit jde kteroukoli vrstvu</li>
+  <li><strong>Snadné testování</strong> – každá vrstva má vlastní testy</li>
+</ul>
+
+<p>
+  React SPA sestavenou do statických souborů můžete hostovat na CDN, což je
+  rychlé a levné. Pokud je aplikace za přihlášením, SEO řešit nemusíte, takže
+  server-side rendering je zbytečný. Backend se stará o API, autentizaci a
+  business logiku.
+</p>
+
+<h2>Rozhodovací strom: co zvolit?</h2>
+
+<p>Tady je praktický návod, jak se rozhodnout:</p>
+
+<ol>
+  <li>
+    <strong>Máte méně než 10 stránek bez složité logiky?</strong><br />
+    → HTML + CSS + JavaScript
+  </li>
+  <li>
+    <strong>Potřebujete blog nebo dokumentaci?</strong><br />
+    → Statický generátor (Astro, statický export Next.js, vlastní)
+  </li>
+  <li>
+    <strong>Stavíte administraci nebo CMS?</strong><br />
+    → API backend + React SPA
+  </li>
+  <li>
+    <strong>Potřebujete SEO, interaktivitu a chráněné API klíče?</strong><br />
+    → Next.js (hybridní řešení)
+  </li>
+  <li>
+    <strong>Stavíte velkou aplikaci se složitou logikou?</strong><br />
+    → Samostatný backend + React SPA
+  </li>
+</ol>
+
+<h2>Časté chyby při výběru technologií</h2>
+
+<p>Ze zkušenosti vidím několik chyb, které se pořád opakují:</p>
+
+<h3>1. Kanón na vrabce u jednoduchých projektů</h3>
+<p>
+  Použít React na statický prezentační web je jako najmout symfonický
+  orchestr, aby zahrál „Hodně štěstí, zdraví“. Funguje to, ale je to zbytečně
+  složité.
+</p>
+
+<h3>2. Podcenění složitosti</h3>
+<p>
+  Naopak pokus postavit složitý e-shop jen ve vanilla JavaScriptu je recept na
+  nekonečné problémy s udržovatelností.
+</p>
+
+<h3>3. Honba za trendy</h3>
+<p>
+  To, že je něco nové a trendy, ještě neznamená, že se to hodí pro váš
+  projekt. Technologie vybírejte podle požadavků, ne podle Hacker News.
+</p>
+
+<h3>4. Málo času na plánování</h3>
+<p>
+  Nejčastější chybou je uspěchaný výběr technologie. Věnujte mu na začátku
+  dost času – pozdější změna bude exponenciálně dražší.
+</p>
+
+<h2>Závěr: méně je často více</h2>
+
+<p>
+  Dnes často máme za to, že složitější technologie automaticky znamená lepší
+  řešení. Opak je pravdou.
+  <strong
+    >Nejlepší technologie je ta nejjednodušší, která splní vaše
+    požadavky.</strong
+  >
+</p>
+
+<p>Před každým projektem si položte tyto otázky:</p>
+
+<ul>
+  <li>Co přesně potřebujeme postavit?</li>
+  <li>Kdo bude aplikaci používat a jak?</li>
+  <li>Jaké máme požadavky na výkon a škálovatelnost?</li>
+  <li>Jak velký je tým a jaké má zkušenosti?</li>
+  <li>Jaký máme časový a finanční rozpočet?</li>
+</ul>
+
+<p>
+  Odpovědi na tyto otázky vám jasně ukážou, jakou technologii zvolit.
+  Pamatujte: úspěšný projekt není ten, který používá nejnovější technologie,
+  ale ten, který efektivně a udržitelně řeší skutečné problémy uživatelů.
+</p>
+
+<p>
+  Technologie jsou jen nástroje. Jejich hodnota se měří tím, jak dobře vám
+  pomáhají dosáhnout vašich cílů, ne tím, jak jsou moderní nebo populární.
+</p>

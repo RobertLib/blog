@@ -1,0 +1,186 @@
+<!-- title: Od nápadu do produkce za 2 hodiny s pomocí AI -->
+<!-- date: 2025-07-12 -->
+<!-- updated: 2026-11-12 -->
+<!-- description: Jak jsem s agentem Claude Sonnet 4 za 2 hodiny postavil a nasadil kvízový web – co AI zvládla dobře a kde bylo pořád potřeba moje rozhodnutí. -->
+<!-- tags: AI, Next.js, Web Development -->
+
+<p>
+  Před pár dny mě napadlo udělat jednoduchý kvízový web. Něco, co by pobavilo
+  uživatele a mně zároveň dovolilo experimentovat s novými technologiemi.
+  Normálně by mi takový projekt zabral nejméně 2 dny – návrh, implementace,
+  testování, stylování, nasazení. S pomocí AI agenta Claude Sonnet 4 jsem ho
+  ale dokončil za pouhé 2 hodiny.
+</p>
+
+<p>
+  Výsledek najdete na
+  <a
+    href="https://quizzy-eight-khaki.vercel.app/"
+    target="_blank"
+    rel="noopener"
+    >quizzy-eight-khaki.vercel.app</a
+  >. Plně funkční kvízový web s responzivním designem, různými kategoriemi
+  otázek a moderním uživatelským rozhraním.
+</p>
+
+<h2>Co se změnilo na mém přístupu k vývoji</h2>
+
+<p>
+  Tradičně bych začal plánováním architektury, pak bych kreslil wireframy,
+  napsal základní strukturu v HTML/CSS/JS, implementoval logiku kvízu, ladil
+  styly a nakonec vše nasadil. Každý krok by vyžadoval hodně pozornosti a
+  času na debugování.
+</p>
+
+<p>S AI agentem se celý proces dramaticky zrychlil:</p>
+
+<ul>
+  <li>
+    <strong>Okamžité vygenerování struktury</strong> – u takhle malé aplikace
+    dokázal agent navrhnout celou strukturu včetně komponent
+  </li>
+  <li>
+    <strong>Automatické stylování</strong> – moderní responzivní design vznikl
+    během pár minut
+  </li>
+  <li>
+    <strong>Logika kvízu</strong> – implementace bodování, časovače a správy
+    stavu bez ručního psaní kódu
+  </li>
+  <li>
+    <strong>Optimalizace pro produkci</strong> – build i nasazení na Vercel
+    proběhly hladce
+  </li>
+</ul>
+
+<h2>Konkrétní přínosy AI v tomto projektu</h2>
+
+<h3>1. Rychlost iterací</h3>
+<p>
+  Místo psaní kódu řádek po řádku jsem mohl komunikovat přirozeným jazykem:
+  „Chci kvíz s časovačem, různými kategoriemi a počítáním skóre.“ Agent
+  požadavkům porozuměl a během pár minut je implementoval.
+</p>
+
+<h3>2. Méně chyb</h3>
+<p>
+  AI agent napsal čistý, funkční kód s minimem chyb. Žádné zapomenuté
+  středníky, žádné syntaktické chyby – aplikace fungovala od prvního spuštění
+  a většina toho, co jsem ještě musel udělat, se týkala rozhodnutí, ne kódu
+  (o tom víc níže).
+</p>
+
+<h3>3. Moderní osvědčené postupy</h3>
+<p>
+  Agent automaticky použil moderní přístupy – Next.js s Reactem a
+  TypeScriptem, Tailwind CSS pro responzivní layout, sémantické HTML a
+  správnou strukturu souborů. U projektu takové velikosti jsem nad způsobem
+  implementace nemusel moc přemýšlet.
+</p>
+
+<h3>4. Víc prostoru pro kreativitu</h3>
+<p>
+  Místo abych trávil čas technickými detaily, mohl jsem se soustředit na
+  uživatelský zážitek, výběr otázek a celkový koncept aplikace. „Nudnou“
+  implementační část obstarala AI.
+</p>
+
+<h2>Co AI pořád nezvládá</h2>
+
+<p>
+  Abych byl férový – AI není kouzelná hůlka. I v tomto projektu byly oblasti,
+  kde jsem musel zasáhnout:
+</p>
+
+<ul>
+  <li>
+    <strong>Kreativní rozhodnutí</strong> – finální podoba designu, barevná
+    schémata a rozhodnutí o UX
+  </li>
+  <li>
+    <strong>Znalost oboru</strong> – výběr vhodných otázek a vyvážení
+    obtížnosti
+  </li>
+  <li>
+    <strong>Strategické myšlení</strong> – rozhodnutí, které funkce
+    implementovat a které vynechat
+  </li>
+  <li>
+    <strong>Testování okrajových případů</strong> – ověření, že aplikace
+    funguje ve všech prohlížečích a situacích
+  </li>
+</ul>
+
+<h2>Praktický dopad na mou práci</h2>
+
+<p>
+  Tahle zkušenost mi ukázala, jak se mění role programátora. Místo psaní kódu
+  se stávám spíš architektem a produktovým manažerem. Místo ladění syntaxe
+  řeším potřeby uživatelů a business logiku.
+</p>
+
+<p>
+  <strong>Dřív:</strong> 70 % času kódování, 30 % času přemýšlení<br />
+  <strong>Teď:</strong> 30 % času kódování, 70 % času přemýšlení a návrhu
+</p>
+
+<p>
+  Díky tomuto posunu stihnu dokončit víc projektů, experimentovat s novými
+  nápady a víc se věnovat kreativní stránce vývoje.
+</p>
+
+<h2>Vyzkoušejte si kvíz sami</h2>
+
+<p>
+  Jestli vás zajímá, jak takový projekt vytvořený s AI vypadá v praxi,
+  vyzkoušejte
+  <a
+    href="https://quizzy-eight-khaki.vercel.app/"
+    target="_blank"
+    rel="noopener"
+    >můj kvízový web</a
+  >. Najdete v něm otázky z různých kategorií – od všeobecného přehledu po
+  technologie. Uvidíte, že i když vznikl za 2 hodiny, nabízí plnohodnotný
+  uživatelský zážitek.
+</p>
+
+<p>
+  Web má všechno, co od moderní aplikace čekáte: responzivní design, plynulé
+  animace, správu stavu, časovač a bodování. A hlavně – používat ho je
+  zábava.
+</p>
+
+<h2>Závěr: AI jako akcelerátor kreativity</h2>
+
+<p>
+  AI mi programování nenahradila – zrychlila ho natolik, že se můžu soustředit
+  na to, co mě baví víc. Místo boje s technickými detaily se můžu věnovat
+  řešení problémů a tvorbě užitečných aplikací.
+</p>
+
+<p>
+  Doba, kdy jsme trávili hodiny laděním CSS nebo debugováním JavaScriptu,
+  končí. Budoucnost patří těm, kdo dokážou AI efektivně používat jako nástroj
+  k uskutečnění svých nápadů.
+</p>
+
+<p>
+  Pokud jste AI nástroje při vývoji ještě nezačali používat, vřele to
+  doporučuji. Rozdíl je opravdu dramatický – a jak ukazuje můj kvízový web,
+  výsledky mluví samy za sebe.
+</p>
+
+<p>
+  <em
+    >Už chystám další experimenty s AI. Sledujte tento blog, ať vám neuniknou
+    další praktické zkušenosti a tipy, jak z AI ve svých projektech vytěžit
+    maximum.</em
+  >
+</p>
+
+<p>
+  <em>Aktualizace z listopadu 2026:</em> Quizzy se od napsání tohoto článku
+  dál vyvíjí. Teď má denní výzvu, která je pro všechny stejná, násobiče za
+  sérii až ×3, úrovně a odznaky, tři obtížnosti a osm kategorií – a to všechno
+  pořád bez registrace, s postupem uloženým ve vašem zařízení.
+</p>

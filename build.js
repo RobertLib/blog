@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const config = require("./config");
 const { decodeEntities } = require("./html-entities");
+const { LANGUAGES, DEFAULT_LANGUAGE, getLanguage } = require("./i18n");
 const { imageSize } = require("./image-size");
 const { validateSEO } = require("./seo-validate");
 
@@ -153,14 +154,15 @@ function parseDate(dateString) {
 }
 
 // Formatted in UTC to match parseDate; the machine's local time zone would
-// otherwise shift the day.
-function formatDate(dateString) {
+// otherwise shift the day. `locale` is the page language's ("cs-CZ" gives
+// "31. ledna 2026").
+function formatDate(dateString, locale = DEFAULT_LANGUAGE.locale) {
   if (!dateString) return "";
   const date = parseDate(dateString);
   if (isNaN(date.getTime())) {
     throw new Error(`Invalid date format: ${dateString}`);
   }
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -168,14 +170,15 @@ function formatDate(dateString) {
   });
 }
 
-// Compact form for the date column in list views ("Jan 31, 2026")
-function formatDateShort(dateString) {
+// Compact form for the date column in list views ("Jan 31, 2026",
+// "31. 1. 2026")
+function formatDateShort(dateString, locale = DEFAULT_LANGUAGE.locale) {
   if (!dateString) return "";
   const date = parseDate(dateString);
   if (isNaN(date.getTime())) {
     throw new Error(`Invalid date format: ${dateString}`);
   }
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -219,6 +222,29 @@ function parseTags(value) {
     tags.push({ label, slug });
   }
   return tags;
+}
+
+// Tags as shown in a language: their labels translated (language.tags), the
+// slug (and so the tag page's file name) the same in every language. A
+// translated label in the metadata ("Hry") is the same tag as its original
+// ("Games").
+function localizeTags(tags, lang) {
+  const names = getLanguage(lang).tags || {};
+  const bySlug = new Map();
+  for (const [original, translated] of Object.entries(names)) {
+    const tag = { label: translated, slug: slugify(original) };
+    bySlug.set(slugify(original), tag);
+    bySlug.set(slugify(translated), tag);
+  }
+  const seen = new Set();
+  const result = [];
+  for (const tag of tags || []) {
+    const localized = bySlug.get(tag.slug) || tag;
+    if (seen.has(localized.slug)) continue;
+    seen.add(localized.slug);
+    result.push({ ...localized });
+  }
+  return result;
 }
 
 // Comma- or whitespace-separated URLs
@@ -431,8 +457,10 @@ function getArticleData(
 }
 
 // Throws if any article is invalid, so a broken article fails the build
-// instead of silently disappearing from the site.
-function getAllArticles(articlesDir = ARTICLES_DIR) {
+// instead of silently disappearing from the site. `lang` is the language of
+// the articles in `articlesDir` (articles/ holds the default language's,
+// articles/<dir>/ the others').
+function getAllArticles(articlesDir = ARTICLES_DIR, lang = DEFAULT_LANGUAGE.code) {
   if (!fs.existsSync(articlesDir)) {
     return [];
   }
@@ -445,7 +473,10 @@ function getAllArticles(articlesDir = ARTICLES_DIR) {
 
   for (const file of files) {
     try {
-      articles.push(getArticleData(file, articlesDir));
+      const article = getArticleData(file, articlesDir);
+      article.lang = lang;
+      article.tags = localizeTags(article.tags, lang);
+      articles.push(article);
     } catch (error) {
       failures.push(`${file}: ${error.message}`);
     }
@@ -759,17 +790,23 @@ const EAGER_IMAGE_MAX_WORDS_BEFORE = 100;
 // lazy loading, except the first one (the first `eager` ones, for a grid
 // whose first row is side by side) when it sits near the top of the content,
 // where it is likely in view on load. A local image that doesn't exist fails
-// the build.
-function enhanceImages(html, staticDir = STATIC_DIR, { eager: eagerCount = 1 } = {}) {
+// the build. `root` is the page's relative path to the site root that local
+// sources start with ("../images/..." on a page one level down).
+function enhanceImages(
+  html,
+  staticDir = STATIC_DIR,
+  { eager: eagerCount = 1, root = "" } = {}
+) {
   let index = 0;
   return html.replace(/<img\b[^>]*>/gi, (tag, offset) => {
     let result = tag;
     const src = getAttribute(tag, "src");
 
     if (src && isLocalPath(src)) {
+      const local = root && src.startsWith(root) ? src.slice(root.length) : src;
       const file = path.join(
         staticDir,
-        stripLeadingSlash(src.split(/[?#]/)[0])
+        stripLeadingSlash(local.split(/[?#]/)[0])
       );
       if (!fs.existsSync(file)) {
         throw new Error(`Image not found: ${file}`);
@@ -877,11 +914,228 @@ function absolutizeUrls(html, pageUrl) {
   );
 }
 
+// Relative links and image sources of a translation's content, which is
+// written exactly like its original's: files from static/ ("images/...")
+// live at the site root, not in the language's directory, and a page the
+// language doesn't have (an untranslated article) is linked in the default
+// language. Content in the default language is left as it is.
+function localizeContentUrls(html, ctx, staticDir = STATIC_DIR) {
+  if (ctx.lang === DEFAULT_LANGUAGE.code || ctx.root === ctx.home) return html;
+  return html.replace(OPENING_TAG, (tag) =>
+    tag.replace(
+      /(\s(?:href|src|poster)\s*=\s*)(["'])(.*?)\2/gi,
+      (match, prefix, quote, value) => {
+        if (!isLocalPath(value) || /^(?:\/|\.\.\/)/.test(value)) return match;
+        const target = decodeEntities(value).split(/[?#]/)[0];
+        if (!target) return match;
+        const file = path.join(staticDir, stripLeadingSlash(target));
+        const isStatic = fs.existsSync(file) && fs.statSync(file).isFile();
+        if (isStatic || pageHref(ctx, target) !== ctx.home + target) {
+          return `${prefix}${quote}${ctx.root}${value}${quote}`;
+        }
+        return match;
+      }
+    )
+  );
+}
+
+// Elements whose text is never retypeset (code keeps its spaces)
+const VERBATIM_ELEMENTS = /^<(pre|code|script|style|textarea)\b/i;
+
+// Czech typography: a one-letter preposition or conjunction (v, k, s, z, o,
+// u, a, i) never ends a line, so the space after it becomes a non-breaking
+// one. Only text between tags changes, never markup or code.
+function typeset(html, lang) {
+  if (getLanguage(lang).code !== "cs") return html;
+  const parts = html.split(/(<[^>]*>)/);
+  let verbatim = null;
+  let afterInlineClose = false;
+  return parts
+    .map((part) => {
+      if (part.startsWith("<")) {
+        const name = (part.match(/^<\/?([a-z0-9]+)/i) || [])[1];
+        if (verbatim) {
+          if (name && name.toLowerCase() === verbatim && part.startsWith("</")) {
+            verbatim = null;
+          }
+        } else {
+          const open = part.match(VERBATIM_ELEMENTS);
+          if (open && !part.endsWith("/>")) verbatim = open[1].toLowerCase();
+        }
+        // "</em>a" is a word ending in the emphasis, not the conjunction
+        afterInlineClose = /^<\/(a|em|strong|b|i|span|code|abbr|mark|small|sub|sup)>$/i.test(part);
+        return part;
+      }
+      if (verbatim) return part;
+      // Text right after a tag starts a word, unless the tag closed an
+      // inline element the word continues
+      const before = afterInlineClose
+        ? "(?<=[\\s(„‚\"'\\[–—])"
+        : "(?<=^|[\\s(„‚\"'\\[–—])";
+      return part
+        .replace(
+          new RegExp(`${before}([kKsSvVzZoOuUaAiI])[ \\t\\r\\n]+(?=\\S)`, "g"),
+          "$1&nbsp;"
+        )
+        .replace(
+          // A one-letter word right before a tag ("v <a ...>")
+          new RegExp(`${before}([kKsSvVzZoOuUaAiI])[ \\t\\r\\n]+$`),
+          "$1&nbsp;"
+        )
+        // Digit groups ("10 000"), "40 %", and a dash, which never starts
+        // a line
+        .replace(/(\d) (?=\d{3}(?!\d))/g, "$1&nbsp;")
+        .replace(/(\d)[ \t]+%/g, "$1&nbsp;%")
+        .replace(/[ \t\r\n]+(–|&ndash;)(?=[ \t\r\n])/g, "&nbsp;$1");
+    })
+    .join("");
+}
+
+// ------------------------------------------------------------
+// Languages and URLs
+// ------------------------------------------------------------
+
+// Where a page of a language is, relative to the output directory and the
+// site URL: "archive.html" -> "cs/archive.html"; "" is the language's home
+function langPath(pagePath, lang) {
+  const { dir } = getLanguage(lang);
+  return dir ? `${dir}/${pagePath}` : pagePath;
+}
+
+// Absolute URL of a page of a language. The default language's home page is
+// the bare site URL, as it has always been.
+function pageUrl(pagePath = "", lang = DEFAULT_LANGUAGE.code) {
+  const relative = langPath(pagePath, lang);
+  return relative ? `${BASE_URL}/${relative}` : BASE_URL;
+}
+
+// What a page needs to know about where it is: its language, the relative
+// path to the site root (`root`: static files) and to its language's root
+// (`home`: its pages), and, from the build, which languages each page of the
+// site exists in (`translations`: page path -> language codes). Pages
+// rendered without `translations` link only within their own language.
+function pageContext(pagePath = "", { lang, translations = null } = {}) {
+  const language = getLanguage(lang);
+  const depth = pagePath.split("/").length - 1;
+  const langDepth = language.dir ? language.dir.split("/").length : 0;
+  return {
+    language,
+    lang: language.code,
+    pagePath,
+    home: "../".repeat(depth),
+    root: "../".repeat(depth + langDepth),
+    translations,
+  };
+}
+
+// Languages a page of the site exists in, in the order of LANGUAGES
+function pageLanguages(ctx, pagePath = ctx.pagePath) {
+  if (!ctx.translations) return [ctx.lang];
+  return ctx.translations.get(pagePath) || [];
+}
+
+// Relative link from the current page to another page of the site: in the
+// current page's language, or in the default language when this one doesn't
+// have that page
+function pageHref(ctx, pagePath) {
+  if (!ctx.translations || ctx.lang === DEFAULT_LANGUAGE.code) {
+    return ctx.home + pagePath;
+  }
+  const langs = pageLanguages(ctx, pagePath);
+  return langs.includes(ctx.lang) || !langs.includes(DEFAULT_LANGUAGE.code)
+    ? ctx.home + pagePath
+    : ctx.root + pagePath;
+}
+
+// Languages the built site has (those with a home page)
+function siteLanguages(ctx) {
+  return ctx.translations
+    ? LANGUAGES.filter((language) =>
+        pageLanguages(ctx, "").includes(language.code)
+      )
+    : [ctx.language];
+}
+
+// hreflang links to every language version of the page, the default
+// language's also as x-default. Nothing for a page in one language only.
+function alternateLinksHtml(ctx) {
+  const langs = pageLanguages(ctx);
+  if (langs.length < 2) return "";
+  const link = (hreflang, code) =>
+    `<link rel="alternate" hreflang="${hreflang}" href="${escapeHtml(
+      pageUrl(ctx.pagePath, code)
+    )}" />`;
+  return [
+    ...langs.map((code) => link(code, code)),
+    ...(langs.includes(DEFAULT_LANGUAGE.code)
+      ? [link("x-default", DEFAULT_LANGUAGE.code)]
+      : []),
+  ].join("\n    ");
+}
+
+function ogLocaleAlternatesHtml(ctx) {
+  return pageLanguages(ctx)
+    .filter((code) => code !== ctx.lang)
+    .map(
+      (code) =>
+        `<meta property="og:locale:alternate" content="${getLanguage(code).ogLocale}" />`
+    )
+    .join("\n    ");
+}
+
+// Links to the page in the site's other languages, or to their home pages
+// when the page isn't translated
+function otherLanguageLinks(ctx) {
+  const langs = pageLanguages(ctx);
+  return siteLanguages(ctx)
+    .filter((language) => language.code !== ctx.lang)
+    .map((language) => ({
+      language,
+      href: pageUrl(langs.includes(language.code) ? ctx.pagePath : "", language.code),
+    }));
+}
+
+// The header's language switch: the other language's code, named in it
+function languageSwitchHtml(ctx) {
+  return otherLanguageLinks(ctx)
+    .map(
+      ({ language, href }) =>
+        `<a class="lang-switch" href="${escapeHtml(href)}" hreflang="${
+          language.code
+        }" lang="${language.code}" title="${escapeHtml(language.name)}">${escapeHtml(
+          language.short
+        )}</a>`
+    )
+    .join("\n          ");
+}
+
+// The footer's language links, by the languages' own names
+function footerLanguagesHtml(ctx) {
+  return otherLanguageLinks(ctx)
+    .map(
+      ({ language, href }) =>
+        `<a href="${escapeHtml(href)}" hreflang="${language.code}" lang="${
+          language.code
+        }">${escapeHtml(language.name)}</a>`
+    )
+    .join("\n          ");
+}
+
+// Text in languages with letters outside Latin-1 (Czech ě, š, ř ...) needs
+// the latin-ext font files from the first paint
+function fontPreloadsHtml(ctx) {
+  if (ctx.lang === DEFAULT_LANGUAGE.code) return "";
+  return ["inter-latin-ext.woff2", "source-serif-4-latin-ext.woff2"]
+    .map(
+      (font) =>
+        `<link rel="preload" href="${ctx.root}fonts/${font}" as="font" type="font/woff2" crossorigin />`
+    )
+    .join("\n    ");
+}
+
 // ------------------------------------------------------------
 // Shared page parts
 // ------------------------------------------------------------
-
-const DEFAULT_SOCIAL_IMAGE_ALT = `${config.site.title}: small software, games and the web`;
 
 function twitterProfileUrl() {
   const handle = String(config.site.twitter || "").replace(/^@/, "");
@@ -903,13 +1157,20 @@ function analyticsHtml(
 }
 
 // Email sign-up through Buttondown when configured, otherwise an RSS call
-// to action
-function subscribeHtml(root = "", newsletter = config.newsletter) {
+// to action. `home` leads to the language's own feed.
+function subscribeHtml(
+  home = "",
+  newsletter = config.newsletter,
+  lang = DEFAULT_LANGUAGE.code
+) {
+  const text = getLanguage(lang).subscribe;
   const user = newsletter && newsletter.buttondown;
-  const rss = `<a href="${root}feed.xml">RSS</a>`;
+  const rss = `<a href="${home}feed.xml">RSS</a>`;
   const xUrl = twitterProfileUrl();
   const xLink = xUrl
-    ? ` or follow <a href="${escapeHtml(xUrl)}" target="_blank" rel="noopener">${escapeHtml(config.site.twitter)}</a> on X`
+    ? text.xLink(
+        `<a href="${escapeHtml(xUrl)}" target="_blank" rel="noopener">${escapeHtml(config.site.twitter)}</a>`
+      )
     : "";
 
   if (user) {
@@ -918,55 +1179,70 @@ function subscribeHtml(root = "", newsletter = config.newsletter) {
     }
     return `
         <section class="subscribe" aria-labelledby="subscribe-title">
-          <h2 class="subscribe__title" id="subscribe-title">Get new posts by email</h2>
+          <h2 class="subscribe__title" id="subscribe-title">${text.emailTitle}</h2>
           <p class="subscribe__text">
-            One short email whenever something new is published. No spam,
-            unsubscribe with one click.
+            ${text.emailText}
           </p>
           <form class="subscribe__form" action="https://buttondown.com/api/emails/embed-subscribe/${user}" method="post" target="_blank">
-            <label class="visually-hidden" for="subscribe-email">Email address</label>
-            <input class="subscribe__input" type="email" name="email" id="subscribe-email" placeholder="you@example.com" autocomplete="email" required />
+            <label class="visually-hidden" for="subscribe-email">${text.emailLabel}</label>
+            <input class="subscribe__input" type="email" name="email" id="subscribe-email" placeholder="${text.emailPlaceholder}" autocomplete="email" required />
             <input type="hidden" name="embed" value="1" />
-            <button class="button button--accent" type="submit">Subscribe</button>
+            <button class="button button--accent" type="submit">${text.emailButton}</button>
           </form>
-          <p class="subscribe__alt meta">Prefer a feed reader? Follow via ${rss}${xLink}.</p>
+          <p class="subscribe__alt meta">${text.emailAlt(rss, xLink)}</p>
         </section>`;
   }
 
   return `
         <section class="subscribe" aria-labelledby="subscribe-title">
-          <h2 class="subscribe__title" id="subscribe-title">Follow along</h2>
+          <h2 class="subscribe__title" id="subscribe-title">${text.rssTitle}</h2>
           <p class="subscribe__text">
-            New posts about small software, games and the web. Subscribe via
-            ${rss}${xLink}.
+            ${text.rssText(rss, xLink)}
           </p>
           <p class="subscribe__actions">
-            <a class="button button--accent" href="${root}feed.xml">Subscribe via RSS</a>
+            <a class="button button--accent" href="${home}feed.xml">${text.rssButton}</a>
           </p>
         </section>`;
 }
 
-// Placeholders shared by every page template. `root` prefixes asset and page
-// links: empty (relative) at the top level, "../" in subdirectories and the
-// absolute site URL on the 404 page.
-function commonReplacements(root = "") {
+// Placeholders shared by every page template, for the page described by
+// `ctx` (pageContext): `root` prefixes asset links and `home` page links
+// (both empty, i.e. relative, at the top level of the default language;
+// "../" a level deeper; the absolute site URL on the 404 page), and
+// {{t.<key>}} is the page language's text (i18n.js).
+function commonReplacements(ctx = pageContext()) {
+  const { language, root, home } = ctx;
   return {
     "base-url": BASE_URL,
+    "home-url": escapeHtml(pageUrl("", ctx.lang)),
     root,
+    home,
+    lang: language.code,
+    "og-locale": language.ogLocale,
+    "og-locale-alternates": ogLocaleAlternatesHtml(ctx),
+    alternates: alternateLinksHtml(ctx),
+    "language-switch": languageSwitchHtml(ctx),
+    "footer-languages": footerLanguagesHtml(ctx),
+    "font-preloads": fontPreloadsHtml(ctx),
     "site-title": escapeHtml(config.site.title),
     // The site name as shown in the header, with a typographic apostrophe
     "wordmark-text": escapeHtml(config.site.title).replace(/&#039;/g, "&rsquo;"),
-    author: escapeHtml(config.site.author),
-    "json-author": escapeJsonString(config.site.author),
+    author: escapeHtml(language.author),
     twitter: escapeHtml(config.site.twitter || ""),
     year: new Date().getFullYear(),
     analytics: analyticsHtml(),
-    subscribe: subscribeHtml(root),
+    subscribe: subscribeHtml(home, config.newsletter, ctx.lang),
     "footer-profiles": footerProfilesHtml(),
     // Marks the current page in the header navigation
     "nav-archive-current": "",
     "nav-projects-current": "",
     "nav-about-current": "",
+    ...Object.fromEntries(
+      Object.entries(language.ui).map(([key, value]) => [
+        `t.${key}`,
+        typeset(value, language.code),
+      ])
+    ),
   };
 }
 
@@ -998,13 +1274,31 @@ const IMAGE_TYPES = {
   ".webp": "image/webp",
 };
 
-// The page's own generated card (og/<key>.png) when it exists
-function socialImageFile(key, staticDir = STATIC_DIR) {
+// The site-wide card of a language: og-image.png, og-image-cs.png ...
+function defaultSocialImage(lang = DEFAULT_LANGUAGE.code) {
+  const language = getLanguage(lang);
+  return language === DEFAULT_LANGUAGE
+    ? DEFAULT_SOCIAL_IMAGE
+    : DEFAULT_SOCIAL_IMAGE.replace(/\.png$/, `-${language.code}.png`);
+}
+
+// Key of a page's own card: its slug, under the language's directory for
+// the other languages (og/cs/<slug>.png)
+function socialKey(key, lang = DEFAULT_LANGUAGE.code) {
+  return langPath(key, lang);
+}
+
+// The page's own generated card (og/<key>.png) when it exists, otherwise
+// the language's site-wide card, otherwise the default language's
+function socialImageFile(key, staticDir = STATIC_DIR, lang = DEFAULT_LANGUAGE.code) {
   if (key) {
     const card = `${SOCIAL_CARDS_DIR}/${key}.png`;
     if (fs.existsSync(path.join(staticDir, card))) return card;
   }
-  return DEFAULT_SOCIAL_IMAGE;
+  const fallback = defaultSocialImage(lang);
+  return fs.existsSync(path.join(staticDir, fallback))
+    ? fallback
+    : DEFAULT_SOCIAL_IMAGE;
 }
 
 function socialImageReplacements(file, alt, staticDir = STATIC_DIR) {
@@ -1040,12 +1334,15 @@ function headReplacements({
   socialAlt = null,
   jsonLd = null,
   extraMeta = "",
+  lang = DEFAULT_LANGUAGE.code,
 }) {
-  const imageFile = socialImageFile(socialKey);
-  const alt =
-    imageFile === DEFAULT_SOCIAL_IMAGE
-      ? DEFAULT_SOCIAL_IMAGE_ALT
-      : socialAlt || socialTitle;
+  const imageFile = socialImageFile(socialKey, STATIC_DIR, lang);
+  const defaultCardLang = LANGUAGES.find(
+    (language) => defaultSocialImage(language.code) === imageFile
+  );
+  const alt = defaultCardLang
+    ? defaultCardLang.defaultSocialAlt
+    : socialAlt || socialTitle;
   return {
     "page-title": escapeHtml(documentTitle),
     "social-title": escapeHtml(socialTitle),
@@ -1072,15 +1369,15 @@ function authorSchema() {
   };
 }
 
-function tagUrl(tag, root = "") {
-  return `${root}tags/${tag.slug}.html`;
+function tagUrl(tag, home = "") {
+  return `${home}tags/${tag.slug}.html`;
 }
 
-function tagLinksHtml(tags, root = "", className = "tag") {
+function tagLinksHtml(tags, home = "", className = "tag") {
   return (tags || [])
     .map(
       (tag) =>
-        `<a class="${className}" href="${tagUrl(tag, root)}">${escapeHtml(
+        `<a class="${className}" href="${tagUrl(tag, home)}">${escapeHtml(
           tag.label
         )}</a>`
     )
@@ -1089,23 +1386,34 @@ function tagLinksHtml(tags, root = "", className = "tag") {
 
 const isNote = (article) => article.type === "note";
 
+// Language of an article (the default one for articles loaded on their own)
+const articleLanguage = (article) => getLanguage(article.lang);
+
 // Eyebrow line of an article in lists and on its page. On its own page
 // (`updated`), an article updated since publication shows that day too.
 function postMetaHtml(article, { long = true, updated = false } = {}) {
+  const language = articleLanguage(article);
   const parts = [];
-  if (isNote(article)) parts.push('<span class="badge">Note</span>');
+  if (isNote(article)) {
+    parts.push(`<span class="badge">${language.note}</span>`);
+  }
   parts.push(
     `<time datetime="${escapeHtml(article.date)}">${
-      long ? formatDate(article.date) : formatDateShort(article.date)
+      long
+        ? formatDate(article.date, language.locale)
+        : formatDateShort(article.date, language.locale)
     }</time>`
   );
   if (!isNote(article)) {
-    parts.push(`<span>${estimateReadingTime(article.content)} min read</span>`);
+    parts.push(
+      `<span>${language.minRead(estimateReadingTime(article.content))}</span>`
+    );
   }
   if (updated && article.updated && article.updated !== article.date) {
     parts.push(
-      `<span class="post__updated">Updated <time datetime="${escapeHtml(article.updated)}">${formatDate(
-        article.updated
+      `<span class="post__updated">${language.updated} <time datetime="${escapeHtml(article.updated)}">${formatDate(
+        article.updated,
+        language.locale
       )}</time></span>`
     );
   }
@@ -1113,27 +1421,29 @@ function postMetaHtml(article, { long = true, updated = false } = {}) {
 }
 
 // `heading` is the level of the card's title: h2 directly under the page's
-// h1, h3 inside a titled section
-function postCardHtml(article, root = "", heading = "h2") {
+// h1, h3 inside a titled section. `home` leads to the language's pages.
+function postCardHtml(article, home = "", heading = "h2") {
   const tags = article.tags || [];
   return `
         <article class="post-card${isNote(article) ? " post-card--note" : ""}">
           <p class="eyebrow post-card__meta">${postMetaHtml(article)}</p>
           <${heading} class="post-card__title">
-            <a href="${root}${escapeHtml(article.filename)}">${escapeHtml(
-    article.title
+            <a href="${home}${escapeHtml(article.filename)}">${typeset(
+    escapeHtml(article.title),
+    article.lang
   )}</a>
           </${heading}>
           ${
             article.description
-              ? `<p class="post-card__excerpt">${escapeHtml(
-                  article.description
+              ? `<p class="post-card__excerpt">${typeset(
+                  escapeHtml(article.description),
+                  article.lang
                 )}</p>`
               : ""
           }
           ${
             tags.length > 0
-              ? `<p class="post-card__tags">${tagLinksHtml(tags, root)}</p>`
+              ? `<p class="post-card__tags">${tagLinksHtml(tags, home)}</p>`
               : ""
           }
         </article>
@@ -1166,29 +1476,26 @@ function collectTags(articles) {
     );
 }
 
-function topicsHtml(tags, root = "") {
+function topicsHtml(tags, home = "", lang = DEFAULT_LANGUAGE.code) {
   if (tags.length === 0) return "";
+  const language = getLanguage(lang);
   const items = tags
     .map(
       (tag) =>
-        `<li><a class="tag" href="${tagUrl(tag, root)}">${escapeHtml(
+        `<li><a class="tag" href="${tagUrl(tag, home)}">${escapeHtml(
           tag.label
         )}<span class="tag__count" aria-hidden="true">${
           tag.articles.length
-        }</span><span class="visually-hidden"> (${postCount(
+        }</span><span class="visually-hidden"> (${language.postCount(
           tag.articles.length
         )})</span></a></li>`
     )
     .join("");
   return `
         <section class="topics" aria-labelledby="topics-heading">
-          <h2 class="section-label" id="topics-heading">Topics</h2>
+          <h2 class="section-label" id="topics-heading">${language.topics}</h2>
           <ul class="tag-cloud" role="list">${items}</ul>
         </section>`;
-}
-
-function postCount(count) {
-  return `${count} ${count === 1 ? "post" : "posts"}`;
 }
 
 function truncateText(text, maxLength) {
@@ -1202,12 +1509,18 @@ function truncateText(text, maxLength) {
   )}…`;
 }
 
+// A tag's language is its articles'
+const tagLanguage = (tag) => articleLanguage(tag.articles[0] || {});
+
 function tagDescription(tag) {
+  const language = tagLanguage(tag);
   const count = tag.articles.length;
   const titles = tag.articles.map((article) => article.title).join("; ");
-  let text = `${postCount(count)} about ${tag.label} by ${
-    config.site.author
-  }: ${titles}`;
+  let text = `${language.tagDescription(
+    count,
+    tag.label,
+    language.author
+  )}: ${titles}`;
   // One title alone makes a thin description; the post's own summary
   // fills it out
   const [only] = tag.articles;
@@ -1217,36 +1530,40 @@ function tagDescription(tag) {
   return truncateText(text, 160);
 }
 
-function generateTagHtml(tag) {
+function generateTagHtml(tag, { translations = null } = {}) {
   const template = loadTemplate("tag");
-  const root = "../";
-  const canonicalUrl = `${BASE_URL}/${tagUrl(tag)}`;
+  const language = tagLanguage(tag);
+  const ctx = pageContext(tagUrl(tag), { lang: language.code, translations });
+  const canonicalUrl = pageUrl(tagUrl(tag), language.code);
   const count = tag.articles.length;
   const description = tagDescription(tag);
   // The label alone ("C", "AI") says too little in a search result or a tab
-  const title = `Articles about ${tag.label}`;
+  const title = language.tagTitle(tag.label);
 
   return replaceTemplate(template, {
-    ...commonReplacements(root),
+    ...commonReplacements(ctx),
     ...headReplacements({
       title,
       description,
       canonicalUrl,
-      socialKey: `tag-${tag.slug}`,
+      socialKey: socialKey(`tag-${tag.slug}`, language.code),
+      lang: language.code,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
         name: `${title} - ${config.site.title}`,
         description,
         url: canonicalUrl,
-        inLanguage: "en-US",
+        inLanguage: language.locale,
         author: authorSchema(),
       },
     }),
     "nav-archive-current": CURRENT_SECTION,
     "tag-label": escapeHtml(tag.label),
-    "tag-summary": `${postCount(count)}, newest first.`,
-    articles: tag.articles.map((article) => postCardHtml(article, root)).join(""),
+    "tag-summary": language.tagSummary(count),
+    articles: tag.articles
+      .map((article) => postCardHtml(article, ctx.home))
+      .join(""),
   });
 }
 
@@ -1254,11 +1571,12 @@ function generateTagHtml(tag) {
 // Projects (projects.json): the Projects page and the home page showcase
 // ------------------------------------------------------------
 
-const PROJECT_CATEGORIES = [
-  { key: "games", title: "Games" },
-  { key: "apps", title: "Apps" },
-  { key: "web", title: "Web" },
-];
+// Their headings are in each language's projectCategories (i18n.js)
+const PROJECT_CATEGORIES = [{ key: "games" }, { key: "apps" }, { key: "web" }];
+
+// Fields a project's `translations` may give for another language:
+// "translations": { "cs": { "summary": "...", "linkLabel": "..." } }
+const TRANSLATED_PROJECT_FIELDS = ["name", "summary", "linkLabel", "platforms"];
 
 function validateProject(project, index) {
   const errors = [];
@@ -1283,7 +1601,33 @@ function validateProject(project, index) {
       errors.push(`Project ${label}: invalid ${key} URL`);
     }
   }
+  if (project.translations !== undefined) {
+    const translations = project.translations;
+    if (!translations || typeof translations !== "object" || Array.isArray(translations)) {
+      errors.push(`Project ${label}: translations must be an object by language`);
+    } else {
+      for (const [code, fields] of Object.entries(translations)) {
+        if (!LANGUAGES.some((language) => language.code === code)) {
+          errors.push(`Project ${label}: unknown language "${code}" in translations`);
+          continue;
+        }
+        for (const [key, value] of Object.entries(fields || {})) {
+          if (!TRANSLATED_PROJECT_FIELDS.includes(key) || typeof value !== "string") {
+            errors.push(
+              `Project ${label}: translations.${code}.${key} is not a translatable text (${TRANSLATED_PROJECT_FIELDS.join(", ")})`
+            );
+          }
+        }
+      }
+    }
+  }
   return errors;
+}
+
+// A project as shown in a language: its translated fields over the original
+function localizeProject(project, lang = DEFAULT_LANGUAGE.code) {
+  const { translations, ...rest } = project;
+  return { ...rest, ...((translations && translations[lang]) || {}) };
 }
 
 function loadProjects(
@@ -1333,29 +1677,34 @@ function externalLink(url, label, className = "") {
   )}" target="_blank" rel="noopener">${label}</a>`;
 }
 
-function projectCardHtml(project, root = "") {
+// `ctx` (pageContext) is the page the card is on: its language, and where
+// the images (`root`) and the project's article are
+function projectCardHtml(project, ctx = pageContext()) {
+  const language = ctx.language;
   const links = [
     externalLink(
       project.url,
-      escapeHtml(project.linkLabel || "Open"),
+      escapeHtml(project.linkLabel || language.openProject),
       "project__link project__link--primary"
     ),
   ];
   if (project.article) {
     links.push(
-      `<a class="project__link" href="${root}${escapeHtml(
-        project.article
-      )}">Read the story</a>`
+      `<a class="project__link" href="${escapeHtml(
+        pageHref(ctx, project.article)
+      )}">${language.readStory}</a>`
     );
   }
   if (project.source) {
-    links.push(externalLink(project.source, "Source code", "project__link"));
+    links.push(
+      externalLink(project.source, language.sourceCode, "project__link")
+    );
   }
 
   const media = project.image
     ? `<a class="project__media" href="${escapeHtml(
         project.url
-      )}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="${root}${escapeHtml(
+      )}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="${ctx.root}${escapeHtml(
         project.image
       )}" alt="" /></a>`
     : "";
@@ -1372,7 +1721,10 @@ function projectCardHtml(project, root = "") {
                     )}</p>`
                   : ""
               }
-              <p class="project__summary">${escapeHtml(project.summary)}</p>
+              <p class="project__summary">${typeset(
+                escapeHtml(project.summary),
+                ctx.lang
+              )}</p>
               <p class="project__links">${links.join("")}</p>
             </div>
           </article>`;
@@ -1382,66 +1734,78 @@ function projectCardHtml(project, root = "") {
 // of the whole first row are in view when the page opens
 const PROJECT_GRID_COLUMNS = 2;
 
-function featuredProjectsHtml(projects, root = "") {
+// Project images are linked relative to the page (ctx.root) and sized from
+// static/
+function enhanceProjectImages(html, ctx) {
+  return enhanceImages(html, STATIC_DIR, {
+    eager: PROJECT_GRID_COLUMNS,
+    root: ctx.root,
+  });
+}
+
+function featuredProjectsHtml(projects, ctx = pageContext()) {
   const featured = projects.filter((project) => project.featured);
   if (featured.length === 0) return "";
-  return enhanceImages(
+  return enhanceProjectImages(
     `
         <section class="showcase" aria-labelledby="showcase-heading">
           <div class="showcase__head">
-            <h2 class="section-label" id="showcase-heading">Games I made</h2>
-            <a class="showcase__all" href="${root}projects.html">All projects</a>
+            <h2 class="section-label" id="showcase-heading">${ctx.language.showcase}</h2>
+            <a class="showcase__all" href="${ctx.home}projects.html">${ctx.language.allProjects}</a>
           </div>
           <div class="project-grid">${featured
-            .map((project) => projectCardHtml(project, root))
+            .map((project) => projectCardHtml(localizeProject(project, ctx.lang), ctx))
             .join("")}
           </div>
         </section>`,
-    STATIC_DIR,
-    { eager: PROJECT_GRID_COLUMNS }
+    ctx
   );
 }
 
-function generateProjectsHtml(projects) {
+function generateProjectsHtml(
+  projects,
+  { lang = DEFAULT_LANGUAGE.code, translations = null } = {}
+) {
   const template = loadTemplate("projects");
-  const canonicalUrl = `${BASE_URL}/projects.html`;
-  const description = `Games, iPhone apps and websites by ${config.site.author}: free browser games written in C, offline iOS games without ads, and small web tools.`;
+  const ctx = pageContext("projects.html", { lang, translations });
+  const language = ctx.language;
+  const canonicalUrl = pageUrl("projects.html", lang);
+  const description = language.projectsDescription(language.author);
 
-  const sections = PROJECT_CATEGORIES.map(({ key, title }) => {
+  const sections = PROJECT_CATEGORIES.map(({ key }) => {
     const items = projects.filter((project) => project.category === key);
     if (items.length === 0) return "";
     return `
         <section class="project-group" aria-labelledby="projects-${key}">
-          <h2 class="section-label" id="projects-${key}">${title}</h2>
+          <h2 class="section-label" id="projects-${key}">${language.projectCategories[key]}</h2>
           <div class="project-grid">${items
-            .map((project) => projectCardHtml(project))
+            .map((project) => projectCardHtml(localizeProject(project, lang), ctx))
             .join("")}
           </div>
         </section>`;
   }).join("");
 
   return replaceTemplate(template, {
-    ...commonReplacements(),
+    ...commonReplacements(ctx),
     ...headReplacements({
-      title: "Projects",
-      socialTitle: "Projects: games, apps and websites",
+      title: language.projectsTitle,
+      socialTitle: language.projectsSocialTitle,
       description,
       canonicalUrl,
-      socialKey: "projects",
+      socialKey: socialKey("projects", lang),
+      lang,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: `Projects - ${config.site.title}`,
+        name: `${language.projectsTitle} - ${config.site.title}`,
         description,
         url: canonicalUrl,
-        inLanguage: "en-US",
+        inLanguage: language.locale,
         author: authorSchema(),
       },
     }),
     "nav-projects-current": CURRENT_PAGE,
-    projects: enhanceImages(sections, STATIC_DIR, {
-      eager: PROJECT_GRID_COLUMNS,
-    }),
+    projects: enhanceProjectImages(sections, ctx),
   });
 }
 
@@ -1467,18 +1831,28 @@ function getPageData(file, pagesDir = PAGES_DIR) {
   };
 }
 
-function getAllPages(pagesDir = PAGES_DIR) {
+// `lang` is the language of the pages in `pagesDir` (pages/ holds the
+// default language's, pages/<dir>/ the others')
+function getAllPages(pagesDir = PAGES_DIR, lang = DEFAULT_LANGUAGE.code) {
   if (!fs.existsSync(pagesDir)) return [];
   return fs
     .readdirSync(pagesDir)
     .filter((file) => file.endsWith(".html"))
     .sort()
-    .map((file) => getPageData(file, pagesDir));
+    .map((file) => ({ ...getPageData(file, pagesDir), lang }));
 }
 
-function generatePageHtml(page) {
+// An article's or page's body as shown on its page: enhanced, with links
+// resolved for its language and typeset for it
+function renderContent(html, ctx) {
+  return typeset(localizeContentUrls(enhanceContent(html), ctx), ctx.lang);
+}
+
+function generatePageHtml(page, { translations = null } = {}) {
   const template = loadTemplate("page");
-  const canonicalUrl = `${BASE_URL}/${page.filename}`;
+  const ctx = pageContext(page.filename, { lang: page.lang, translations });
+  const language = ctx.language;
+  const canonicalUrl = pageUrl(page.filename, ctx.lang);
   const profile = page.schema === "profile";
   const jsonLd = profile
     ? {
@@ -1487,7 +1861,7 @@ function generatePageHtml(page) {
         name: page.title,
         description: page.description,
         url: canonicalUrl,
-        inLanguage: "en-US",
+        inLanguage: language.locale,
         mainEntity: authorSchema(),
       }
     : {
@@ -1496,26 +1870,30 @@ function generatePageHtml(page) {
         name: page.title,
         description: page.description,
         url: canonicalUrl,
-        inLanguage: "en-US",
+        inLanguage: language.locale,
         author: authorSchema(),
       };
 
   const navKey = `nav-${page.nav || page.slug}-current`;
+  const common = commonReplacements(ctx);
 
   return replaceTemplate(template, {
-    ...commonReplacements(),
+    ...common,
     ...headReplacements({
       title: page.title,
       description: page.description,
       canonicalUrl,
       ogType: profile ? "profile" : "website",
-      socialKey: page.slug,
+      socialKey: socialKey(page.slug, ctx.lang),
+      lang: ctx.lang,
       jsonLd,
     }),
-    ...(navKey in commonReplacements() ? { [navKey]: CURRENT_PAGE } : {}),
-    title: escapeHtml(page.title),
-    lede: page.lede ? `<p class="page-head__lede">${escapeHtml(page.lede)}</p>` : "",
-    content: enhanceContent(page.content),
+    ...(navKey in common ? { [navKey]: CURRENT_PAGE } : {}),
+    title: typeset(escapeHtml(page.title), ctx.lang),
+    lede: page.lede
+      ? `<p class="page-head__lede">${typeset(escapeHtml(page.lede), ctx.lang)}</p>`
+      : "",
+    content: renderContent(page.content, ctx),
   });
 }
 
@@ -1523,11 +1901,25 @@ function generatePageHtml(page) {
 // Home and archive
 // ------------------------------------------------------------
 
-const HOME_TITLE = `${config.site.title}: Small Software, Games and the Web`;
+// Language of a listing page: the one asked for, or its articles'
+function listingLanguage(lang, articles) {
+  return lang || (articles && articles[0] && articles[0].lang) || DEFAULT_LANGUAGE.code;
+}
 
-function generateIndexHtml(articles = null, projects = null) {
+function generateIndexHtml(
+  articles = null,
+  projects = null,
+  { lang = null, translations = null } = {}
+) {
   const allArticles = articles || getAllArticles();
   const allProjects = projects || loadProjects();
+  const ctx = pageContext("", {
+    lang: listingLanguage(lang, allArticles),
+    translations,
+  });
+  const language = ctx.language;
+  const homeTitle = language.homeTitle;
+  const homeUrl = pageUrl("", ctx.lang);
 
   const recentArticles = allArticles.slice(0, RECENT_ARTICLES_COUNT);
   const articlesList = recentArticles
@@ -1536,37 +1928,45 @@ function generateIndexHtml(articles = null, projects = null) {
 
   let archiveLink = "";
   if (allArticles.length > RECENT_ARTICLES_COUNT) {
-    archiveLink =
-      '<p class="list-footer"><a href="archive.html" class="button">View archive</a></p>';
+    archiveLink = `<p class="list-footer"><a href="archive.html" class="button">${language.viewArchive}</a></p>`;
   }
 
   return replaceTemplate(loadTemplate("index"), {
-    ...commonReplacements(),
+    ...commonReplacements(ctx),
     ...headReplacements({
-      title: HOME_TITLE,
-      documentTitle: HOME_TITLE,
-      description: config.site.description,
-      canonicalUrl: BASE_URL,
+      title: homeTitle,
+      documentTitle: homeTitle,
+      description: language.siteDescription,
+      canonicalUrl: homeUrl,
+      lang: ctx.lang,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "Blog",
         name: config.site.title,
-        description: config.site.description,
-        url: BASE_URL,
-        inLanguage: "en-US",
+        description: language.siteDescription,
+        url: homeUrl,
+        inLanguage: language.locale,
         author: authorSchema(),
         publisher: authorSchema(),
       },
     }),
     articles: articlesList,
     archive: archiveLink,
-    showcase: featuredProjectsHtml(allProjects),
+    showcase: featuredProjectsHtml(allProjects, ctx),
   });
 }
 
 
-function generateArchiveHtml(articles = null) {
+function generateArchiveHtml(
+  articles = null,
+  { lang = null, translations = null } = {}
+) {
   const allArticles = articles || getAllArticles();
+  const ctx = pageContext("archive.html", {
+    lang: listingLanguage(lang, allArticles),
+    translations,
+  });
+  const language = ctx.language;
 
   const articlesByYear = {};
   allArticles.forEach((article) => {
@@ -1588,11 +1988,13 @@ function generateArchiveHtml(articles = null) {
           (article) => `
             <li class="archive-item">
               <a href="${escapeHtml(article.filename)}">${
-            isNote(article) ? '<span class="badge">Note</span> ' : ""
-          }${escapeHtml(article.title)}</a>
+            isNote(article)
+              ? `<span class="badge">${language.note}</span> `
+              : ""
+          }${typeset(escapeHtml(article.title), ctx.lang)}</a>
               <time datetime="${escapeHtml(
                 article.date
-              )}">${formatDateShort(article.date)}</time>
+              )}">${formatDateShort(article.date, language.locale)}</time>
             </li>
           `
         )
@@ -1609,28 +2011,29 @@ function generateArchiveHtml(articles = null) {
     })
     .join("");
 
-  const canonicalUrl = `${BASE_URL}/archive.html`;
-  const description = `Every post on ${config.site.title} by ${config.site.author}, by topic and by year: indie games in C and Swift, offline iPhone apps, web development and AI.`;
+  const canonicalUrl = pageUrl("archive.html", ctx.lang);
+  const description = language.archiveDescription(language.author);
 
   return replaceTemplate(loadTemplate("archive"), {
-    ...commonReplacements(),
+    ...commonReplacements(ctx),
     ...headReplacements({
-      title: "Archive",
-      socialTitle: `Archive - ${config.site.title}`,
+      title: language.archiveTitle,
+      socialTitle: `${language.archiveTitle} - ${config.site.title}`,
       description,
       canonicalUrl,
+      lang: ctx.lang,
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
-        name: `Archive - ${config.site.title}`,
+        name: `${language.archiveTitle} - ${config.site.title}`,
         description,
         url: canonicalUrl,
-        inLanguage: "en-US",
+        inLanguage: language.locale,
         author: authorSchema(),
       },
     }),
     "nav-archive-current": CURRENT_PAGE,
-    topics: topicsHtml(collectTags(allArticles)),
+    topics: topicsHtml(collectTags(allArticles), "", ctx.lang),
     archive: archiveContent,
   });
 }
@@ -1740,20 +2143,42 @@ function getRelatedArticles(currentArticle, allArticles, maxCount = 3) {
   return scored;
 }
 
-function generateRelatedArticlesHTML(relatedArticles) {
+// A translation's related reading mirrors its original's (the same
+// articles, in this language, where translated), so both language versions
+// point readers the same way. Articles without an original (or whose
+// original's picks aren't translated) get their own.
+function relatedArticlesFor(article, articles, originals = null) {
+  if (originals && article.lang && article.lang !== DEFAULT_LANGUAGE.code) {
+    const original = originals.find((item) => item.filename === article.filename);
+    if (original) {
+      const translated = new Map(articles.map((item) => [item.filename, item]));
+      const mirrored = getRelatedArticles(original, originals, originals.length)
+        .map((item) => translated.get(item.filename))
+        .filter(Boolean)
+        .slice(0, 3);
+      if (mirrored.length > 0) return mirrored;
+    }
+  }
+  return getRelatedArticles(article, articles);
+}
+
+function generateRelatedArticlesHTML(relatedArticles, lang = DEFAULT_LANGUAGE.code) {
   if (!relatedArticles || relatedArticles.length === 0) {
     return "";
   }
+  const language = getLanguage(lang);
 
   const articlesList = relatedArticles
     .map(
       (article) => `
       <li>
-        <a href="${escapeHtml(article.filename)}">${escapeHtml(
-        article.title
+        <a href="${escapeHtml(article.filename)}">${typeset(
+        escapeHtml(article.title),
+        lang
       )}</a>
         <time datetime="${escapeHtml(article.date)}">${formatDateShort(
-        article.date
+        article.date,
+        language.locale
       )}</time>
       </li>
     `
@@ -1762,7 +2187,7 @@ function generateRelatedArticlesHTML(relatedArticles) {
 
   return `
     <section class="related">
-      <h2 class="section-label">Related reading</h2>
+      <h2 class="section-label">${language.related}</h2>
       <ul class="related__list" role="list">
         ${articlesList}
       </ul>
@@ -1771,6 +2196,7 @@ function generateRelatedArticlesHTML(relatedArticles) {
 }
 
 function generateArticleNavigation(currentArticle, allArticles) {
+  const language = articleLanguage(currentArticle);
   const sortedArticles = allArticles
     .filter((article) => article.date)
     .sort((a, b) => compareNewestFirst(b, a));
@@ -1795,14 +2221,17 @@ function generateArticleNavigation(currentArticle, allArticles) {
     article.filename
   )}">
           <span class="eyebrow">${label}</span>
-          <span class="post-nav__title">${escapeHtml(article.title)}</span>
+          <span class="post-nav__title">${typeset(
+            escapeHtml(article.title),
+            language.code
+          )}</span>
         </a>
   `;
 
   return `
-      <nav class="post-nav" aria-label="More articles">
-        ${prevArticle ? item(prevArticle, "prev", "Previous") : ""}
-        ${nextArticle ? item(nextArticle, "next", "Next") : ""}
+      <nav class="post-nav" aria-label="${language.moreArticles}">
+        ${prevArticle ? item(prevArticle, "prev", language.previous) : ""}
+        ${nextArticle ? item(nextArticle, "next", language.next) : ""}
       </nav>
   `;
 }
@@ -1827,7 +2256,7 @@ function discussionLabel(value) {
   return DISCUSSION_SITES[host] || host;
 }
 
-function discussionHtml(urls) {
+function discussionHtml(urls, lang = DEFAULT_LANGUAGE.code) {
   if (!urls || urls.length === 0) return "";
   const links = urls
     .map((url) =>
@@ -1836,7 +2265,7 @@ function discussionHtml(urls) {
     .join("");
   return `
           <div class="share discuss">
-            <span class="meta share__label">Discuss</span>
+            <span class="meta share__label">${getLanguage(lang).discuss}</span>
             ${links}
           </div>`;
 }
@@ -1846,7 +2275,7 @@ function sourceLinkHtml(article) {
   const host = new URL(article.link).hostname.replace(/^www\./, "");
   return `<p class="post__source">${externalLink(
     article.link,
-    `<span class="post__source-label">Link</span> ${escapeHtml(host)}`,
+    `<span class="post__source-label">${articleLanguage(article).link}</span> ${escapeHtml(host)}`,
     ""
   )}</p>`;
 }
@@ -1866,7 +2295,7 @@ function articleSchema(article, { canonicalUrl, socialImage, wordCount, readingT
     author: authorSchema(),
     publisher: authorSchema(),
     mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
-    inLanguage: "en-US",
+    inLanguage: articleLanguage(article).locale,
     keywords,
     articleSection: (article.tags || [])[0]?.label,
     wordCount,
@@ -1874,7 +2303,15 @@ function articleSchema(article, { canonicalUrl, socialImage, wordCount, readingT
   };
 }
 
-function renderArticleHtml(article, articles) {
+// `translations` (page path -> languages, from the build) links the other
+// language versions; `originals` (the default language's articles) gives a
+// translation its original's related reading
+function renderArticleHtml(
+  article,
+  articles,
+  { translations = null, originals = null } = {}
+) {
+  const ctx = pageContext(article.filename, { lang: article.lang, translations });
   const readingTime = estimateReadingTime(article.content);
   const tags = article.tags || [];
   const keywords =
@@ -1882,10 +2319,11 @@ function renderArticleHtml(article, articles) {
       ? tags.map((tag) => tag.label).join(", ")
       : extractKeywords(article.content, article.title);
   const wordCount = countWords(article.content);
-  const canonicalUrl = `${BASE_URL}/${article.filename}`;
+  const canonicalUrl = pageUrl(article.filename, ctx.lang);
   const published = formatDateISO(article.date);
   const modified = article.modified || published;
-  const socialImage = socialImageFile(article.slug);
+  const cardKey = socialKey(article.slug, ctx.lang);
+  const socialImage = socialImageFile(cardKey, STATIC_DIR, ctx.lang);
 
   // An untagged article has no section rather than a made-up one
   const extraMeta = [
@@ -1909,13 +2347,14 @@ function renderArticleHtml(article, articles) {
   const via = String(config.site.twitter || "").replace(/^@/, "");
 
   return replaceTemplate(loadTemplate("article"), {
-    ...commonReplacements(),
+    ...commonReplacements(ctx),
     ...headReplacements({
       title: article.title || "Untitled",
       description: article.description,
       canonicalUrl,
       ogType: "article",
-      socialKey: article.slug,
+      socialKey: cardKey,
+      lang: ctx.lang,
       extraMeta,
       jsonLd: articleSchema(article, {
         canonicalUrl,
@@ -1925,40 +2364,55 @@ function renderArticleHtml(article, articles) {
         keywords,
       }),
     }),
-    title: escapeHtml(article.title || "Untitled"),
+    title: typeset(escapeHtml(article.title || "Untitled"), ctx.lang),
     "post-meta": postMetaHtml(article, { updated: true }),
-    content: enhanceContent(article.content),
+    content: renderContent(article.content, ctx),
     // Notes have no separate description: it is their opening text
     lede:
       article.description && !isNote(article)
-        ? `<p class="post__lede">${escapeHtml(article.description)}</p>`
+        ? `<p class="post__lede">${typeset(
+            escapeHtml(article.description),
+            ctx.lang
+          )}</p>`
         : "",
     "post-tags":
       tags.length > 0
-        ? `<p class="post__tags">${tagLinksHtml(tags)}</p>`
+        ? `<p class="post__tags">${tagLinksHtml(tags, ctx.home)}</p>`
         : "",
     "source-link": sourceLinkHtml(article),
-    discussion: discussionHtml(article.discuss),
+    discussion: discussionHtml(article.discuss, ctx.lang),
     // Query-string values for the share links
     "share-url": encodeURIComponent(canonicalUrl),
     "share-title": shareText,
     "share-via": via ? `&amp;via=${encodeURIComponent(via)}` : "",
     "canonical-url": escapeHtml(canonicalUrl),
     "related-articles": generateRelatedArticlesHTML(
-      getRelatedArticles(article, articles)
+      relatedArticlesFor(article, articles, originals),
+      ctx.lang
     ),
     navigation: generateArticleNavigation(article, articles),
   });
 }
 
-function buildArticle(articleFile, articleData = null, allArticles = null) {
+// Writes a page of a language into the output directory
+function writeOutput(pagePath, lang, html) {
+  const file = path.join(OUTPUT_DIR, langPath(pagePath, lang));
+  ensureDir(path.dirname(file));
+  fs.writeFileSync(file, html);
+}
+
+function buildArticle(
+  articleFile,
+  articleData = null,
+  allArticles = null,
+  options = {}
+) {
   try {
     const article = articleData || getArticleData(articleFile);
     const articles = allArticles || getAllArticles();
-    const html = renderArticleHtml(article, articles);
+    const html = renderArticleHtml(article, articles, options);
 
-    const outputPath = path.join(OUTPUT_DIR, articleFile);
-    fs.writeFileSync(outputPath, html);
+    writeOutput(articleFile, article.lang, html);
     return article;
   } catch (error) {
     console.error(`Error building ${articleFile}:`, error.message);
@@ -1966,30 +2420,27 @@ function buildArticle(articleFile, articleData = null, allArticles = null) {
   }
 }
 
-function buildIndex(articles, projects = null) {
-  const html = generateIndexHtml(articles, projects);
-  fs.writeFileSync(path.join(OUTPUT_DIR, "index.html"), html);
+function buildIndex(articles, projects = null, options = {}) {
+  const html = generateIndexHtml(articles, projects, options);
+  writeOutput("index.html", listingLanguage(options.lang, articles), html);
 }
 
-function buildArchive(articles) {
-  const html = generateArchiveHtml(articles);
-  fs.writeFileSync(path.join(OUTPUT_DIR, "archive.html"), html);
+function buildArchive(articles, options = {}) {
+  const html = generateArchiveHtml(articles, options);
+  writeOutput("archive.html", listingLanguage(options.lang, articles), html);
 }
 
-function buildTags(articles) {
+function buildTags(articles, options = {}) {
   const tags = collectTags(articles);
-  if (tags.length === 0) return tags;
-  ensureDir(path.join(OUTPUT_DIR, "tags"));
   for (const tag of tags) {
-    fs.writeFileSync(
-      path.join(OUTPUT_DIR, tagUrl(tag)),
-      generateTagHtml(tag)
-    );
+    writeOutput(tagUrl(tag), tagLanguage(tag).code, generateTagHtml(tag, options));
   }
   return tags;
 }
 
-function buildPages(pages, articles) {
+// `articles` are the pages' language's: a page may not take an article's
+// place
+function buildPages(pages, articles, options = {}) {
   const articleFiles = new Set(articles.map((article) => article.filename));
   for (const page of pages) {
     if (
@@ -1997,34 +2448,45 @@ function buildPages(pages, articles) {
       RESERVED_PAGES.includes(page.filename)
     ) {
       throw new Error(
-        `Page ${page.filename} would overwrite another page of the site`
+        `Page ${langPath(page.filename, page.lang)} would overwrite another page of the site`
       );
     }
-    fs.writeFileSync(
-      path.join(OUTPUT_DIR, page.filename),
-      generatePageHtml(page)
-    );
+    writeOutput(page.filename, page.lang, generatePageHtml(page, options));
   }
 }
 
-function buildProjects(projects) {
+function buildProjects(projects, options = {}) {
   if (projects.length === 0) return;
-  fs.writeFileSync(
-    path.join(OUTPUT_DIR, "projects.html"),
-    generateProjectsHtml(projects)
+  writeOutput(
+    "projects.html",
+    options.lang,
+    generateProjectsHtml(projects, options)
   );
 }
 
 // GitHub Pages serves 404.html for any missing path, including nested ones,
-// so the template references assets through absolute URLs.
-function generateNotFoundHtml() {
+// so the template references assets through absolute URLs. It is in the
+// default language, with a pointer to each other language's home page.
+function generateNotFoundHtml({ translations = null } = {}) {
+  const ctx = {
+    ...pageContext("", { translations }),
+    root: `${BASE_URL}/`,
+    home: `${BASE_URL}/`,
+  };
+  const notes = otherLanguageLinks(ctx)
+    .map(
+      ({ language, href }) =>
+        `<p class="page-head__alt" lang="${language.code}">${language.notFound} <a href="${escapeHtml(href)}">${language.notFoundLink}</a></p>`
+    )
+    .join("");
   return replaceTemplate(loadTemplate("404"), {
-    ...commonReplacements(`${BASE_URL}/`),
+    ...commonReplacements(ctx),
+    "other-languages": notes,
   });
 }
 
-function buildNotFound() {
-  const html = generateNotFoundHtml();
+function buildNotFound(options = {}) {
+  const html = generateNotFoundHtml(options);
   fs.writeFileSync(path.join(OUTPUT_DIR, "404.html"), html);
 }
 
@@ -2039,8 +2501,16 @@ const newestDay = (days) =>
     ? days.reduce((a, b) => (a > b ? a : b))
     : day(new Date().toISOString());
 
-// Every indexable page of the site, for the sitemap and IndexNow
-function sitePages(articles, { pages = [], projects = [], pageDates = new Map() } = {}) {
+// Every indexable page of one language of the site, for the sitemap and
+// IndexNow. `pageDates` holds the last commit days of the files in pages/
+// (by their path inside it: "about.html", "cs/about.html") and of the
+// projects file.
+function sitePages(
+  articles,
+  { pages = [], projects = [], pageDates = new Map(), lang = null } = {}
+) {
+  const code = listingLanguage(lang, articles);
+  const url = (pagePath) => pageUrl(pagePath, code);
   const articleLastmods = articles.map((article) =>
     day(article.modified || formatDateISO(article.date))
   );
@@ -2048,9 +2518,9 @@ function sitePages(articles, { pages = [], projects = [], pageDates = new Map() 
   const listingLastmod = newestDay(articleLastmods);
 
   const entries = [
-    { url: BASE_URL, lastmod: listingLastmod, changefreq: "daily", priority: 1.0 },
+    { url: url(""), lastmod: listingLastmod, changefreq: "daily", priority: 1.0 },
     {
-      url: `${BASE_URL}/archive.html`,
+      url: url("archive.html"),
       lastmod: listingLastmod,
       changefreq: "weekly",
       priority: 0.8,
@@ -2059,7 +2529,7 @@ function sitePages(articles, { pages = [], projects = [], pageDates = new Map() 
 
   if (projects.length > 0) {
     entries.push({
-      url: `${BASE_URL}/projects.html`,
+      url: url("projects.html"),
       lastmod: pageDates.get(PROJECTS_FILE),
       changefreq: "monthly",
       priority: 0.8,
@@ -2068,8 +2538,8 @@ function sitePages(articles, { pages = [], projects = [], pageDates = new Map() 
 
   for (const page of pages) {
     entries.push({
-      url: `${BASE_URL}/${page.filename}`,
-      lastmod: pageDates.get(page.filename),
+      url: url(page.filename),
+      lastmod: pageDates.get(langPath(page.filename, code)),
       changefreq: "monthly",
       priority: 0.7,
     });
@@ -2077,7 +2547,7 @@ function sitePages(articles, { pages = [], projects = [], pageDates = new Map() 
 
   for (const tag of collectTags(articles)) {
     entries.push({
-      url: `${BASE_URL}/${tagUrl(tag)}`,
+      url: url(tagUrl(tag)),
       lastmod: newestDay(
         tag.articles.map((article) =>
           day(article.modified || formatDateISO(article.date))
@@ -2090,7 +2560,7 @@ function sitePages(articles, { pages = [], projects = [], pageDates = new Map() 
 
   articles.forEach((article, index) => {
     entries.push({
-      url: `${BASE_URL}/${article.filename}`,
+      url: url(article.filename),
       lastmod: articleLastmods[index],
       changefreq: "monthly",
       priority: 0.9,
@@ -2100,12 +2570,10 @@ function sitePages(articles, { pages = [], projects = [], pageDates = new Map() 
   return entries;
 }
 
-function renderSitemap(articles, options = {}) {
-  const sitemapItems = sitePages(articles, options);
-
+function sitemapXml(entries) {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${sitemapItems
+${entries
   .map(
     (item) => `  <url>
     <loc>${escapeXml(item.url)}</loc>${
@@ -2122,11 +2590,17 @@ ${sitemapItems
 </urlset>`;
 }
 
-function generateSitemap(articles, options = {}) {
-  fs.writeFileSync(
-    path.join(OUTPUT_DIR, "sitemap.xml"),
-    renderSitemap(articles, options)
+function renderSitemap(articles, options = {}) {
+  return sitemapXml(sitePages(articles, options));
+}
+
+// One sitemap for the whole site: `languages` is the build's content of
+// every language ({ lang, articles, pages, projects })
+function generateSitemap(languages, pageDates = new Map()) {
+  const entries = languages.flatMap(({ lang, articles, pages, projects }) =>
+    sitePages(articles, { pages, projects, pageDates, lang })
   );
+  fs.writeFileSync(path.join(OUTPUT_DIR, "sitemap.xml"), sitemapXml(entries));
   console.log("✅ Sitemap generated");
 }
 
@@ -2137,11 +2611,13 @@ function cdata(text) {
 }
 
 // Full article HTML as a feed reader shows it, with absolute URLs
-function feedContent(article) {
-  const url = `${BASE_URL}/${article.filename}`;
-  let html = sanitizeHtml(article.content);
+function feedContent(article, translations = null) {
+  const language = articleLanguage(article);
+  const url = pageUrl(article.filename, language.code);
+  const ctx = pageContext(article.filename, { lang: language.code, translations });
+  let html = localizeContentUrls(sanitizeHtml(article.content), ctx);
   if (article.link) {
-    html = `<p>Link: <a href="${escapeHtml(article.link)}">${escapeHtml(
+    html = `<p>${language.link}: <a href="${escapeHtml(article.link)}">${escapeHtml(
       article.link
     )}</a></p>\n${html}`;
   }
@@ -2158,31 +2634,35 @@ function feedUpdated(articles) {
   return times.length > 0 ? new Date(Math.max(...times)) : new Date();
 }
 
-function renderRSSFeed(articles) {
+// The feed of one language: feed.xml, cs/feed.xml ...
+function renderRSSFeed(
+  articles,
+  { lang = null, translations = null } = {}
+) {
+  const language = getLanguage(listingLanguage(lang, articles));
   const recentArticles = articles.slice(0, RSS_ITEMS);
+  const itemUrl = (article) => pageUrl(article.filename, language.code);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>${escapeXml(config.site.title)}</title>
-    <link>${BASE_URL}</link>
-    <description>${escapeXml(config.site.description)}</description>
-    <language>en-us</language>
+    <link>${escapeXml(pageUrl("", language.code))}</link>
+    <description>${escapeXml(language.siteDescription)}</description>
+    <language>${language.feedLanguage}</language>
     <lastBuildDate>${feedUpdated(articles).toUTCString()}</lastBuildDate>
-    <atom:link href="${BASE_URL}/feed.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="${escapeXml(pageUrl("feed.xml", language.code))}" rel="self" type="application/rss+xml" />
     ${recentArticles
       .map(
         (article) => `
     <item>
       <title>${escapeXml(article.title)}</title>
-      <link>${escapeXml(`${BASE_URL}/${article.filename}`)}</link>
+      <link>${escapeXml(itemUrl(article))}</link>
       <description>${escapeXml(article.description || "")}</description>
-      <content:encoded>${cdata(feedContent(article))}</content:encoded>
-      <dc:creator>${escapeXml(config.site.author)}</dc:creator>
+      <content:encoded>${cdata(feedContent(article, translations))}</content:encoded>
+      <dc:creator>${escapeXml(language.author)}</dc:creator>
       <pubDate>${parseDate(article.date).toUTCString()}</pubDate>
-      <guid isPermaLink="true">${escapeXml(
-        `${BASE_URL}/${article.filename}`
-      )}</guid>${(
+      <guid isPermaLink="true">${escapeXml(itemUrl(article))}</guid>${(
           article.tags || []
         )
           .map(
@@ -2197,8 +2677,12 @@ function renderRSSFeed(articles) {
 </rss>`;
 }
 
-function generateRSSFeed(articles) {
-  fs.writeFileSync(path.join(OUTPUT_DIR, "feed.xml"), renderRSSFeed(articles));
+function generateRSSFeed(articles, options = {}) {
+  writeOutput(
+    "feed.xml",
+    listingLanguage(options.lang, articles),
+    renderRSSFeed(articles, options)
+  );
   console.log("✅ RSS feed generated");
 }
 
@@ -2221,52 +2705,59 @@ const SOCIAL_CARD_TEMPLATE = path.join("tools", "og-card.html");
 const SOCIAL_CARD_MANIFEST = path.join("tools", "og-cards.json");
 
 // One card per page that has its own: articles, standalone pages, the
-// projects page and every tag, plus the site-wide default card
-function socialCardSpecs(articles, pages = [], projects = []) {
+// projects page and every tag, plus the language's site-wide card. Cards of
+// the other languages are in og/<dir>/ (og-image-<code>.png for the
+// site-wide one).
+function socialCardSpecs(articles, pages = [], projects = [], lang = null) {
+  const language = getLanguage(listingLanguage(lang, articles));
+  const card = (key) => `${SOCIAL_CARDS_DIR}/${socialKey(key, language.code)}.png`;
   const specs = [
     {
-      file: DEFAULT_SOCIAL_IMAGE,
-      title: "Small software, games and the web",
+      file: defaultSocialImage(language.code),
+      title: language.defaultCardTitle,
       eyebrow: "",
       image: null,
     },
     ...articles.map((article) => ({
-      file: `${SOCIAL_CARDS_DIR}/${article.slug}.png`,
+      file: card(article.slug),
       title: article.title,
       eyebrow: isNote(article)
-        ? "Note"
+        ? language.note
         : (article.tags || []).map((tag) => tag.label).slice(0, 3).join(" · "),
       image: article.image || null,
     })),
     ...pages.map((page) => ({
-      file: `${SOCIAL_CARDS_DIR}/${page.slug}.png`,
+      file: card(page.slug),
       title: page.title,
       eyebrow: "",
       image: page.image ? stripLeadingSlash(page.image) : null,
     })),
     ...collectTags(articles).map((tag) => ({
-      file: `${SOCIAL_CARDS_DIR}/tag-${tag.slug}.png`,
-      title: `Articles about ${tag.label}`,
-      eyebrow: "Topic",
+      file: card(`tag-${tag.slug}`),
+      title: language.tagTitle(tag.label),
+      eyebrow: language.ui.topic,
       image: null,
     })),
   ];
   if (projects.length > 0) {
     const cover = projects.find((project) => project.featured && project.image);
     specs.push({
-      file: `${SOCIAL_CARDS_DIR}/projects.png`,
-      title: "Games, apps and websites I made",
-      eyebrow: "Projects",
+      file: card("projects"),
+      title: language.projectsCardTitle,
+      eyebrow: language.projectsTitle,
       image: cover ? cover.image : null,
     });
   }
-  return specs;
+  // The card's footer names the language's site and author
+  return specs.map((spec) => ({ ...spec, lang: language.code }));
 }
 
 // Changes when the card's text, image or the card design changes
 function socialCardHash(spec, staticDir = STATIC_DIR) {
   const hash = require("crypto").createHash("sha256");
-  hash.update(JSON.stringify([spec.title, spec.eyebrow, spec.image]));
+  hash.update(
+    JSON.stringify([spec.title, spec.eyebrow, spec.image, spec.lang || null])
+  );
   if (fs.existsSync(SOCIAL_CARD_TEMPLATE)) {
     hash.update(fs.readFileSync(SOCIAL_CARD_TEMPLATE));
   }
@@ -2562,6 +3053,71 @@ function extractKeywords(content, title) {
     .join(", ");
 }
 
+// ------------------------------------------------------------
+// The whole site
+// ------------------------------------------------------------
+
+// Where a language's articles or pages are: articles/, articles/cs/ ...
+function contentDir(baseDir, lang) {
+  const { dir } = getLanguage(lang);
+  return dir ? path.join(baseDir, dir) : baseDir;
+}
+
+// The content of every language: the default language always, the others
+// when they have articles. With `gitDates` (getGitDates), articles published
+// on the same day are ordered by their first commit; a translation takes
+// its original's place in that order.
+function loadSite({ gitDates = null } = {}) {
+  const projects = loadProjects();
+  return LANGUAGES.map((language) => {
+    const articles = getAllArticles(
+      contentDir(ARTICLES_DIR, language.code),
+      language.code
+    );
+    if (gitDates) {
+      articles.forEach((article) => {
+        article.created = (
+          gitDates.get(article.filename) ||
+          gitDates.get(langPath(article.filename, language.code))
+        )?.created;
+      });
+      articles.sort(compareNewestFirst);
+    }
+    return {
+      lang: language.code,
+      articles,
+      pages: getAllPages(contentDir(PAGES_DIR, language.code), language.code),
+      projects,
+    };
+  }).filter((entry, index) => index === 0 || entry.articles.length > 0);
+}
+
+// Page path ("", "archive.html", "tags/ai.html", "<article>.html" ...) ->
+// the languages it exists in, in the order of LANGUAGES
+function translationIndex(site) {
+  const index = new Map();
+  const add = (pagePath, lang) => {
+    if (!index.has(pagePath)) index.set(pagePath, []);
+    if (!index.get(pagePath).includes(lang)) index.get(pagePath).push(lang);
+  };
+  for (const { lang, articles, pages, projects } of site) {
+    add("", lang);
+    add("archive.html", lang);
+    if (projects.length > 0) add("projects.html", lang);
+    for (const page of pages) add(page.filename, lang);
+    for (const tag of collectTags(articles)) add(tagUrl(tag), lang);
+    for (const article of articles) add(article.filename, lang);
+  }
+  return index;
+}
+
+// The social cards of every language
+function siteSocialCardSpecs(site) {
+  return site.flatMap(({ lang, articles, pages, projects }) =>
+    socialCardSpecs(articles, pages, projects, lang)
+  );
+}
+
 async function build() {
   try {
     console.log("🚀 Starting blog build...");
@@ -2581,55 +3137,61 @@ async function build() {
     copyStatic();
 
     console.log("📝 Processing articles...");
-    const articles = getAllArticles();
+    // "created" orders articles published on the same day
+    const site = loadSite({ gitDates: getGitDates() });
+    const [main] = site;
 
-    if (articles.length === 0) {
+    if (main.articles.length === 0) {
       console.log("No articles found in articles directory");
       return;
     }
 
-    // "created" orders articles published on the same day
-    const gitDates = getGitDates();
-    articles.forEach((article) => {
-      article.created = gitDates.get(article.filename)?.created;
-    });
-    articles.sort(compareNewestFirst);
+    const translations = translationIndex(site);
+    const options = { translations, originals: main.articles };
 
     // Build every article first so all failures are reported at once
     const failures = [];
 
-    articles.forEach((article) => {
-      try {
-        buildArticle(article.filename, article, articles);
-        console.log(`Generated: ${article.filename}`);
-      } catch (error) {
-        failures.push(`${article.filename}: ${error.message}`);
-      }
-    });
+    for (const { lang, articles } of site) {
+      articles.forEach((article) => {
+        const name = langPath(article.filename, lang);
+        try {
+          buildArticle(article.filename, article, articles, options);
+          console.log(`Generated: ${name}`);
+        } catch (error) {
+          failures.push(`${name}: ${error.message}`);
+        }
+      });
+    }
 
     if (failures.length > 0) {
       throw new Error(`Failed to generate articles:\n${failures.join("\n")}`);
     }
 
-    const pages = getAllPages();
-    const projects = loadProjects();
+    for (const { lang, articles, pages, projects } of site) {
+      const languageOptions = { lang, translations };
+      const generated = (name) => console.log(`Generated ${langPath(name, lang)}`);
 
-    buildIndex(articles, projects);
-    console.log("Generated index.html");
+      buildIndex(articles, projects, languageOptions);
+      generated("index.html");
 
-    buildArchive(articles);
-    console.log("Generated archive.html");
+      buildArchive(articles, languageOptions);
+      generated("archive.html");
 
-    const tags = buildTags(articles);
-    console.log(`Generated ${tags.length} tag pages`);
+      const tags = buildTags(articles, languageOptions);
+      console.log(`Generated ${tags.length} tag pages (${lang})`);
 
-    buildProjects(projects);
-    if (projects.length > 0) console.log("Generated projects.html");
+      buildProjects(projects, languageOptions);
+      if (projects.length > 0) generated("projects.html");
 
-    buildPages(pages, articles);
-    pages.forEach((page) => console.log(`Generated: ${page.filename}`));
+      buildPages(pages, articles, languageOptions);
+      pages.forEach((page) => generated(page.filename));
 
-    buildNotFound();
+      generateRSSFeed(articles, languageOptions);
+      generated("feed.xml");
+    }
+
+    buildNotFound({ translations });
     console.log("Generated 404.html");
 
     // Last commit days of the pages and projects.json, for <lastmod>
@@ -2639,17 +3201,17 @@ async function build() {
         path.basename(PROJECTS_FILE),
       ]),
     ]);
-    generateSitemap(articles, { pages, projects, pageDates });
+    generateSitemap(site, pageDates);
     console.log("Generated sitemap.xml");
 
-    generateRSSFeed(articles);
-    console.log("Generated feed.xml");
-
-    console.log(`\nBuild complete: ${articles.length} articles generated`);
-
-    const staleCards = staleSocialCards(
-      socialCardSpecs(articles, pages, projects)
+    const articleCount = site.reduce((sum, { articles }) => sum + articles.length, 0);
+    console.log(
+      `\nBuild complete: ${articleCount} articles generated (${site
+        .map(({ lang, articles }) => `${lang}: ${articles.length}`)
+        .join(", ")})`
     );
+
+    const staleCards = staleSocialCards(siteSocialCardSpecs(site));
     if (staleCards.length > 0) {
       console.warn(
         `\n⚠️  ${staleCards.length} social cards are missing or out of date (pages without a card use the default one, outdated cards still show the old title or image). Run: npm run og-images`
@@ -2691,6 +3253,17 @@ if (typeof module !== "undefined" && module.exports) {
     getAllArticles,
     getAllPages,
     getPageData,
+    loadSite,
+    translationIndex,
+    contentDir,
+    langPath,
+    pageUrl,
+    localizeTags,
+    localizeProject,
+    localizeContentUrls,
+    typeset,
+    siteSocialCardSpecs,
+    defaultSocialImage,
     loadProjects,
     collectTags,
     slugify,

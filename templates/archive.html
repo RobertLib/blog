@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{lang}}">
   <head>
     {{> head-meta}}
     {{> head-assets}}
@@ -11,9 +11,9 @@
     <main id="main-content">
       <div class="shell">
         <div class="page-head">
-          <h1>Archive</h1>
+          <h1>{{t.archive-title}}</h1>
           <p>
-            Every post on the blog &mdash; browse by topic or by year.
+            {{t.archive-intro}}
           </p>
         </div>
         {{topics}}

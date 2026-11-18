@@ -8,7 +8,14 @@
     "url": "https://roblib.itch.io/sands-of-saqqara",
     "linkLabel": "Play free on itch.io",
     "article": "sands-of-saqqara-egyptian-ghost-story-platformer.html",
-    "image": "images/sands-of-saqqara/crossroads-of-ptah.webp"
+    "image": "images/sands-of-saqqara/crossroads-of-ptah.webp",
+    "translations": {
+      "cs": {
+        "summary": "Plošinovková adventura po obrazovkách ztracené egyptské hrobky, postavená na skutečném příběhu o duchovi z ptolemaiovského papyru. 49 komnat s ručně rozmístěným pixel artem, napsaná v C.",
+        "platforms": "Prohlížeč · Windows · macOS · Linux",
+        "linkLabel": "Hrát zdarma na itch.io"
+      }
+    }
   },
   {
     "name": "Chuck",
@@ -20,7 +27,14 @@
     "linkLabel": "Play free on itch.io",
     "source": "https://github.com/RobertLib/chuck",
     "article": "chuck-stealth-platformer-600-kilobytes.html",
-    "image": "images/chuck/sector-09.png"
+    "image": "images/chuck/sector-09.png",
+    "translations": {
+      "cs": {
+        "summary": "Stealth plošinovka vzhůru uvnitř zapečetěné čtyřicetipatrové věže. Každý pixel i každý zvuk generuje kód, takže verze pro prohlížeč má asi 600 kilobajtů.",
+        "platforms": "Prohlížeč · Windows · macOS · Linux",
+        "linkLabel": "Hrát zdarma na itch.io"
+      }
+    }
   },
   {
     "name": "Breakup",
@@ -32,7 +46,14 @@
     "linkLabel": "Play free on itch.io",
     "source": "https://github.com/RobertLib/breakup",
     "article": "breakup-neon-brick-breaker-roguelite.html",
-    "image": "images/breakup/stormfront.webp"
+    "image": "images/breakup/stormfront.webp",
+    "translations": {
+      "cs": {
+        "summary": "Neonová rozbíječka cihel hraná jako roguelite, napsaná v C s SDL3: věže místo zdí, perky, bossové a denní run, který nepotřebuje server.",
+        "platforms": "Prohlížeč · Windows · macOS · Linux",
+        "linkLabel": "Hrát zdarma na itch.io"
+      }
+    }
   },
   {
     "name": "Jetshot",
@@ -43,7 +64,12 @@
     "url": "https://apps.apple.com/us/app/jetshot/id6754814450",
     "linkLabel": "App Store",
     "article": "jetshot-ios-game-swift-spritekit.html",
-    "image": "images/jetshot/cover.webp"
+    "image": "images/jetshot/cover.webp",
+    "translations": {
+      "cs": {
+        "summary": "Arkádová vesmírná střílečka pro iPhone a iPad, napsaná ve Swiftu a SpriteKitu, s vektorovou grafikou kreslenou kódem a úplně bez spritů."
+      }
+    }
   },
   {
     "name": "Chess Offline: Play & Review",
@@ -54,7 +80,12 @@
     "url": "https://apps.apple.com/us/app/chess-offline-play-review/id6809805041",
     "linkLabel": "App Store",
     "article": "chess-mini-golf-solitaire-ios-games.html",
-    "image": "images/ios-games/chess-cover.webp"
+    "image": "images/ios-games/chess-cover.webp",
+    "translations": {
+      "cs": {
+        "summary": "Šachy proti vlastnímu enginu ve Swiftu v pěti úrovních, s kompletním rozborem po každé partii. Bez reklam, bez nákupů a bez síťového kódu."
+      }
+    }
   },
   {
     "name": "Mini Golf 3D: 108 Holes",
@@ -64,7 +95,12 @@
     "url": "https://apps.apple.com/us/app/mini-golf-3d-108-holes/id6799511530",
     "linkLabel": "App Store",
     "article": "chess-mini-golf-solitaire-ios-games.html",
-    "image": "images/ios-games/minigolf-cover.webp"
+    "image": "images/ios-games/minigolf-cover.webp",
+    "translations": {
+      "cs": {
+        "summary": "Minigolf ve 3D se 108 ručně navrženými jamkami v devíti světech, postavený na SwiftUI a RealityKitu. Obtížnost se měří Dijkstrovým algoritmem."
+      }
+    }
   },
   {
     "name": "Klondike Solitaire: No Ads",
@@ -74,7 +110,12 @@
     "url": "https://apps.apple.com/us/app/klondike-solitaire-no-ads/id6806802031",
     "linkLabel": "App Store",
     "article": "chess-mini-golf-solitaire-ios-games.html",
-    "image": "images/ios-games/solitaire-cover.webp"
+    "image": "images/ios-games/solitaire-cover.webp",
+    "translations": {
+      "cs": {
+        "summary": "Klasický solitér Klondike, který vám řekne, když už rozdání nejde dohrát. Lízání po jedné nebo po třech, standardní nebo Vegas skóre, a nic dalšího."
+      }
+    }
   },
   {
     "name": "Tangletris",
@@ -83,7 +124,14 @@
     "platforms": "Browser",
     "url": "https://robertlib.github.io/tangletris/",
     "linkLabel": "Play in the browser",
-    "source": "https://github.com/RobertLib/tangletris"
+    "source": "https://github.com/RobertLib/tangletris",
+    "translations": {
+      "cs": {
+        "summary": "Logická hra ve stylu Tetrisu, která běží v prohlížeči.",
+        "platforms": "Prohlížeč",
+        "linkLabel": "Hrát v prohlížeči"
+      }
+    }
   },
   {
     "name": "J-Notes",
@@ -91,7 +139,12 @@
     "summary": "Private notes that stay on the device: write or sketch, lock them behind Face ID, no account, no cloud and no ads.",
     "platforms": "iPhone · iPad",
     "url": "https://apps.apple.com/us/app/j-notes/id1634043414",
-    "linkLabel": "App Store"
+    "linkLabel": "App Store",
+    "translations": {
+      "cs": {
+        "summary": "Soukromé poznámky, které zůstávají v zařízení: pište nebo kreslete, zamkněte je přes Face ID, bez účtu, bez cloudu a bez reklam."
+      }
+    }
   },
   {
     "name": "Old School Games",
@@ -100,7 +153,13 @@
     "url": "https://oldschoolgames.eu/",
     "linkLabel": "Visit oldschoolgames.eu",
     "article": "old-school-games-retro-gaming-platform.html",
-    "image": "images/old-school-games/homepage.webp"
+    "image": "images/old-school-games/homepage.webp",
+    "translations": {
+      "cs": {
+        "summary": "Klasické hry pro MS-DOS hratelné v prohlížeči, postavené na starých dobrých webových technologiích kolem DOSBoxu.",
+        "linkLabel": "Navštívit oldschoolgames.eu"
+      }
+    }
   },
   {
     "name": "Watch-List.me",
@@ -109,7 +168,13 @@
     "url": "https://www.watch-list.me/",
     "linkLabel": "Visit watch-list.me",
     "source": "https://github.com/RobertLib/watch-list",
-    "article": "building-watch-list-ai-collaboration.html"
+    "article": "building-watch-list-ai-collaboration.html",
+    "translations": {
+      "cs": {
+        "summary": "Přehled filmů a seriálů postavený na Next.js, napsaný společně s AI agentem.",
+        "linkLabel": "Navštívit watch-list.me"
+      }
+    }
   },
   {
     "name": "WeatherNow",
@@ -117,7 +182,13 @@
     "summary": "A weather app for the web.",
     "url": "https://www.weather-now.app/",
     "linkLabel": "Visit weather-now.app",
-    "source": "https://github.com/RobertLib/weather-now"
+    "source": "https://github.com/RobertLib/weather-now",
+    "translations": {
+      "cs": {
+        "summary": "Webová aplikace s předpovědí počasí.",
+        "linkLabel": "Navštívit weather-now.app"
+      }
+    }
   },
   {
     "name": "Quizzy",
@@ -126,7 +197,13 @@
     "url": "https://quizzy-eight-khaki.vercel.app/",
     "linkLabel": "Open Quizzy",
     "source": "https://github.com/RobertLib/quizzy",
-    "article": "quiz-website-in-2-hours.html"
+    "article": "quiz-website-in-2-hours.html",
+    "translations": {
+      "cs": {
+        "summary": "Kvízový web, který se s AI agentem dostal od nápadu do produkce za dvě hodiny.",
+        "linkLabel": "Otevřít Quizzy"
+      }
+    }
   },
   {
     "name": "Paint",
@@ -134,7 +211,13 @@
     "summary": "A drawing app that runs in the browser.",
     "url": "https://robertlib.github.io/paint/",
     "linkLabel": "Open Paint",
-    "source": "https://github.com/RobertLib/paint"
+    "source": "https://github.com/RobertLib/paint",
+    "translations": {
+      "cs": {
+        "summary": "Kreslicí aplikace, která běží v prohlížeči.",
+        "linkLabel": "Otevřít Paint"
+      }
+    }
   },
   {
     "name": "FortiPass",
@@ -142,13 +225,26 @@
     "summary": "A password generator that runs entirely in the browser.",
     "url": "https://robertlib.github.io/forti-pass/",
     "linkLabel": "Open FortiPass",
-    "source": "https://github.com/RobertLib/forti-pass"
+    "source": "https://github.com/RobertLib/forti-pass",
+    "translations": {
+      "cs": {
+        "summary": "Generátor hesel, který běží celý v prohlížeči.",
+        "linkLabel": "Otevřít FortiPass"
+      }
+    }
   },
   {
     "name": "This blog",
     "category": "web",
     "summary": "A static blog generator in plain Node.js with no runtime dependencies, deployed to GitHub Pages.",
     "url": "https://github.com/RobertLib/blog",
-    "linkLabel": "Source on GitHub"
+    "linkLabel": "Source on GitHub",
+    "translations": {
+      "cs": {
+        "name": "Tento blog",
+        "summary": "Generátor statického blogu v čistém Node.js bez závislostí za běhu, nasazený na GitHub Pages.",
+        "linkLabel": "Zdrojový kód na GitHubu"
+      }
+    }
   }
 ]

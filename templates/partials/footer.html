@@ -1,10 +1,11 @@
     <footer class="site-footer">
       <div class="shell site-footer__inner">
         <p class="meta">&copy; {{year}} {{author}}</p>
-        <nav class="site-footer__links" aria-label="Footer">
-          <a href="{{root}}about.html">About</a>
-          <a href="{{root}}feed.xml">RSS</a>
+        <nav class="site-footer__links" aria-label="{{t.footer-label}}">
+          <a href="{{home}}about.html">{{t.nav-about}}</a>
+          <a href="{{home}}feed.xml">RSS</a>
           {{footer-profiles}}
+          {{footer-languages}}
         </nav>
       </div>
     </footer>

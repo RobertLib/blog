@@ -1,0 +1,258 @@
+<!-- title: Co mě naučil vývoj Watch-List.me s AI agentem -->
+<!-- date: 2025-08-16 -->
+<!-- updated: 2026-11-12 -->
+<!-- description: Podrobně o tom, jak jsem stavěl aplikaci v Next.js s Claude Sonnet 4 v agentním režimu: přínosy, úskalí a proč je lidský dohled pořád nutný. -->
+<!-- tags: AI, Next.js, Web Development -->
+
+<p>
+  Nedávno jsem postavil
+  <a href="https://www.watch-list.me/" target="_blank" rel="noopener"
+    >Watch-List.me</a
+  >,
+  aplikaci v Next.js (tehdy nasazenou na Vercelu) pro sledování filmů a
+  seriálů. Samotný projekt možná nezní nijak revolučně, ale jeho vývoj mi
+  ukázal něco důležitého o tom, jaký vztah dnes máme k AI nástrojům pro
+  programování – zvlášť když kód generuje Claude Sonnet 4 v agentním režimu.
+</p>
+
+<p>
+  Znovu se mi potvrdilo zásadní ponaučení: AI dokáže vývoj dramaticky
+  zrychlit, ale potřebuje neustálý lidský dohled a někoho, kdo dělá
+  architektonická rozhodnutí. Čím je aplikace složitější, tím je ten dohled
+  důležitější.
+</p>
+
+<h2>V čem AI vyniká: rutinní dřina</h2>
+
+<p>
+  Claude v agentním režimu byl k nezaplacení při generování všedního,
+  opakujícího se kódu, který potřebuje každá webová aplikace:
+</p>
+
+<ul>
+  <li><strong>Boilerplate pro API routy</strong> – standardní CRUD operace</li>
+  <li>
+    <strong>Formulářové komponenty</strong> – validace vstupů a ošetření chyb
+  </li>
+  <li>
+    <strong>Rozhraní v TypeScriptu</strong> – typové definice datových
+    struktur
+  </li>
+  <li><strong>Stylování komponent</strong> – kombinace tříd Tailwind CSS</li>
+</ul>
+
+<p>
+  Na takové úkoly je AI neuvěřitelně efektivní. Co by mi pečlivým psaním
+  zabralo 30 minut, Claude vygeneroval za pár sekund. Díky času ušetřenému na
+  rutinní práci jsem se mohl soustředit na zajímavější architektonická
+  rozhodnutí.
+</p>
+
+<h2>Kritická slabina: porozumění architektuře</h2>
+
+<p>
+  Jak ale aplikace nabývala na složitosti, narazil jsem na zásadní omezení AI:
+  chybí jí celkové pochopení architektury aplikace, zvlášť pokud jde o Server
+  Components v Next.js a křehkou rovnováhu mezi vykreslováním na serveru a na
+  klientovi.
+</p>
+
+<h3>Dilema serverových a klientských komponent</h3>
+
+<p>
+  App Router v Next.js se Server Components přináší nový druh složitosti, se
+  kterým si AI nástroje soustavně nevědí rady. Mají sklon rozhodovat se podle
+  bezprostředního kontextu, místo aby zvážily:
+</p>
+
+<ul>
+  <li>
+    <strong>Dopady na SEO</strong> – co se musí kvůli vyhledávačům vykreslit na
+    serveru
+  </li>
+  <li>
+    <strong>Kompromisy ve výkonu</strong> – interaktivita versus velikost
+    bundlu a cena hydratace
+  </li>
+  <li>
+    <strong>Uživatelský zážitek</strong> – interaktivní prvky versus statický
+    obsah
+  </li>
+  <li>
+    <strong>Vzory toku dat</strong> – jak se stav šíří stromem komponent
+  </li>
+</ul>
+
+<p>
+  Opakovaně jsem musel zasahovat, když Claude navrhoval klientské komponenty,
+  které si data načítaly až v prohlížeči, a to pro obsah, který kvůli SEO
+  musel být už v HTML vykresleném na serveru – nebo když se naopak snažil
+  přidat interaktivitu do serverových komponent bez správné hranice
+  <code>"use client"</code>.
+</p>
+
+<h3>Skutečné příklady přešlapů AI</h3>
+
+<p>
+  Obzvlášť výmluvný příklad se týkal vyhledávání filmů. Claude nejdřív navrhl
+  udělat celé vyhledávací rozhraní jako serverovou komponentu. Serverová
+  komponenta ale nedokáže reagovat na psaní, takže každý dotaz by znamenal
+  změnu URL a kompletní nové vykreslení výsledků na serveru – u vyhledávacího
+  pole naprosto příšerné UX. Když jsem ho později požádal o optimalizaci,
+  skočil do opačného extrému a navrhl, aby si celá stránka s výpisem filmů
+  načítala data v prohlížeči. Filmy by pak chyběly v HTML, které dostávají
+  vyhledávače.
+</p>
+
+<p>
+  Správné řešení vyžadovalo pochopit, že úvodní mřížka filmů má být serverová
+  komponenta, která si data načte na serveru kvůli SEO a výkonu, zatímco
+  vyhledávací overlay musí být kvůli interaktivitě klientská komponenta,
+  přičemž pro každý z těchto případů je potřeba zvolit vhodnou strategii
+  načítání dat.
+</p>
+
+<h2>Lidský faktor: code review a dohled nad architekturou</h2>
+
+<p>
+  Práce s AI mě naučila, že code review nebylo nikdy důležitější. Nejde ale
+  jen o hledání chyb – jde o to zajistit konzistentní architekturu a
+  dlouhodobou udržitelnost.
+</p>
+
+<h3>Na co jsem se naučil dávat pozor</h3>
+
+<ul>
+  <li><strong>Hranice komponent</strong> – správné oddělení odpovědností</li>
+  <li>
+    <strong>Vzory načítání dat</strong> – jednotný přístup napříč celou
+    aplikací
+  </li>
+  <li>
+    <strong>Ošetření chyb</strong> – důkladné pokrytí, nejen happy path
+  </li>
+  <li>
+    <strong>Dopady na výkon</strong> – velikost bundlu a efektivita za běhu
+  </li>
+  <li><strong>Přístupnost</strong> – AI ji často úplně přehlíží</li>
+</ul>
+
+<p>
+  Přistihl jsem se, že dělám důkladnější code review než kdykoli předtím. Ne
+  proto, že by kód od AI byl chybový (většinou fungoval), ale protože jsem
+  musel hlídat, aby zapadal do celkové architektonické vize.
+</p>
+
+<h2>Antipattern: „vibe coding“</h2>
+
+<p>
+  Největší riziko vývoje s pomocí AI vidím v tom, čemu se dnes říká „vibe
+  coding“ – přijmout cokoli, co AI vyprodukuje, pokud to zdánlivě funguje, a
+  nechat ji dělat architektonická rozhodnutí podle toho, co se u jednotlivých
+  funkcí „zdá správné“, bez ohledu na aplikaci jako celek.
+</p>
+
+<p>
+  U malých skriptů nebo prototypů to může fungovat, ale v produkčních
+  aplikacích to vede k nejednotným vzorům, problémům s výkonem a noční můře
+  při údržbě. Pokušení je silné, protože kód od AI často funguje napoprvé –
+  jenže fungující kód ještě není dobrý kód.
+</p>
+
+<h2>Osvědčené postupy pro vývoj s AI</h2>
+
+<p>
+  Na základě této zkušenosti doporučuji při práci s AI nástroji pro
+  programování následující:
+</p>
+
+<h3>Než začnete</h3>
+<ul>
+  <li>
+    <strong>Definujte architekturu</strong> – o vzorech rozhodněte dřív, než
+    začnete generovat kód
+  </li>
+  <li><strong>Stanovte standardy kódu</strong> – konvence explicitně popište</li>
+  <li>
+    <strong>Naplánujte hierarchii komponent</strong> – mějte jasno, co poběží
+    na serveru a co na klientovi
+  </li>
+</ul>
+
+<h3>Během vývoje</h3>
+<ul>
+  <li>
+    <strong>Kontrolujte každý návrh AI</strong> – vygenerovaný kód nepřijímejte
+    naslepo
+  </li>
+  <li>
+    <strong>Testujte architektonická rozhodnutí</strong> – ověřte jejich dopady
+    na výkon a SEO
+  </li>
+  <li>
+    <strong>Udržujte konzistenci</strong> – hlídejte, aby nový kód dodržoval
+    zavedené vzory
+  </li>
+</ul>
+
+<h3>Po implementaci</h3>
+<ul>
+  <li>
+    <strong>Audit výkonu</strong> – zkontrolujte velikost bundlů a výkon
+    vykreslování
+  </li>
+  <li>
+    <strong>Kontrola SEO</strong> – otestujte, že obsah vykreslený na serveru
+    opravdu funguje
+  </li>
+  <li>
+    <strong>Kontrola přístupnosti</strong> – AI na přístupnost málokdy
+    pořádně myslí
+  </li>
+</ul>
+
+<h2>Budoucnost vývoje s AI</h2>
+
+<p>
+  Navzdory těmto potížím se na roli AI ve vývoji softwaru dívám optimisticky.
+  Nárůst produktivity je skutečný, zvlášť u otravných částí programování,
+  které musíme dělat všichni, ale nikoho moc nebaví.
+</p>
+
+<p>
+  Role lidského vývojáře se ale nezmenšuje, jen se mění. Stáváme se spíš
+  architekty a reviewery, kteří se soustředí na rozhodnutí na vyšší úrovni,
+  zatímco implementační detaily obstarává AI. Musíme proto lépe rozumět návrhu
+  systémů, dopadům na výkon a architektonickým vzorům.
+</p>
+
+<h2>Závěr</h2>
+
+<p>
+  Stavět Watch-List.me s pomocí AI bylo rychlejší a zároveň náročnější než
+  tradiční vývoj. Zrychlení bylo značné, ale vykoupené režií v podobě
+  neustálého dohledu nad architekturou.
+</p>
+
+<p>
+  Klíčové poznání je, že AI nástroje jsou silným akcelerátorem, ne náhradou
+  inženýrského úsudku. V generování fungujícího kódu vynikají, ale zajistit,
+  aby byl ten kód dobře navržený, výkonný a udržovatelný, zůstává pevně v
+  rukou člověka.
+</p>
+
+<p>
+  Jak budeme AI dál začleňovat do svých vývojových postupů, uspějí ti
+  vývojáři, kteří se naučí využívat její silné stránky a přitom si udrží
+  přísné nároky na kvalitu kódu a konzistenci architektury. Budoucnost patří
+  spolupráci člověka s AI – ale jen tehdy, když člověk pevně drží volant.
+</p>
+
+<p>
+  <em>Aktualizace z listopadu 2026:</em> Watch-List.me se od napsání tohoto
+  článku hodně rozrostl a dnes je to statický web hostovaný na GitHub Pages
+  místo Vercelu: každá stránka je klientská komponenta, která komunikuje s
+  TMDb přímo z prohlížeče, a seznam ke zhlédnutí se ukládá do úložiště
+  prohlížeče. Rozdělení na server a klienta popsané výše patří k jeho první
+  verzi.
+</p>

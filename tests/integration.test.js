@@ -4,6 +4,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import * as build from "../build.js";
+import { getLanguage } from "../i18n.js";
 
 describe("Integration Tests - Real Usage", () => {
   describe("End-to-end functionality", () => {
@@ -126,6 +127,7 @@ describe("Integration Tests - Real Usage", () => {
       "config.js",
       "seo-validate.js",
       "html-entities.js",
+      "i18n.js",
       "image-size.js",
       "pages",
       "projects.json",
@@ -211,6 +213,48 @@ describe("Integration Tests - Real Usage", () => {
         expect(sitemap).toContain(
           `<loc>https://example.com/tags/${tag.slug}.html</loc>`
         );
+      }
+
+      // Every other language: its own home, archive, feed, tag pages and
+      // articles in its directory, paired with their originals by hreflang
+      const [, ...translated] = build.loadSite();
+      for (const { lang, articles: localized, pages: localPages } of translated) {
+        const { dir } = getLanguage(lang);
+        for (const file of [
+          "index.html",
+          "archive.html",
+          "feed.xml",
+          "projects.html",
+          ...localPages.map((page) => page.filename),
+          ...localized.map((article) => article.filename),
+        ]) {
+          expect(fs.existsSync(path.join(dist, dir, file)), `${dir}/${file}`).toBe(
+            true
+          );
+        }
+        for (const article of localized) {
+          const html = read(`${dir}/${article.filename}`);
+          expect(html).toContain(`<html lang="${lang}">`);
+          expect(html).toContain(build.formatDate(article.date, getLanguage(lang).locale));
+          expect(html.slice(0, html.indexOf("</head>"))).not.toMatch(
+            /\{\{[^}]+\}\}/
+          );
+          expect(sitemap).toContain(
+            `<loc>https://example.com/${dir}/${article.filename}</loc>`
+          );
+          if (articles.some((original) => original.filename === article.filename)) {
+            expect(html).toContain(
+              `<link rel="alternate" hreflang="en" href="https://example.com/${article.filename}" />`
+            );
+            expect(read(article.filename)).toContain(
+              `<link rel="alternate" hreflang="${lang}" href="https://example.com/${dir}/${article.filename}" />`
+            );
+          }
+        }
+        expect(read(`${dir}/feed.xml`).match(/<item>/g)).toHaveLength(
+          Math.min(localized.length, 20)
+        );
+        expect(sitemap).toContain(`<loc>https://example.com/${dir}/</loc>`);
       }
 
       const pages = fs
